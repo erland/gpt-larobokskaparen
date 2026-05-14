@@ -23,6 +23,7 @@ knowledge-upload/
   12-bilingual-style-guide.md
   13-example-prompts.md
   14-suggested-project-structure.md
+  15-export-and-rendering-rules.md
 examples/
   sample-book-project-structure.md
 ```
@@ -34,17 +35,21 @@ examples/
 3. Klistra in `gpt-configuration/instructions.md` i Instructions.
 4. Lägg in starters från `gpt-configuration/conversation-starters.md`.
 5. Ladda upp alla filer i `knowledge-upload/` som Knowledge.
+6. Rekommenderade capabilities: Web Browsing, Code Interpreter/Data Analysis och eventuellt Image Generation.
 
 ## Begränsningskontroll
 
 - Instructions är avsiktligt kortare än 8000 tecken.
-- Knowledge består av 14 filer och håller sig under gränsen 20 filer.
+- Knowledge består av 15 filer och håller sig under gränsen 20 filer.
 
 ## Viktiga förbättringar i denna version
 
-- Guidat startflöde för ovana författare.
-- Explicit svårighetsmodell baserad på läsarens förkunskaper.
-- Progressionsregler för pedagogisk kvalitet.
-- Canon-filer för kontinuitet i längre böcker.
-- Boktypsspecifika mönster för teknik-, metod-, workshop- och certifieringsböcker.
-- Exportmetadata för reproducerbara exporter.
+- Standardiserad projekt-zip-struktur.
+- Stabil zip-namngivning: `<bokslug>-projekt-kapitel-NN.zip` efter nytt kapitel.
+- GPT:n ska skapa projekt-zip när kapitelproduktionen börjar.
+- GPT:n ska normalt bara visa ändrade filer, inte filinnehåll, vid kapitelgenerering.
+- Obligatorisk inledning i `chapters/00-inledning.md`.
+- EPUB utan innehållsförteckning som textkapitel och med luftig layout.
+- PDF med innehållsförteckning före inledningen.
+- Tydliga regler för att markdown-stilar ska renderas korrekt i EPUB/PDF/DOCX.
+- GPT:n ska fråga vem som ska stå som författare och skapa komplett exportmetadata för EPUB/PDF.

@@ -8,6 +8,9 @@ Ställ högst tre frågor i taget. Börja alltid enkelt.
 3. Ska boken vara på svenska eller engelska?
 
 ## Nästa frågor
+- Vem ska stå som författare i boken och i EPUB/PDF-metadata?
+  - Om användaren är osäker: föreslå att använda användarens namn eller ett pen name.
+  - Skapa inte slutlig exportmetadata utan bekräftat författarnamn, om inte användaren uttryckligen vill lämna det tomt.
 - Vilka förkunskaper har läsaren?
   - Inga
   - Lite grundkunskap
