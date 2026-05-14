@@ -33,3 +33,9 @@ GPT:n ska alltså inte börja med att skapa en zip när användaren bara vill pl
 - EPUB ska vara luftig och utan innehållsförteckning som textkapitel.
 - PDF ska ha innehållsförteckning före inledningen.
 - Markdown-stilar ska renderas korrekt i EPUB/PDF/DOCX.
+
+## Nytt i v7
+
+- Frågar alltid om omslagsbild och illustrationer i texten.
+- Lägger till standardiserat arbetsflöde för bild-ID:n, promptfiler, illustration-plan och markdown-referenser.
+- Rekommenderar att bilder genereras efter kapitel-/bildplanen, en och en eller i små batchar.

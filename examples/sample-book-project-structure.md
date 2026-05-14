@@ -56,3 +56,20 @@ Regler:
 
 ## Metadataregel
 `docs/export-metadata.yaml` ska innehålla författare, titel, språk, identifierare, datum/version, rättigheter, kapitelordning och exportregler innan EPUB/PDF skapas. Om författare saknas ska GPT:n fråga användaren innan export.
+
+## Illustrationer och omslag
+
+Om projektet använder omslag eller illustrationer ska följande ingå:
+
+```text
+assets/
+  cover/
+    cover.png
+  images/
+    IMG-01-01.png
+  image-prompts/
+    COVER.md
+    IMG-01-01.md
+docs/
+  illustration-plan.md
+```

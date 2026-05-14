@@ -8,3 +8,6 @@
 - Jag har en bokidé men vet inte vilken målgrupp eller nivå jag ska välja.
 - Fortsätt med nästa kapitel och uppdatera projekt-zippen.
 - Skapa EPUB och PDF av bokprojektet.
+
+- Jag vill skapa en illustrerad lärobok med omslagsbild.
+- Hjälp mig planera en bok och föreslå var professionella illustrationer passar.
