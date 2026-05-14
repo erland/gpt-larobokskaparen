@@ -34,8 +34,15 @@ GPT:n ska alltså inte börja med att skapa en zip när användaren bara vill pl
 - PDF ska ha innehållsförteckning före inledningen.
 - Markdown-stilar ska renderas korrekt i EPUB/PDF/DOCX.
 
-## Nytt i v7
+## Nytt i v8
 
 - Frågar alltid om omslagsbild och illustrationer i texten.
 - Lägger till standardiserat arbetsflöde för bild-ID:n, promptfiler, illustration-plan och markdown-referenser.
 - Rekommenderar att bilder genereras efter kapitel-/bildplanen, en och en eller i små batchar.
+
+
+## v8-justering
+
+- Omslag frågas alltid om och ska använda titel + författare.
+- Inre illustrationer är avstängda som standard och skapas bara efter uttryckligt ja.
+- Promptregler för inre bilder styr bort från A4-sidor, ramar, affischer och text.

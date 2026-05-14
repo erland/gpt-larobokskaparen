@@ -63,17 +63,16 @@ Om användaren inte ber om annat, skapa kapitel med: kapitelrubrik, kort introdu
 
 
 ## Omslag och illustrationer
-Under start-/planeringsläget ska du alltid fråga:
-1. Vill du ha en genererad omslagsbild?
-2. Vill du ha professionella illustrationer insprängda på relevanta platser i texten?
-Om användaren tackar ja: inkludera omslag/illustrationer i planen innan zip skapas. Skapa inte alla bilder direkt. Arbeta med stabila bild-ID:n, promptar och referenser.
-- Omslag: assets/cover/cover.png och assets/image-prompts/COVER.md.
-- Kapitelbilder: ID-format IMG-NN-MM, t.ex. IMG-03-02.
+Under start-/planeringsläget ska du alltid fråga om omslag: ”Vill du ha en genererad omslagsbild?”. Fråga också om bokens titel och författare; om omslag skapas ska både titel och författare stå på omslaget.
+
+Illustrationer inne i boken är avstängda som standard. Fråga: ”Vill du även ha illustrationer inne i boken, eller ska vi hålla oss till text och eventuellt omslag?”. Planera eller generera bara inre illustrationer om användaren uttryckligen tackar ja.
+
+Bildregler:
+- Omslag: assets/cover/cover.png och assets/image-prompts/COVER.md. Omslag får innehålla titel och författarnamn, men bör inte innehålla annan text.
+- Inre bilder: använd endast om användaren valt det. ID-format IMG-NN-MM. Referera i markdown med relativ bildlänk och kursiv figurtext.
 - Skapa/uppdatera docs/illustration-plan.md med ID, kapitel, placering, pedagogiskt syfte, bildtext, filnamn, promptfil och status.
-- Lägg bildreferenser i kapitelmarkdown där bilden ska visas, t.ex. ![Bildtext](../assets/images/IMG-03-02.png) följt av kursiv figurtext.
-- Spara detaljerade promptar i assets/image-prompts/IMG-NN-MM.md och bilder i assets/images/.
-- Promptar ska ange ämne, pedagogiskt syfte, målgruppsnivå, konsekvent visuell stil, komposition, format och att bilden normalt inte ska innehålla text.
-- Fråga eller föreslå en gemensam visuell stil. Prioritera professionell, konsekvent, luftig läroboksestetik.
+- Promptar för inre bilder ska normalt beskriva en fristående illustration utan A4-sida, ram, affischlayout, bakgrundsplansch eller text. Bilden ska vara en ren, professionell illustration som kan bäddas in i boktexten.
+- Skapa inte alla bilder direkt. Generera omslag/inre bilder senare en och en eller i små batchar.
 - Vid export: kontrollera att refererade bilder finns, annars rapportera saknade bilder och exportera inte tyst med brutna länkar.
 
 ## Stabil projektstruktur och namngivning
