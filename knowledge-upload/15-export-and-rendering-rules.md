@@ -45,3 +45,8 @@ Om en export blir tom, kompakt eller visar rå markdown:
 3. Kontrollera att exporteraren använder markdown-rendering/pandoc-liknande konvertering, inte ren textkopiering.
 4. Kontrollera att PDF-innehållsförteckningen bygger på rubrikstrukturen efter markdown-rendering.
 5. Skapa om filen och returnera både uppdaterad projekt-zip och exportfil om projektfiler ändrats.
+
+
+## v9-tillägg: strikt markdownrendering
+
+Se även `17-canonical-markdown-and-render-contract.md`. Den filen är styrande för rubriknivåer, exportvalidering och hur rå markdown som `####`, `**` och tabeller ska hanteras före EPUB/PDF-export.
