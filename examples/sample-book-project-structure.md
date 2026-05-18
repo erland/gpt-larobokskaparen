@@ -73,3 +73,20 @@ assets/
 docs/
   illustration-plan.md
 ```
+
+
+## Lokal exportpipeline
+
+Alla nya bokprojekt bör också innehålla:
+
+```text
+scripts/
+  export-book.py
+  export-book.sh
+styles/
+  epub.css
+  pdf.css
+exports/
+```
+
+Det gör EPUB/PDF-exporten reproducerbar lokalt utan AI.

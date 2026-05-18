@@ -95,3 +95,66 @@ PDF ska ha en mer trycklik men fortfarande luftig layout:
 ## 6. Felhantering
 
 Om exportverktyget inte kan rendera markdown korrekt ska Lärobokskaparen inte låtsas att exporten är färdig. Den ska rapportera problemet och skapa en korrigerad markdown-/HTML-mellanrepresentation eller föreslå verifieringssteg.
+
+
+## 6. Punktlistor och nästlade punktlistor
+
+Punktlistor måste skrivas som strikt markdown med tomrad före och efter listblocket. Detta är särskilt viktigt för EPUB/PDF eftersom vissa renderare annars kan tolka punkterna som vanlig text.
+
+Korrekt:
+
+```md
+
+- **Misstag: Att försöka förstå alla Unity-fönster samtidigt.**
+  - Varför det händer: Editorn visar mycket information direkt.
+  - Hur du undviker det: Fokusera först på Scene view, Game view, Hierarchy, Inspector och Project.
+
+```
+
+Regler:
+
+- Lägg en tomrad före första `-` när listan följer efter brödtext eller rubrik.
+- Lägg en tomrad efter sista listpunkten innan nästa stycke/rubrik/tabell.
+- Underpunkter ska indenteras konsekvent med två mellanslag före `-`.
+- Blanda inte `-`, `*` och `+` i samma lista; använd `-`.
+- Skriv inte flera listnivåer som separata stycken utan korrekt indentering.
+- Om en föräldrapunkt har underpunkter ska underpunkterna ligga direkt efter föräldrapunkten.
+- Om listpunkten blir lång, håll efterföljande rader indenterade minst två mellanslag så de hör till samma punkt.
+
+## 7. Tabeller
+
+Markdown-tabeller måste vara enkla och konsekventa.
+
+Korrekt:
+
+```md
+
+| Begrepp | Betydelse | Exempel |
+|---|---|---|
+| Scene view | Där du bygger banan | Placera objekt |
+| Game view | Där du testar spelet | Spela scenen |
+
+```
+
+Regler:
+
+- Lägg tomrad före och efter varje tabell.
+- Använd alltid rubrikrad och separatorrad.
+- Varje rad ska ha samma antal celler.
+- Undvik radbrytningar inuti tabellceller.
+- Undvik nästlade listor inne i tabeller; lägg i stället listan före eller efter tabellen.
+- Om en tabell blir bred i EPUB/PDF, gör om den till en punktlista eller dela den i två tabeller.
+
+## 8. EPUB/PDF-validering för listor och tabeller
+
+Före export ska GPT:n göra en snabb renderingskontroll:
+
+- Kontrollera att varje listblock har tomrad före och efter.
+- Kontrollera att nästlade listor har konsekvent indentering.
+- Kontrollera att tabeller har separatorrad och lika många celler per rad.
+- Om exporten använder HTML mellanformat: kontrollera att punktlistor blir `<ul><li>`, nästlade punktlistor blir `<ul><li><ul><li>`, och tabeller blir `<table>`.
+- Om en renderare inte stöder tabeller tillförlitligt ska GPT:n konvertera tabellen till semantisk HTML-tabell eller till en tydlig punktlista innan EPUB/PDF skapas.
+
+## 9. Korrigering före export
+
+Om ett kapitel innehåller en lista som riskerar att renderas fel ska GPT:n normalisera den före export och även uppdatera projekt-zippen. Visa som standard endast vilka filer som ändrats, inte hela filinnehållet.

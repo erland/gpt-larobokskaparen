@@ -50,3 +50,26 @@ Om en export blir tom, kompakt eller visar rå markdown:
 ## v9-tillägg: strikt markdownrendering
 
 Se även `17-canonical-markdown-and-render-contract.md`. Den filen är styrande för rubriknivåer, exportvalidering och hur rå markdown som `####`, `**` och tabeller ska hanteras före EPUB/PDF-export.
+
+
+## Särskilda regler för listor och tabeller
+
+EPUB/PDF-export ska aldrig acceptera att listor och tabeller blir vanlig text. Innan export ska GPT:n normalisera markdown:
+
+- tomrad före och efter listor
+- två mellanslag för nästlade listor
+- konsekvent `-` för punktlistor
+- korrekt tabellseparator `|---|---|`
+- lika många tabellceller i alla rader
+
+Exempel på godkänd nästlad lista:
+
+```md
+
+- **Misstag: Att försöka förstå alla Unity-fönster samtidigt.**
+  - Varför det händer: Editorn visar mycket information direkt.
+  - Hur du undviker det: Fokusera först på Scene view, Game view, Hierarchy, Inspector och Project.
+
+```
+
+Om exportverktyget ändå tappar nästling eller tabellformat ska GPT:n använda ett robust mellanformat, exempelvis HTML genererad från markdown, så att EPUB/PDF innehåller riktiga `<ul>`, `<li>` och `<table>`-element.
