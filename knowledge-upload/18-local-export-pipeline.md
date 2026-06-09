@@ -39,9 +39,12 @@ Scriptet ska stoppa eller varna vid:
 
 ## EPUB-regler
 - Ingen innehållsförteckning som kapitel i dokumentflödet.
-- Använd navigerbar TOC om verktyget genererar det.
+- Använd navigerbar TOC/index i EPUB-läsaren.
+- EPUB-TOC ska normalt bara innehålla H1/översta kapitelnivån.
 - Använd `styles/epub.css`.
+- Behåll `nav.xhtml`, men låt den inte visas som en vanlig lässida. Om den ligger i spine, sätt `linear="no"`.
 - Luftig layout: generöst radavstånd, marginaler, avstånd efter stycken, tydliga rubriker.
+- Kapitelstart ska inte få tom sida före kapitlet. Undvik EPUB-CSS med `page-break-before`, `break-before` och stora top-marginaler på H1.
 - Bilder ska skalas responsivt och inte spränga sidbredd.
 
 ## PDF-regler
@@ -78,6 +81,8 @@ EPUB:
 pandoc build/book.md \
   --from=gfm \
   --to=epub3 \
+  --toc \
+  --toc-depth=1 \
   --metadata title="..." \
   --metadata author="..." \
   --metadata lang="sv-SE" \
@@ -116,3 +121,14 @@ PDF CSS/layout ska prioritera:
 - sidbrytning före H1,
 - tabeller med läsbar cellpadding,
 - bildtexter och bilder som håller sig inom sidbredd.
+
+
+## Efterkontroll av EPUB från Pandoc
+
+Efter EPUB-export ska scriptet kontrollera zip-innehållet:
+
+1. `EPUB/nav.xhtml` eller motsvarande navigation ska finnas.
+2. `content.opf` ska inte göra navigationsfilen till en vanlig synlig sida i läsflödet. Sätt `linear="no"` om nav-item finns i spine.
+3. Det ska inte finnas en separat synlig innehållsförteckningsfil skapad från markdown.
+4. TOC-länkar ska gå direkt till kapitelrubrikens dokument/ankare, inte till tom sida före kapitlet.
+5. EPUB-TOC ska bara innehålla H1-rubriker om inget annat uttryckligen begärts.

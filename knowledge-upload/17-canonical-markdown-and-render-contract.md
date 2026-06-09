@@ -75,8 +75,13 @@ Kontrollera alltid innan export:
 EPUB ska vara luftig och läsbar:
 
 - Ingen innehållsförteckning som eget textkapitel.
-- Navigerbar TOC får finnas i EPUB-metadata/navigation.
+- Navigerbar TOC ska finnas i EPUB-metadata/navigation och ska normalt bara omfatta H1/översta kapitelnivån.
+- Vid Pandoc-export till EPUB: använd `--toc --toc-depth=1`.
+- Behåll `nav.xhtml`; den ska inte visas som vanlig lässida i bokflödet. Om den finns i spine ska den sättas som icke-linjär (`linear="no"`) i stället för att navigationen tas bort.
 - CSS ska sätta generösa marginaler, tydligt radavstånd och styckeavstånd.
+- EPUB-CSS får inte använda `page-break-before`, `break-before` eller stora top-marginaler på H1 som kan skapa tom sida före kapitelankaret.
+- Kapitelrubriker ska vara bokmässiga och centrerade. Om H1 är `1. Kapitelrubrik` får exporten visa numret och rubriken på två rader men TOC-texten ska vara `1. Kapitelrubrik`.
+- Avståndet mellan kapitelnummer och kapitelrubrik ska vara tajt; avståndet mellan rubrik och brödtext ska vara tydligt men inte överdrivet.
 - Rubriker, tabeller, kodblock, listor, blockcitat, bilder och bildtexter ska ha definierad styling.
 - Tabeller får inte lämnas som rå markdown.
 
@@ -87,7 +92,7 @@ Rekommenderad EPUB-känsla: `line-height` ca 1.55–1.7, styckesmarginal ca 0.7�
 PDF ska ha en mer trycklik men fortfarande luftig layout:
 
 - Innehållsförteckning ska ligga före `chapters/00-inledning.md`.
-- TOC ska skapas från H1–H3 och får inte vara tom.
+- TOC ska skapas från H1–H3 och får inte vara tom, om användaren inte uttryckligen vill ha endast översta nivån även i PDF.
 - Markdown ska renderas semantiskt till rubriker, fetstil, kursiv, tabeller, listor och kodblock.
 - Använd sidbrytning före varje kapitel.
 - Använd läsbara marginaler och radavstånd.

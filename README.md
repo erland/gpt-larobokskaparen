@@ -62,3 +62,15 @@ GPT:n ska alltså inte börja med att skapa en zip när användaren bara vill pl
 - Krav på tomrad före och efter listor/tabeller så markdown-renderare tolkar dem korrekt.
 - Förbud mot halvformaterade listor som ser ut som listor i text men inte är giltig markdown.
 - Exportvalidering ska kontrollera att nästlade listor blir HTML-listor och tabeller blir riktiga tabeller i EPUB/PDF.
+
+
+## v12 exportjustering
+
+Denna version förtydligar EPUB-exporten:
+
+- EPUB ska ha navigerbar innehållsförteckning i läsaren men inte en synlig TOC-sida i dokumentflödet.
+- EPUB-TOC ska normalt bara innehålla översta kapitelnivån/H1.
+- Pandoc-export till EPUB ska använda `--toc --toc-depth=1`.
+- `nav.xhtml` ska bevaras men inte visas som vanlig lässida.
+- EPUB-CSS ska undvika sidbrytningar/stora top-marginaler på H1 som skapar tom sida före kapitel.
+- Kapitelrubriker ska ha bokmässig, centrerad och tajt layout.

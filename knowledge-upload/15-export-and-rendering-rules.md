@@ -1,4 +1,4 @@
-# Export- och renderingsregler
+# Export- och renderingsregler v12
 
 ## Allmänt
 
@@ -19,11 +19,15 @@ Innan EPUB eller PDF skapas ska GPT:n kontrollera `docs/export-metadata.yaml`. O
 
 ## EPUB
 
-EPUB ska vara luftig och lättläst:
+EPUB ska vara luftig och lättläst men utan synlig innehållsförteckningssida i bokflödet:
 
 - Ingen innehållsförteckning som eget textkapitel i början.
-- Navigeringsfil/metadata får finnas enligt EPUB-standard.
+- EPUB ska ändå ha navigerbar TOC/index i EPUB-läsaren.
+- Navigerbar TOC ska normalt bara innehålla översta kapitelnivån: H1-rubriker. Använd `--toc --toc-depth=1` vid Pandoc-export till EPUB.
+- Behåll `nav.xhtml`/EPUB-navigation. Om den hamnar i spine ska den sättas som icke-linjär (`linear="no"`) eller annars döljas från läsflödet utan att navigationen försvinner.
 - Använd CSS med tydliga styckeavstånd, rimlig radlängd, läsbar brödtextstorlek, luft före/efter rubriker och bra tabell-/kodblocksstil.
+- Kapitelstart får inte skapa tom ankarsida före kapitlet. Undvik `page-break-before`, `break-before` och stora top-marginaler på H1 i EPUB-CSS.
+- H1 med formatet `1. Kapitelrubrik` får typograferas som två centrerade rader: `1.` och `Kapitelrubrik`. Numret och rubriken ska vara tydliga och bokmässiga, med tajt avstånd: cirka 25 % av tidigare luft mellan nummer och rubrik och cirka 50 % mindre luft mellan rubrik och brödtext.
 - Undvik kompakt layout där långa stycken trycks ihop.
 
 ## PDF
