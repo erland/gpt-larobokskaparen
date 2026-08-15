@@ -74,3 +74,70 @@ Denna version förtydligar EPUB-exporten:
 - `nav.xhtml` ska bevaras men inte visas som vanlig lässida.
 - EPUB-CSS ska undvika sidbrytningar/stora top-marginaler på H1 som skapar tom sida före kapitel.
 - Kapitelrubriker ska ha bokmässig, centrerad och tajt layout.
+
+---
+
+## Distributionspaket
+
+Repositoryt kan bygga två distributioner från samma källfiler:
+
+- `larobokskaparen-custom-gpt-vX.Y.Z.zip` för installation/uppdatering av Custom GPT:n.
+- `larobokskaparen-chat-vX.Y.Z.zip` för användning som portabel Läroboksskapare i en vanlig ChatGPT-konversation.
+
+Custom GPT-distributionen innehåller samma `gpt-configuration/instructions.md`, `gpt-configuration/conversation-starters.md` och samma 18 filer från `knowledge-upload/` som repositoryt. Byggvalideringen kontrollerar att dessa filer är byte-identiska med källorna.
+
+Den portabla distributionen innehåller:
+
+```text
+START-HERE.md
+VERSION
+MANIFEST.json
+assistant/instructions.md
+knowledge/
+examples/
+```
+
+`assistant/instructions.md` är en byte-identisk kopia av `gpt-configuration/instructions.md`, och filerna under `knowledge/` är byte-identiska kopior av de 18 Knowledge-filerna.
+
+### Lokal build
+
+Vanliga lokala/preview-byggen använder versionsnumret i `VERSION`:
+
+```bash
+python3 scripts/build_distributions.py
+python3 scripts/validate_distributions.py
+```
+
+En explicit version kan anges utan att ändra repositoryts `VERSION`:
+
+```bash
+python3 scripts/build_distributions.py --version 1.1.0
+python3 scripts/validate_distributions.py --version 1.1.0
+```
+
+### GitHub Release
+
+Vid publicering av en GitHub Release är release-taggen versionskälla. Taggen ska följa `v<SemVer>`, exempelvis:
+
+```text
+v1.0.0
+v1.1.0
+v2.0.0
+```
+
+För en release med taggen `v1.1.0` bygger workflowet automatiskt:
+
+```text
+larobokskaparen-custom-gpt-v1.1.0.zip
+larobokskaparen-chat-v1.1.0.zip
+```
+
+Versionen `1.1.0` skrivs också in i `VERSION` inne i båda distributionspaketen och i `MANIFEST.json` i den portabla distributionen. Repositoryts egen `VERSION` ändras inte av releasebygget.
+
+Workflowet laddar upp ZIP-filerna både som tillfälliga GitHub Actions-artifacts och, för publicerade releaser, som permanenta assets på själva GitHub-releasen.
+
+### Använda den portabla versionen
+
+Bifoga `larobokskaparen-chat-vX.Y.Z.zip` i en ny ChatGPT-konversation och skriv exempelvis:
+
+> Använd Läroboksskaparen i den bifogade ZIP-filen för den här konversationen. Läs `START-HERE.md` först.
