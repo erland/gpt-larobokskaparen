@@ -87,9 +87,15 @@ def main() -> int:
     parser.add_argument("--version")
     args = parser.parse_args()
 
-    version = (args.version or (ROOT / "VERSION").read_text(encoding="utf-8")).strip().removeprefix("v")
-    if not SEMVER.fullmatch(version):
-        raise SystemExit(f"Ogiltig version: {version}")
+    build_module = load_module(ROOT / "scripts/build_distributions.py", "build_distributions_for_validation")
+    version = build_module.resolve_version(args.version)
+
+
+    if (ROOT / "VERSION").exists():
+        raise SystemExit("Repositoryt får inte ha en incheckad VERSION-fil; release-taggen är versionskälla")
+    root_workflow=(ROOT / ".github/workflows/build-distributions.yml").read_text(encoding="utf-8")
+    if "github.event.release.tag_name" not in root_workflow or "< VERSION" in root_workflow:
+        raise SystemExit("Distributionsworkflowet använder inte release-taggen som versionskälla")
 
     knowledge = sorted(path.name for path in (ROOT / "knowledge-upload").glob("*.md"))
     if len(knowledge) > 20:
@@ -105,7 +111,7 @@ def main() -> int:
     if missing_terms:
         raise SystemExit(f"Instructions saknar centrala termer: {missing_terms}")
     if re.search(r"GPT-instruktioner\s+v\d+", instructions):
-        raise SystemExit("Instructions innehåller en separat intern versionsetikett; VERSION ska vara enda versionskälla")
+        raise SystemExit("Instructions innehåller en separat intern versionsetikett; release-taggen ska vara enda distributionsversionskälla")
 
     guidance_files = [ROOT / "gpt-configuration/instructions.md", ROOT / "examples/sample-book-project-structure.md"]
     guidance_files += [path for path in (ROOT / "knowledge-upload").glob("*.md") if path.name != "19-project-template-bundle.md"]
@@ -122,7 +128,9 @@ def main() -> int:
     for rel in (
         "chapters/kapitelmall-larobok.md", "chapters/kapitelmall-faktabok.md",
         "docs/kallpolicy.md", "docs/faktakontroll.md", "docs/innehalls-canon.md",
-        "scripts/export-book.py", "scripts/project_integrity.py",
+        "scripts/export-book.py", "scripts/project_integrity.py", "scripts/validate_project.py", "scripts/build_book.py",
+        "publishing/epub.css", "publishing/fix-epub-after-pandoc.py", "publishing/pdf-template.tex", "publishing/pdf-filter.lua",
+        ".github/workflows/01-validate.yml", ".github/workflows/02-build-preview.yml", ".github/workflows/03-release.yml",
     ):
         if not (template_root / rel).is_file():
             raise SystemExit(f"Saknad templatefil: {rel}")
@@ -132,6 +140,13 @@ def main() -> int:
         raise SystemExit("book.yaml saknar default book_kind=textbook")
     if "chapters:\n  - chapters/00-inledning.md" not in yaml:
         raise SystemExit("book.yaml saknar kanonisk inledning som första kapitelpost")
+
+    preview=(template_root / ".github/workflows/02-build-preview.yml").read_text(encoding="utf-8")
+    release=(template_root / ".github/workflows/03-release.yml").read_text(encoding="utf-8")
+    if "workflow_dispatch" not in preview or "actions/upload-artifact@v4" not in preview or "*.epub" not in preview or "*.pdf" not in preview:
+        raise SystemExit("Preview-workflowet saknar gemensamt EPUB/PDF-artifact")
+    if 'tags: ["v*"]' not in release or "gh release" not in release or "*.epub" not in release or "*.pdf" not in release:
+        raise SystemExit("Release-workflowet saknar v*-tagg eller separata EPUB/PDF-assets")
 
     validate_export_order(template_root)
     validate_duplicate_chapter_guard(template_root)

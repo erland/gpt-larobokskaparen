@@ -4,7 +4,7 @@ import argparse, fnmatch, hashlib, json, re, sys, uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
-MANIFEST='project-manifest.json'; LOG='revision-log.md'; IGNORED={'.git','.DS_Store','__MACOSX'}
+MANIFEST='project-manifest.json'; LOG='revision-log.md'; IGNORED={'.git','.DS_Store','__MACOSX','__pycache__'}
 CHAPTER_RE=re.compile(r'^chapters/(\d{2})-[a-z0-9][a-z0-9-]*\.md$',re.I)
 
 def now(): return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
@@ -18,7 +18,7 @@ def inventory(root):
     for p in sorted(root.rglob('*')):
         if not p.is_file(): continue
         r=p.relative_to(root)
-        if r.as_posix()==MANIFEST or any(x in IGNORED for x in r.parts): continue
+        if r.as_posix()==MANIFEST or any(x in IGNORED for x in r.parts) or p.suffix=='.pyc': continue
         out[r.as_posix()]={'sha256':digest(p),'bytes':p.stat().st_size}
     return out
 def summary(files):

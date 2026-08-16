@@ -12,3 +12,9 @@ Detta projekt är skapat från Lärobokskaparens kanoniska projektmall och stöd
 7. Bygg EPUB/PDF reproducerbart med `scripts/export-book.py`.
 
 Arbetsnoteringar i `docs/` är inte boktext och ska inte exporteras om de inte uttryckligen införs i bokens kapitel eller källförteckning.
+
+## GitHub Actions och publicering
+- `01-validate.yml` validerar PR/push till `main`.
+- `02-build-preview.yml` bygger EPUB/PDF manuellt och laddar upp ett gemensamt preview-artifact.
+- `03-release.yml` bygger på `v*`-tagg och publicerar EPUB/PDF som separata GitHub Release-assets.
+- `scripts/build_book.py` är CI-wrapper; `scripts/export-book.py` är kanonisk exportmotor.

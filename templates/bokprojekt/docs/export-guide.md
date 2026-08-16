@@ -1,9 +1,17 @@
 # Exportguide
 
-Exporten använder `book.yaml`, `scripts/export-book.py` och styles under `styles/`.
+`book.yaml` är enda kanoniska metadata- och kapitelordningskällan.
 
+## Lokalt
 ```bash
-python3 scripts/export-book.py
+python3 scripts/validate_project.py .
+python3 scripts/export-book.py --format all
 ```
+Pandoc 3.1.11.1 rekommenderas. PDF kräver XeLaTeX och TeX Gyre Pagella.
 
-För EPUB/PDF krävs Pandoc. PDF kräver dessutom en Pandoc-kompatibel PDF-engine, som XeLaTeX, om inte exporteraren anpassats till annan engine.
+## GitHub
+- Validate körs på pull request och push till `main`.
+- Build Preview startas manuellt och ger ett gemensamt artifact med EPUB, PDF och SHA256SUMS.
+- Release triggas av `v<SemVer>` och publicerar EPUB/PDF som separata release-assets.
+
+Arbetsfiler i `docs/` exporteras aldrig som boktext.

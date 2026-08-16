@@ -36,7 +36,8 @@ Se `project-template-bundle.md` för exakta filer och mallinnehåll. Huvudstrukt
   examples/
   code/
   assets/
-  styles/
+  publishing/
+  .github/workflows/
   scripts/
   exports/
 ```

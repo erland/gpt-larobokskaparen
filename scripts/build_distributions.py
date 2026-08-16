@@ -6,6 +6,7 @@ import hashlib
 import json
 import re
 import shutil
+import subprocess
 import zipfile
 from pathlib import Path
 
@@ -16,7 +17,6 @@ EXAMPLES_DIR = ROOT / "examples"
 PORTABLE_DIR = ROOT / "portable"
 TEMPLATE_ROOT = ROOT / "templates" / "bokprojekt"
 BUNDLE_PATH = KNOWLEDGE_DIR / "19-project-template-bundle.md"
-DEFAULT_VERSION_FILE = ROOT / "VERSION"
 EXPECTED_KNOWLEDGE = [
     "01-purpose-and-workflow.md", "02-guided-interview.md", "03-difficulty-and-pedagogy-model.md",
     "04-book-specification-template.md", "05-chapter-plan-template.md", "06-chapter-template.md",
@@ -28,37 +28,45 @@ EXPECTED_KNOWLEDGE = [
 ]
 
 TEMPLATE_FILE_ORDER = [
-    "README.md",
-    "book.yaml",
-    "project-manifest.json",
-    "revision-log.md",
-    "project-index.md",
-    "docs/bokspecifikation.md",
-    "docs/kapitelplan.md",
-    "docs/projektstatus.md",
-    "docs/innehalls-canon.md",
-    "docs/terminologi.md",
-    "docs/kallpolicy.md",
-    "docs/faktakontroll.md",
-    "docs/quality-checklist.md",
-    "docs/illustration-plan.md",
-    "docs/export-guide.md",
-    "chapters/00-inledning.md",
-    "chapters/kapitelmall-larobok.md",
-    "chapters/kapitelmall-faktabok.md",
-    "exercises/README.md",
-    "examples/README.md",
-    "code/README.md",
-    "assets/cover/README.md",
-    "assets/images/README.md",
-    "assets/image-prompts/README.md",
-    "styles/epub.css",
-    "styles/pdf.css",
-    "scripts/project_integrity.py",
-    "scripts/export-book.py",
-    "scripts/export-book.sh",
-    "exports/README.md",
-    "exports/exportlogg.md",
+    'README.md',
+    'book.yaml',
+    'project-manifest.json',
+    'revision-log.md',
+    'project-index.md',
+    'docs/bokspecifikation.md',
+    'docs/kapitelplan.md',
+    'docs/projektstatus.md',
+    'docs/innehalls-canon.md',
+    'docs/terminologi.md',
+    'docs/kallpolicy.md',
+    'docs/faktakontroll.md',
+    'docs/quality-checklist.md',
+    'docs/illustration-plan.md',
+    'docs/export-guide.md',
+    'chapters/00-inledning.md',
+    'chapters/kapitelmall-larobok.md',
+    'chapters/kapitelmall-faktabok.md',
+    'exercises/README.md',
+    'examples/README.md',
+    'code/README.md',
+    'assets/cover/README.md',
+    'assets/images/README.md',
+    'assets/image-prompts/README.md',
+    'publishing/epub.css',
+    'publishing/fix-epub-after-pandoc.py',
+    'publishing/pdf-template.tex',
+    'publishing/pdf-filter.lua',
+    'publishing/build-notes.md',
+    'scripts/project_integrity.py',
+    'scripts/validate_project.py',
+    'scripts/export-book.py',
+    'scripts/export-book.sh',
+    'scripts/build_book.py',
+    '.github/workflows/01-validate.yml',
+    '.github/workflows/02-build-preview.yml',
+    '.github/workflows/03-release.yml',
+    'exports/README.md',
+    'exports/exportlogg.md',
 ]
 
 SEMVER = re.compile(r"^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$")
@@ -74,11 +82,18 @@ def sha256(path: Path) -> str:
 
 
 def resolve_version(explicit: str | None) -> str:
-    version = explicit.strip() if explicit else DEFAULT_VERSION_FILE.read_text(encoding="utf-8").strip()
-    if version.startswith("v"):
-        version = version[1:]
+    if explicit:
+        version = explicit.strip().removeprefix("v")
+    else:
+        try:
+            tag = subprocess.run(["git", "describe", "--tags", "--exact-match", "HEAD"], cwd=ROOT, text=True, capture_output=True, check=True).stdout.strip()
+        except (OSError, subprocess.CalledProcessError):
+            raise SystemExit("Ingen explicit --version och HEAD är inte exakt Git-taggad. Ange --version X.Y.Z eller bygg en v<SemVer>-tagg.")
+        if not tag.startswith("v"):
+            raise SystemExit(f"Git-taggen måste börja med v: {tag}")
+        version = tag[1:]
     if not SEMVER.fullmatch(version):
-        raise SystemExit(f"Ogiltig version: {version!r}. Förväntat SemVer, t.ex. 1.1.0.")
+        raise SystemExit(f"Ogiltig version: {version!r}. Förväntat SemVer, t.ex. 1.4.0.")
     return version
 
 
@@ -197,7 +212,9 @@ def deterministic_zip(source_dir: Path, output: Path) -> None:
 
 def main() -> int:
     parser=argparse.ArgumentParser(); parser.add_argument("--output-dir",default=str(ROOT/"dist")); parser.add_argument("--version"); parser.add_argument("--sync-bundle",action="store_true"); args=parser.parse_args()
-    if args.sync_bundle: sync_bundle(); print(f"Synkad: {BUNDLE_PATH.relative_to(ROOT)}")
+    if args.sync_bundle:
+        sync_bundle(); print(f"Synkad: {BUNDLE_PATH.relative_to(ROOT)}")
+        if args.version is None: return 0
     validate_sources(); version=resolve_version(args.version); output_dir=Path(args.output_dir).resolve(); work=output_dir/".build"
     if work.exists(): shutil.rmtree(work)
     work.mkdir(parents=True); custom=work/"custom"; portable=work/"portable"; custom.mkdir(); portable.mkdir()
