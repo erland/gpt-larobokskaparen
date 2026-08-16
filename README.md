@@ -2,7 +2,7 @@
 
 Lärobokskaparen är en Custom GPT-konfiguration för att planera, skriva, underhålla och exportera **läroböcker** och **faktaböcker**. Samma projektformat används för båda profilerna, medan planering, kapitelstruktur och kvalitetskontroll anpassas efter bokens syfte.
 
-Aktuell paketversion anges enbart i `VERSION`.
+Repositoryt har ingen incheckad versionsfil. En publicerad GitHub Release-tagg `v<SemVer>` är auktoritativ versionskälla; lokala/testbyggen använder explicit `--version`.
 
 ## Bokprofiler
 
@@ -50,8 +50,9 @@ Ett typiskt projekt ser ut så här:
   examples/
   code/
   assets/
-  styles/
+  publishing/
   scripts/
+  .github/workflows/
   exports/
 ```
 
@@ -94,24 +95,25 @@ Instructions, Knowledge-filer och den portabla projektmallen verifieras byte-ide
 
 ### Lokal build
 
-```bash
-python3 scripts/build_distributions.py
-python3 scripts/validate_distributions.py
-```
-
-Explicit version kan anges utan att ändra `VERSION`:
+Eftersom repositoryt saknar incheckad version anges version explicit om committen inte är exakt taggad:
 
 ```bash
-python3 scripts/build_distributions.py --version 1.3.0
-python3 scripts/validate_distributions.py --version 1.3.0
+python3 scripts/build_distributions.py --version 1.4.0
+python3 scripts/validate_distributions.py --version 1.4.0
 ```
+
+På en exakt `v<SemVer>`-tagg kan buildscriptet även läsa versionen från Git. Distributionernas `VERSION`-fil genereras vid build och är inte källan till versionen.
 
 ### GitHub Release
 
-Release-taggen är versionskälla och ska följa `v<SemVer>`, till exempel `v1.3.0`. Workflowet bygger och validerar båda distributionerna och bifogar dem som release-assets.
+Release-taggen är versionskälla och ska följa `v<SemVer>`, till exempel `v1.4.0`. Workflowet bygger och validerar båda distributionerna med taggens version och bifogar dem som release-assets.
 
 ## Portabel användning
 
 Bifoga `larobokskaparen-chat-vX.Y.Z.zip` i en ny konversation och skriv exempelvis:
 
 > Använd Lärobokskaparen i den bifogade ZIP-filen för den här konversationen. Läs `START-HERE.md` först.
+
+## GitHub-publicering i genererade bokprojekt
+
+Projektmallen innehåller från början Validate, Build Preview och Release samt reproducerbar EPUB/PDF-export med Pandoc 3.1.11.1 + XeLaTeX. Därmed behöver publiceringsstödet inte eftermonteras i varje ny bok.

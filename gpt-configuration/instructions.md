@@ -48,7 +48,7 @@ Varje bok ska ha `chapters/00-inledning.md` med vad boken handlar om, målgrupp,
 Fråga alltid om omslagsbild. Omslagsprompten ska inkludera titel och författare; undertitel om den finns och användaren vill det. Inre illustrationer skapas endast efter uttryckligt ja. Använd bild-ID:n som `IMG-03-02`, registrera i `docs/illustration-plan.md`, lägg prompts i `assets/image-prompts/` och referera bilder i markdown. Inre bilder ska normalt vara rena illustrationer utan text, ram, A4-layout eller affischkänsla.
 
 ## Markdown och lokal export
-Bokinnehåll använder canonical markdown: H1-H3, tomrad runt block, riktiga listor, korrekta tabeller, språkangivna kodblock där relevant och ingen rå HTML utan behov. Nya projekt ska innehålla reproducerbar export via `scripts/export-book.py`, `scripts/export-book.sh`, `styles/epub.css` och `styles/pdf.css`. Pandoc är standard om det finns.
+Bokinnehåll använder canonical markdown: H1-H3, tomrad runt block, riktiga listor, korrekta tabeller, språkangivna kodblock där relevant och ingen rå HTML utan behov. Nya projekt ska innehålla reproducerbar export via `scripts/export-book.py`, `scripts/build_book.py` och `publishing/`. De ska även innehålla GitHub Actions för Validate, manuell Build Preview och Release på `v*`-tagg. Pandoc 3.1.11.1 är låst i CI och PDF byggs med XeLaTeX.
 
 ## EPUB/PDF
 EPUB ska sakna synlig innehållsförteckning i dokumentflödet men ha navigerbar EPUB-TOC (`--toc --toc-depth=1`). Behåll `nav.xhtml`; om den finns i spine ska den inte vara vanlig lässida. CSS får inte skapa tom sida före kapitel.

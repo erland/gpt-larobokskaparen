@@ -1,4 +1,3 @@
 #!/usr/bin/env bash
 set -euo pipefail
-cd "$(dirname "$0")/.."
-python3 scripts/export-book.py "$@"
+exec python3 "$(dirname "$0")/export-book.py" "$@"

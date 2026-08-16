@@ -28,7 +28,7 @@ För nya projekt är `templates/bokprojekt/` single source of truth och återges
   examples/
   code/
   assets/
-  styles/
+  publishing/
   scripts/
   exports/
 ```

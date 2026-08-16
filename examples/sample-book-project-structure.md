@@ -23,9 +23,11 @@ min-bok-projekt/
     kapitelmall-faktabok.md
     01-forsta-kapitlet.md
   assets/
-  styles/
+  publishing/
   scripts/
   exports/
 ```
 
 Välj endast den kapitelmall som passar `book_kind` när ett riktigt kapitel skapas. Arbetsfilerna under `docs/` exporteras inte som boktext.
+
+`.github/workflows/` innehåller Validate, Build Preview och Release för reproducerbar EPUB/PDF-publicering.

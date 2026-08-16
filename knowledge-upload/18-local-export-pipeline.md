@@ -1,14 +1,24 @@
-# Lokal exportpipeline
+# Lokal export och GitHub-publicering
 
-Nya projekt innehåller `scripts/export-book.py` och `scripts/export-book.sh` samt styles för EPUB/PDF.
+Nya projekt innehåller en gemensam lokal/CI-pipeline. `book.yaml` är enda kanoniska metadatafilen.
+
+## Scripts
+- `scripts/validate_project.py`: snabb deterministisk CI-validering och integritetskontroll.
+- `scripts/export-book.py`: enda kanoniska exportmotor för EPUB/PDF.
+- `scripts/build_book.py`: tunn CI-wrapper som validerar, bygger båda formaten och skriver SHA256SUMS.
+
+## Publishing
+`publishing/` innehåller EPUB-CSS, EPUB-efterbearbetning, XeLaTeX-template, Lua-filter och build-noteringar. Pandoc 3.1.11.1 används i GitHub Actions.
+
+## GitHub Actions
+- `01-validate.yml`: PR/push till `main`, utan tung verktygsinstallation.
+- `02-build-preview.yml`: manuell preview; ett artifact innehåller EPUB + PDF + SHA256SUMS.
+- `03-release.yml`: `v<SemVer>`-tagg; skapar/uppdaterar GitHub Release och bifogar EPUB/PDF som separata assets.
 
 ## Krav
-- Export ska kunna köras utan AI.
-- `book.yaml` är kanonisk metadata och ska innehålla giltig `book_kind` (`textbook` eller `factbook`).
-- Exporten ska inte behandla arbetsfiler i `docs/` som boktext. Källpolicy och faktakontroll får alltså inte följa med av misstag.
-- Boktext hämtas i exakt den ordning som anges under `chapters:` i `book.yaml`. Saknade, dubbellistade eller olistade numrerade kapitelfiler ska ge valideringsfel.
-- Canonical markdown ska valideras före renderering.
-- EPUB ska ha navigerbar TOC men ingen synlig TOC-sida i läsflödet.
-- PDF ska ha innehållsförteckning före inledningen.
-
-Profilen påverkar innehåll och kvalitetskontroll men inte grundprincipen för EPUB/PDF-export.
+- Exporten följer exakt `book.yaml: chapters`.
+- Saknade, dubbellistade eller olistade numrerade kapitelfiler stoppar export.
+- `docs/` exporteras aldrig som boktext.
+- EPUB har navigerbar TOC men ingen vanlig TOC-sida i läsflödet.
+- PDF har omslag om angivet, separat titelsida och synlig klickbar innehållsförteckning.
+- Samma pipeline gäller `textbook` och `factbook`.
