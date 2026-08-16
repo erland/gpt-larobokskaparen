@@ -28,9 +28,9 @@ Scriptet ska vara tydligt med vad som saknas om Pandoc eller PDF-engine inte är
 
 ## Validering före export
 Scriptet ska stoppa eller varna vid:
-- saknad `book.yaml` eller `docs/export-metadata.yaml`,
+- saknad `book.yaml`,
 - saknad titel, författare eller språk,
-- kapitel som inte följer ordningen `00-inledning.md`, `*-01.md`, `*-02.md`,
+- kapitel som inte följer ordningen `00-inledning.md`, `01-kort-slug.md`, `02-kort-slug.md`,
 - H4 eller djupare rubriker (`####`),
 - tabeller utan separatorrad,
 - tabellrader med olika antal celler,
@@ -65,7 +65,7 @@ python3 scripts/export-book.py "$@"
 ## Mallprinciper för export-book.py
 Python-scriptet bör:
 - hitta projektroten,
-- läsa metadata från `book.yaml` och/eller `docs/export-metadata.yaml`,
+- läsa metadata från `book.yaml`,
 - samla kapitel i korrekt ordning,
 - validera markdown,
 - skapa temporär sammanslagen markdown,

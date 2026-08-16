@@ -2,7 +2,7 @@
 
 ## Allmänt
 
-All export ska utgå från `docs/export-metadata.yaml`, `chapters/00-inledning.md` och kapitelordningen i `chapters` eller metadatafilen.
+All export ska utgå från `book.yaml`, `chapters/00-inledning.md` och kapitelordningen i `chapters` eller metadatafilen.
 
 Markdown ska renderas, inte kopieras rått. Följande ska visas som riktig formatering i EPUB/PDF/DOCX:
 
@@ -15,7 +15,7 @@ Markdown ska renderas, inte kopieras rått. Följande ska visas som riktig forma
 - citat som citat
 
 ## Metadata före export
-Innan EPUB eller PDF skapas ska GPT:n kontrollera `docs/export-metadata.yaml`. Om `author` saknas ska användaren tillfrågas vem som ska stå som författare. Exporten ska använda metadata för titel, författare, språk, datum/version, rättigheter, identifierare och kapitelordning. EPUB ska innehålla korrekt dc:title, dc:creator, dc:language och identifierare. PDF-titelsida eller dokumentmetadata ska använda samma titel/författare där det är praktiskt möjligt.
+Innan EPUB eller PDF skapas ska GPT:n kontrollera `book.yaml`. Om `author` saknas ska användaren tillfrågas vem som ska stå som författare. Exporten ska använda metadata för titel, författare, språk, datum/version, rättigheter, identifierare och kapitelordning. EPUB ska innehålla korrekt dc:title, dc:creator, dc:language och identifierare. PDF-titelsida eller dokumentmetadata ska använda samma titel/författare där det är praktiskt möjligt.
 
 ## EPUB
 

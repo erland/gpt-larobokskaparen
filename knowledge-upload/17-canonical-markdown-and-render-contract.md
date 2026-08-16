@@ -67,7 +67,7 @@ Kontrollera alltid innan export:
 - Kodblock har både start och slut.
 - Tabeller har korrekt header och separatorrad.
 - Listor har tomrad före och efter när det behövs för stabil rendering.
-- Kapitelordning följer `docs/export-metadata.yaml`.
+- Kapitelordning följer `book.yaml`.
 - Alla bildlänkar pekar på existerande filer.
 
 ## 4. EPUB-standard

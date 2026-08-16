@@ -1,92 +1,32 @@
-# Standardiserad bokprojektstruktur och namngivning
+# Exempel: kanonisk bokprojektstruktur
 
-Använd alltid exakt denna struktur i projekt-zippar, även när projektet växer:
+Detta är en översikt. Den exakta, genererade mallen finns i Knowledge-filen `project-template-bundle.md` och har företräde för nya projekt.
 
 ```text
 <bokslug>-projekt/
 ├── README.md
+├── book.yaml
+├── project-manifest.json
+├── revision-log.md
+├── project-index.md
 ├── docs/
-│   ├── bokspecifikation.md
-│   ├── kapitelplan.md
-│   ├── pedagogisk-canon.md
-│   ├── terminologi.md
-│   ├── projektstatus.md
-│   ├── export-metadata.yaml
-│   └── export-guide.md
 ├── chapters/
+│   ├── kapitelmall.md
 │   ├── 00-inledning.md
-│   ├── 01-<kapitel-slug>.md
-│   └── 02-<kapitel-slug>.md
+│   └── 01-<kapitel-slug>.md
 ├── exercises/
-│   └── chapter-01-exercises.md
-├── examples/        # scenarier, figurer, data eller icke-kodexempel
-├── code/            # körbar kod för teknikböcker
-├── assets/          # bilder, omslag, diagram, CSS
-└── exports/         # genererade EPUB/PDF/DOCX/HTML/Markdown
-```
-
-## Filnamn för projekt-zippar
-
-När ett projekt startas:
-
-```text
-<bokslug>-projekt.zip
-```
-
-Efter att ett nytt kapitel har lagts till:
-
-```text
-<bokslug>-projekt-kapitel-NN.zip
-```
-
-Exempel:
-
-```text
-javaprogrammering-projekt-kapitel-03.zip
-agilt-arbetssatt-projekt-kapitel-08.zip
+├── examples/
+├── code/
+├── assets/
+├── styles/
+├── scripts/
+└── exports/
 ```
 
 Regler:
-- Använd tvåsiffrigt kapitelnummer: 01, 02, 03.
-- Räkna inte in `00-inledning.md` som kapitel.
-- Bevara befintliga filnamn och kataloger vid uppdatering.
-- Lägg inte kapitel i roten, docs/ eller blandade kataloger.
-- Visa normalt bara ändrade filer i chatten, inte filinnehållet.
-
-
-## Metadataregel
-`docs/export-metadata.yaml` ska innehålla författare, titel, språk, identifierare, datum/version, rättigheter, kapitelordning och exportregler innan EPUB/PDF skapas. Om författare saknas ska GPT:n fråga användaren innan export.
-
-## Illustrationer och omslag
-
-Om projektet använder omslag eller illustrationer ska följande ingå:
-
-```text
-assets/
-  cover/
-    cover.png
-  images/
-    IMG-01-01.png
-  image-prompts/
-    COVER.md
-    IMG-01-01.md
-docs/
-  illustration-plan.md
-```
-
-
-## Lokal exportpipeline
-
-Alla nya bokprojekt bör också innehålla:
-
-```text
-scripts/
-  export-book.py
-  export-book.sh
-styles/
-  epub.css
-  pdf.css
-exports/
-```
-
-Det gör EPUB/PDF-exporten reproducerbar lokalt utan AI.
+- `book.yaml` är kanonisk metadata.
+- Kapitel använder tvåsiffrigt nummer och kort slug: `01-introduktion.md`.
+- `00-inledning.md` räknas inte som kapitel 1.
+- Projektets revision och filhashar skyddas av `project-manifest.json` och `scripts/project_integrity.py`.
+- Leveranszippar får revisionsnummer, exempelvis `javaprogrammering-r0003-kapitel-02.zip`.
+- Bevara fungerande äldre projekt och migrera bara när det behövs eller uttryckligen önskas.
