@@ -2,9 +2,10 @@ title: ""
 subtitle: ""
 author: ""
 language: "sv"
-difficulty: "beginner"
+book_kind: "textbook" # textbook | factbook
+book_type: "complete_textbook"
+difficulty: "beginner" # beginner | basic | experienced | advanced
 audience: ""
-book_type: "textbook"
 edition: "1"
 version: "0.1"
 date: ""

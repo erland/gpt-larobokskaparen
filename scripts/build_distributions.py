@@ -26,6 +26,41 @@ EXPECTED_KNOWLEDGE = [
     "16-illustration-and-cover-workflow.md", "17-canonical-markdown-and-render-contract.md",
     "18-local-export-pipeline.md", "19-project-template-bundle.md",
 ]
+
+TEMPLATE_FILE_ORDER = [
+    "README.md",
+    "book.yaml",
+    "project-manifest.json",
+    "revision-log.md",
+    "project-index.md",
+    "docs/bokspecifikation.md",
+    "docs/kapitelplan.md",
+    "docs/projektstatus.md",
+    "docs/innehalls-canon.md",
+    "docs/terminologi.md",
+    "docs/kallpolicy.md",
+    "docs/faktakontroll.md",
+    "docs/quality-checklist.md",
+    "docs/illustration-plan.md",
+    "docs/export-guide.md",
+    "chapters/00-inledning.md",
+    "chapters/kapitelmall-larobok.md",
+    "chapters/kapitelmall-faktabok.md",
+    "exercises/README.md",
+    "examples/README.md",
+    "code/README.md",
+    "assets/cover/README.md",
+    "assets/images/README.md",
+    "assets/image-prompts/README.md",
+    "styles/epub.css",
+    "styles/pdf.css",
+    "scripts/project_integrity.py",
+    "scripts/export-book.py",
+    "scripts/export-book.sh",
+    "exports/README.md",
+    "exports/exportlogg.md",
+]
+
 SEMVER = re.compile(r"^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$")
 ZIP_DT = (1980, 1, 1, 0, 0, 0)
 
@@ -72,8 +107,18 @@ def render_bundle() -> str:
         "ändra mallen och generera om den. `project-manifest.json` i mallen är ett template-manifest och ska "
         "initieras för det konkreta projektet med `scripts/project_integrity.py init`.\n\n"
     ]
-    for path in sorted(p for p in TEMPLATE_ROOT.rglob("*") if p.is_file() and "__pycache__" not in p.parts and p.suffix != ".pyc"):
-        rel = path.relative_to(TEMPLATE_ROOT).as_posix()
+    actual = {
+        path.relative_to(TEMPLATE_ROOT).as_posix(): path
+        for path in TEMPLATE_ROOT.rglob("*")
+        if path.is_file() and "__pycache__" not in path.parts and path.suffix != ".pyc"
+    }
+    expected = set(TEMPLATE_FILE_ORDER)
+    missing = [name for name in TEMPLATE_FILE_ORDER if name not in actual]
+    extra = sorted(set(actual) - expected)
+    if missing or extra:
+        raise SystemExit(f"Templatefiluppsättningen avviker. Saknas={missing}, extra={extra}")
+    for rel in TEMPLATE_FILE_ORDER:
+        path = actual[rel]
         text = path.read_text(encoding="utf-8")
         fence = fence_for(text)
         parts.append(f"## `{rel}`\n\n{fence}{language_for(path)}\n{text.rstrip()}\n{fence}\n\n")
@@ -104,6 +149,8 @@ def validate_sources() -> None:
     chars = len((CONFIG_DIR / "instructions.md").read_text(encoding="utf-8"))
     if chars > 8000: raise SystemExit(f"GPT Instructions är {chars} tecken; max är 8000")
     actual = sorted(p.name for p in KNOWLEDGE_DIR.glob("*.md"))
+    if len(actual) > 20:
+        raise SystemExit(f"Custom GPT har {len(actual)} Knowledge-filer; max är 20")
     if actual != EXPECTED_KNOWLEDGE:
         missing = sorted(set(EXPECTED_KNOWLEDGE)-set(actual)); extra = sorted(set(actual)-set(EXPECTED_KNOWLEDGE))
         raise SystemExit(f"Fel Knowledge-uppsättning. Saknas={missing}, extra={extra}")

@@ -3,7 +3,6 @@
 ## Varför detta kapitel finns
 
 ## Lärandemål
-
 Efter kapitlet ska läsaren kunna:
 
 - ...

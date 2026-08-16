@@ -1,37 +1,27 @@
-# Mall: Kapitel
+# Kapitelmallar
 
-Använd denna mall om användaren inte begär annat.
+Välj mall efter `book_kind`. Tvinga inte sektioner från den andra profilen.
+
+## Lärobok (`textbook`)
 
 ```markdown
-# Kapitel X: [Titel]
+# X. [Titel]
 
 ## Varför detta kapitel finns
-Kort och konkret introduktion.
 
 ## Lärandemål
 Efter kapitlet ska läsaren kunna:
 - ...
 
 ## Innan vi börjar
-Kort koppling till tidigare kunskap och begrepp.
 
 ## Huvudförklaring
-Förklara stegvis på rätt nivå.
 
 ## Exempel
-Använd återkommande projekt, scenario eller kodexempel när det passar.
 
 ## Vanliga misstag
-- Misstag:
-  - Varför det händer:
-  - Hur man undviker det:
 
 ## Övningar
-### Övning 1
-...
-
-### Fördjupning
-...
 
 ## Snabb sammanfattning
 - ...
@@ -40,5 +30,32 @@ Använd återkommande projekt, scenario eller kodexempel när det passar.
 1. ...
 
 ## Nästa steg
-Förklara hur kapitlet leder vidare.
 ```
+
+Sektioner kan anpassas efter `book_type`; workshopbok, snabbguide och referensverk behöver inte följa allt mekaniskt.
+
+## Faktabok (`factbook`)
+
+```markdown
+# X. [Titel]
+
+[Ingress eller nyfikenhetsväckare]
+
+## [Huvudavsnitt]
+Förklara ämnet sammanhängande och begripligt.
+
+## [Fördjupning eller nästa del]
+
+## Konkreta exempel eller fall
+
+## Centrala fakta
+- ...
+
+## Visste du att? (valfritt)
+
+## Begrepp att känna till (vid behov)
+
+## Sammanfattning (valfritt)
+```
+
+Rubrikerna i faktabok är innehållsdrivna; använd inte identiska mekaniska underrubriker i varje kapitel om berättarflödet blir sämre. Käll-/faktanoteringar hålls normalt i `docs/faktakontroll.md`, inte i kapiteltexten.

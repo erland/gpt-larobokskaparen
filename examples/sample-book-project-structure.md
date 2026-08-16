@@ -1,32 +1,31 @@
-# Exempel: kanonisk bokprojektstruktur
-
-Detta är en översikt. Den exakta, genererade mallen finns i Knowledge-filen `project-template-bundle.md` och har företräde för nya projekt.
+# Exempel: kanoniskt bokprojekt
 
 ```text
-<bokslug>-projekt/
-├── README.md
-├── book.yaml
-├── project-manifest.json
-├── revision-log.md
-├── project-index.md
-├── docs/
-├── chapters/
-│   ├── kapitelmall.md
-│   ├── 00-inledning.md
-│   └── 01-<kapitel-slug>.md
-├── exercises/
-├── examples/
-├── code/
-├── assets/
-├── styles/
-├── scripts/
-└── exports/
+min-bok-projekt/
+  README.md
+  book.yaml                 # book_kind: textbook | factbook
+  project-manifest.json
+  revision-log.md
+  project-index.md
+  docs/
+    bokspecifikation.md
+    kapitelplan.md
+    innehalls-canon.md
+    kallpolicy.md
+    faktakontroll.md
+    projektstatus.md
+    quality-checklist.md
+    illustration-plan.md
+    export-guide.md
+  chapters/
+    00-inledning.md
+    kapitelmall-larobok.md
+    kapitelmall-faktabok.md
+    01-forsta-kapitlet.md
+  assets/
+  styles/
+  scripts/
+  exports/
 ```
 
-Regler:
-- `book.yaml` är kanonisk metadata.
-- Kapitel använder tvåsiffrigt nummer och kort slug: `01-introduktion.md`.
-- `00-inledning.md` räknas inte som kapitel 1.
-- Projektets revision och filhashar skyddas av `project-manifest.json` och `scripts/project_integrity.py`.
-- Leveranszippar får revisionsnummer, exempelvis `javaprogrammering-r0003-kapitel-02.zip`.
-- Bevara fungerande äldre projekt och migrera bara när det behövs eller uttryckligen önskas.
+Välj endast den kapitelmall som passar `book_kind` när ett riktigt kapitel skapas. Arbetsfilerna under `docs/` exporteras inte som boktext.
