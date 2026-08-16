@@ -8,6 +8,8 @@ Titel:
 Språk:
 Författare:
 Version:
+book_kind: textbook / factbook
+book_type:
 
 ## Nuvarande fas
 - Start/intervju
@@ -15,6 +17,7 @@ Version:
 - Kapitelplan
 - Kapitelgenerering
 - Granskning
+- Faktakontroll (vid behov)
 - Export
 
 ## Kapitelstatus
@@ -22,9 +25,12 @@ Version:
 |---|---|---|---|
 | 1 | | Ej påbörjat / Utkast / Granskat / Klart | |
 
-## Introducerade begrepp
-| Begrepp | Kapitel | Kort definition |
-|---|---|---|
+## Canon/terminologi
+- ...
+
+## Faktakontroll
+- Öppna verifieringspunkter:
+- Senast genomgången:
 
 ## Öppna beslut
 - ...

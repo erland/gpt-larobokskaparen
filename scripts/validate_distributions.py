@@ -27,6 +27,15 @@ def main():
     if KNOWLEDGE!=EXPECTED: raise SystemExit(f'Fel Knowledge-lista: {KNOWLEDGE}')
     instr=(ROOT/'gpt-configuration/instructions.md').read_text(encoding='utf-8')
     if len(instr)>8000: raise SystemExit(f'Instructions är {len(instr)} tecken; max 8000')
+    required_instruction_terms=('book_kind','textbook','factbook','docs/kallpolicy.md','docs/faktakontroll.md')
+    missing_terms=[term for term in required_instruction_terms if term not in instr]
+    if missing_terms: raise SystemExit(f'Instructions saknar steg-2-termer: {missing_terms}')
+    template_root=ROOT/'templates/bokprojekt'
+    for rel in ('chapters/kapitelmall-larobok.md','chapters/kapitelmall-faktabok.md','docs/kallpolicy.md','docs/faktakontroll.md','docs/innehalls-canon.md'):
+        if not (template_root/rel).is_file(): raise SystemExit(f'Saknad steg-2-templatefil: {rel}')
+    yaml=(template_root/'book.yaml').read_text(encoding='utf-8')
+    if not re.search(r'(?m)^book_kind:\s*"textbook"',yaml): raise SystemExit('book.yaml saknar default book_kind=textbook')
+    if (template_root/'chapters/kapitelmall.md').exists() or (template_root/'docs/pedagogisk-canon.md').exists(): raise SystemExit('Utfasade steg-1-templatefiler finns kvar')
     # Verify generated bundle without modifying source.
     import subprocess, sys
     subprocess.run([sys.executable,str(ROOT/'scripts/build_distributions.py'),'--output-dir',str(Path(a.dist_dir)/'.validator-build'),'--version',version],check=True,stdout=subprocess.DEVNULL)
@@ -56,5 +65,6 @@ def main():
     print(f'OK: distributionerna för {version} är validerade.')
     print(f'OK: Instructions är {len(instr)} tecken (max 8000).')
     print('OK: Conversation starters är byte-identiska med källan; 19 Knowledge-filer och portabel template är byte-identiska med källorna.')
+    print('OK: Steg 2-profiler, två kapitelmallar, källpolicy och faktakontroll är validerade.')
     return 0
 if __name__=='__main__': raise SystemExit(main())

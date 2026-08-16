@@ -1,30 +1,20 @@
-# Canon och kontinuitet
+# Canon, terminologi och kontinuitet
 
-Canon är bokens interna sanning. Den ska uppdateras när boken växer.
+Canon är bokens interna sanning och ska hållas synkad när boken växer.
 
-## Terminologi
-Lista centrala begrepp med konsekventa definitioner.
+## Gemensamt
+- centrala begrepp och konsekventa definitioner
+- namn, enheter, benämningar och skrivsätt
+- återkommande exempel, case, figurer eller berättargrepp
+- antaganden och avgränsningar
 
-## Introducerade begrepp
-För varje begrepp: första kapitel, kort definition och exempel.
+## Lärobok
+Dokumentera även pedagogisk profil, första introduktion av viktiga begrepp, exempelprojekt, kod-/metodstil och vilka förkunskaper senare kapitel får anta.
 
-## Återkommande exempelprojekt/scenario
-- Namn:
-- Syfte:
-- Regler:
-- Hittills använda delar:
-- Kodstil eller metodstil:
-
-## Pedagogisk profil
-- Språk:
-- Svårighetsgrad:
-- Läsarprofil:
-- Ton:
-- Repetitionstakt:
-
-## Versions- och faktaval
-För teknikböcker: dokumentera versioner, verktyg, ramverk och antaganden. Markera osäkra eller snabbt föränderliga delar som bör verifieras.
+## Faktabok
+Dokumentera även centrala sakförhållanden som återkommer, osäkerheter, tidskänsliga uppgifter och vilka delar som måste omverifieras. `docs/faktakontroll.md` är arbetsregistret för faktapåståenden som behöver källa eller kontroll.
 
 ## Regler
-- Byt inte namn, scenario, kodstil eller definitioner utan att dokumentera ändringen.
-- Kontrollera canon före varje nytt kapitel.
+- Ändra inte etablerad terminologi eller fakta utan att synka berörda filer.
+- Kontrollera canon före nytt kapitel.
+- Vid konflikt mellan gammal boktext och verifierad korrekt fakta: korrigera medvetet och dokumentera ändringen.

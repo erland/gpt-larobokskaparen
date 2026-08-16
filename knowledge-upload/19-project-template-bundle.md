@@ -7,17 +7,18 @@ Denna Knowledge-fil genereras direkt från `templates/bokprojekt/`, som är sing
 ````markdown
 # Bokprojekt
 
-Detta projekt är skapat från Lärobokskaparens kanoniska projektmall.
+Detta projekt är skapat från Lärobokskaparens kanoniska projektmall och stödjer både lärobok (`textbook`) och faktabok (`factbook`).
 
 ## Arbetsflöde
-1. Håll bokmetadata i `book.yaml`.
+1. Ange `book_kind` och `book_type` samt övrig metadata i `book.yaml`.
 2. Planera boken i `docs/bokspecifikation.md` och `docs/kapitelplan.md`.
-3. Skriv inledningen i `chapters/00-inledning.md` och övriga kapitel som `NN-kort-slug.md`.
-4. Håll pedagogik, terminologi och projektstatus synkroniserade i `docs/`.
-5. Verifiera projektet före och efter ändringar med `scripts/project_integrity.py`.
-6. Bygg EPUB/PDF reproducerbart med `scripts/export-book.py`.
+3. Skriv inledningen i `chapters/00-inledning.md`.
+4. Använd `kapitelmall-larobok.md` för lärobok eller `kapitelmall-faktabok.md` för faktabok när nya kapitel skapas.
+5. Håll canon, terminologi, källpolicy, faktakontroll och projektstatus synkroniserade vid behov.
+6. Verifiera före och efter ändringar med `scripts/project_integrity.py`.
+7. Bygg EPUB/PDF reproducerbart med `scripts/export-book.py`.
 
-`project-manifest.json` skapas/aktiveras med `init` när ett nytt konkret projekt instansieras från mallen.
+Arbetsnoteringar i `docs/` är inte boktext och ska inte exporteras om de inte uttryckligen införs i bokens kapitel eller källförteckning.
 ````
 
 ## `assets/cover/README.md`
@@ -51,9 +52,10 @@ title: ""
 subtitle: ""
 author: ""
 language: "sv"
-difficulty: "beginner"
+book_kind: "textbook" # textbook | factbook
+book_type: "complete_textbook"
+difficulty: "beginner" # beginner | basic | experienced | advanced
 audience: ""
-book_type: "textbook"
 edition: "1"
 version: "0.1"
 date: ""
@@ -82,10 +84,36 @@ exports:
 ````markdown
 # Inledning
 
-Beskriv vad boken handlar om, vem den är för, vilka förkunskaper som antas, hur boken är upplagd och hur läsaren bör använda den.
+Beskriv vad boken handlar om, vem den är för, vilka förkunskaper eller vilken läsarnivå som antas, hur boken är upplagd och hur läsaren kan använda den.
 ````
 
-## `chapters/kapitelmall.md`
+## `chapters/kapitelmall-faktabok.md`
+
+````markdown
+# X. [Titel]
+
+[Ingress eller nyfikenhetsväckare]
+
+## [Huvudavsnitt]
+
+Förklara ämnet sammanhängande, konkret och anpassat till målgruppen.
+
+## [Fördjupning eller nästa del]
+
+## Konkreta exempel eller fall
+
+## Centrala fakta
+
+- ...
+
+## Visste du att? (valfritt)
+
+## Begrepp att känna till (vid behov)
+
+## Sammanfattning (valfritt)
+````
+
+## `chapters/kapitelmall-larobok.md`
 
 ````markdown
 # X. [Titel]
@@ -93,7 +121,6 @@ Beskriv vad boken handlar om, vem den är för, vilka förkunskaper som antas, h
 ## Varför detta kapitel finns
 
 ## Lärandemål
-
 Efter kapitlet ska läsaren kunna:
 
 - ...
@@ -136,23 +163,40 @@ Körbar kod för teknikböcker kan läggas här.
 
 ## Titel och undertitel
 
+## Bokprofil
+- book_kind: textbook / factbook
+- book_type:
+- Motivering:
+
 ## Språk och författare
 
 ## Ämne och syfte
 
-## Målgrupp och förkunskaper
+## Målgrupp
 
-## Svårighetsgrad
+## Nivå eller faktadjup
 
-## Boktyp och pedagogisk stil
-
-## Omfattning
-
-## Avgränsningar
-
-## Återkommande exempel eller projekt
+## Omfattning och avgränsningar
 
 ## Ton och stil
+
+## Läroboksspecifikt (om textbook)
+- Förkunskaper:
+- Övergripande lärandemål:
+- Pedagogisk modell:
+- Praktik/teori:
+
+## Faktaboksspecifikt (om factbook)
+- Ämnesbredd/fördjupning:
+- Berättande/förklarande/referens:
+- Centrala faktaområden:
+- Källkrav:
+- Tidskänslighet:
+- Synliga referenser: ja/nej
+
+## Omslag och illustrationer
+
+## Återkommande exempel/case/berättargrepp
 ````
 
 ## `docs/export-guide.md`
@@ -169,6 +213,34 @@ python3 scripts/export-book.py
 För EPUB/PDF krävs Pandoc. PDF kräver dessutom en Pandoc-kompatibel PDF-engine, som XeLaTeX, om inte exporteraren anpassats till annan engine.
 ````
 
+## `docs/faktakontroll.md`
+
+````markdown
+# Faktakontroll
+
+Använd detta som arbetsregister. Det är inte automatiskt en publicerad källförteckning.
+
+| ID | Kapitel | Påstående/faktaområde | Status | Källa/verifiering | Kontrollerad | Kommentar |
+|---|---|---|---|---|---|---|
+| F001 | | | Ej kontrollerad | | | |
+
+## Statusvärden
+- Ej kontrollerad
+- Verifierad
+- Behöver uppdateras
+- Osäker/omstridd
+- Ej relevant
+
+## Öppna verifieringspunkter
+- ...
+
+## Publiceringskontroll
+- [ ] Alla högprioriterade påståenden är verifierade.
+- [ ] Statistik har årtal/definition där det behövs.
+- [ ] Tidskänsliga uppgifter har kontrollerats på nytt.
+- [ ] Källnoteringar som inte ska publiceras ligger utanför kapiteltexten.
+````
+
 ## `docs/illustration-plan.md`
 
 ````markdown
@@ -180,10 +252,80 @@ Inre illustrationer är avstängda tills användaren uttryckligen önskar dem.
 |---|---|---|---|---|---|
 ````
 
+## `docs/innehalls-canon.md`
+
+````markdown
+# Innehålls-canon
+
+## Gemensam profil
+- Språk:
+- book_kind:
+- book_type:
+- Nivå/faktadjup:
+- Läsarprofil:
+- Ton:
+
+## Terminologi och fasta definitioner
+| Begrepp | Första kapitel | Definition | Kommentar |
+|---|---:|---|---|
+
+## Återkommande exempel, case eller berättargrepp
+- Namn:
+- Syfte:
+- Regler:
+
+## Läroboksspecifikt
+- Pedagogisk progression:
+- Kod-/metodstil:
+- Förkunskaper som senare kapitel får anta:
+
+## Faktaboksspecifikt
+- Fasta sakförhållanden som återkommer:
+- Kända osäkerheter/tolkningar:
+- Tidskänsliga delar:
+
+## Versions- och faktaval
+- Verktyg/ramverk/versioner:
+- Antaganden:
+- Delar som kräver färsk verifiering:
+````
+
+## `docs/kallpolicy.md`
+
+````markdown
+# Källpolicy
+
+## Syfte
+Beskriv vilken källnivå boken behöver. Policyn används särskilt för faktaböcker och för aktuellt/omstritt innehåll.
+
+## Grundkrav
+- Primärkällor prioriteras när det är praktiskt och relevant.
+- Aktuella påståenden ska verifieras nära skriv-/publiceringstillfället.
+- Statistik ska ha källa, årtal och tydlig definition.
+- Om trovärdiga källor skiljer sig ska skillnaden beskrivas sakligt.
+- Osäkerhet får inte skrivas om till säker fakta.
+
+## Projektets val
+- Kravnivå: låg / normal / hög / akademisk
+- Synliga referenser i boktext: ja / nej
+- Källförteckning i slutet: ja / nej
+- Referensstil:
+- Maximal ålder på tidskänsliga källor:
+- Särskilt betrodda källtyper/domäner:
+- Källtyper som bör undvikas:
+
+## Anteckning
+Källarbetsmaterial hör normalt hemma i `docs/faktakontroll.md` och ska inte exporteras som boktext av misstag.
+````
+
 ## `docs/kapitelplan.md`
 
 ````markdown
 # Kapitelplan
+
+## Bokprofil
+- book_kind:
+- book_type:
 
 ## Inledning
 - Syfte:
@@ -193,47 +335,34 @@ Inre illustrationer är avstängda tills användaren uttryckligen önskar dem.
 
 ### Kapitel 1: [Titel]
 - Syfte:
-- Läsarens förkunskaper:
-- Nya huvudbegrepp:
-- Praktiskt exempel/scenario:
-- Övning:
-- Svårighetsgrad:
-- Bygger vidare på:
+- Nivå/faktadjup:
+- Nya huvudbegrepp/faktaområden:
+- Exempel/case:
 - Status: planerad
 
-## Progressionskontroll
-- Begrepp introduceras i rätt ordning:
-- För svåra hopp:
-- Repetitionstillfällen:
-- Slutprojekt/sammanfattande moment:
-````
+#### Lärobok
+- Förkunskaper:
+- Lärandemål:
+- Övning/praktiskt moment:
+- Bygger vidare på:
 
-## `docs/pedagogisk-canon.md`
+#### Faktabok
+- Kärnfråga/nyfikenhetskrok:
+- Centrala fakta:
+- Fördjupning/faktaruta:
+- Käll-/verifieringsbehov:
 
-````markdown
-# Pedagogisk canon
+## Helhetskontroll
+### Lärobok
+- Progression:
+- Repetition:
+- Nivåhopp:
 
-## Pedagogisk profil
-- Språk:
-- Svårighetsgrad:
-- Läsarprofil:
-- Ton:
-- Repetitionstakt:
-
-## Introducerade begrepp
-| Begrepp | Första kapitel | Definition | Exempel |
-|---|---:|---|---|
-
-## Återkommande exempelprojekt/scenario
-- Namn:
-- Syfte:
-- Regler:
-- Kod-/metodstil:
-
-## Versions- och faktaval
-- Verktyg/ramverk/versioner:
-- Antaganden:
-- Delar som kräver färsk verifiering:
+### Faktabok
+- Ämnestäckning:
+- Balans bredd/djup:
+- Upprepningar/luckor:
+- Faktakontroll:
 ````
 
 ## `docs/projektstatus.md`
@@ -246,6 +375,8 @@ Inre illustrationer är avstängda tills användaren uttryckligen önskar dem.
 - Språk:
 - Författare:
 - Version:
+- book_kind:
+- book_type:
 
 ## Nuvarande fas
 Planering
@@ -254,6 +385,10 @@ Planering
 | Kapitel | Titel | Status | Kommentar |
 |---|---|---|---|
 | 0 | Inledning | Planerad | |
+
+## Faktakontroll
+- Öppna verifieringspunkter:
+- Senast genomgången:
 
 ## Öppna beslut
 - ...
@@ -267,23 +402,31 @@ Planering
 ````markdown
 # Kvalitetschecklista
 
-## Språk och målgrupp
-- [ ] Språk, ton och nivå är konsekventa.
+## Gemensamt
+- [ ] Språk, ton och nivå/djup är konsekventa.
+- [ ] Begrepp och fakta motsäger inte canon.
+- [ ] Onödiga upprepningar och luckor är hanterade.
+
+## Lärobok (`textbook`)
 - [ ] Förkunskaper respekteras.
+- [ ] Lärandemål och övningar matchar innehållet när boktypen kräver dem.
+- [ ] Begrepp och svårighetsgrad utvecklas i rimlig ordning.
 
-## Pedagogik och progression
-- [ ] Lärandemål och övningar matchar kapitlets innehåll.
-- [ ] Begrepp introduceras innan de används.
-- [ ] Nivåhopp är rimliga.
+## Faktabok (`factbook`)
+- [ ] Ämnestäckning och faktadjup passar målgruppen.
+- [ ] Fakta, tolkning och osäkerhet hålls isär.
+- [ ] Käll- och faktakontroll är tillräcklig för ämnet.
+- [ ] Tidskänsliga uppgifter är aktuella.
+- [ ] Engagerande förenklingar är fortfarande sakligt korrekta.
 
-## Teknik och fakta
+## Teknik
 - [ ] Kod är körbar eller märkt som pseudokod.
 - [ ] Versioner och antaganden är dokumenterade.
-- [ ] Färska/osäkra fakta är verifierade eller markerade.
 
 ## Export
 - [ ] `book.yaml` är komplett och kapitelordningen stämmer.
 - [ ] Canonical markdown är validerad.
+- [ ] Arbetsnoteringar från `docs/` exporteras inte av misstag.
 ````
 
 ## `docs/terminologi.md`
@@ -335,6 +478,8 @@ Genererade EPUB/PDF ska normalt inte vara kanoniskt manus. Logga exporter i `exp
 
 ## Projekt
 - Titel:
+- book_kind:
+- book_type:
 - Project-id:
 - Revision:
 - Senaste verifierade zip:
@@ -343,12 +488,17 @@ Genererade EPUB/PDF ska normalt inte vara kanoniskt manus. Logga exporter i `exp
 - Inledning: planerad
 - Skapade kapitel: inga
 
+## Faktakontroll
+- Policy: `docs/kallpolicy.md`
+- Register: `docs/faktakontroll.md`
+- Öppna punkter:
+
 ## Export
 - EPUB: ej skapad
 - PDF: ej skapad
 
 ## Synkkontroll
-- `book.yaml`, kapitelplan och projektstatus ska beskriva samma aktuella projektläge.
+- `book.yaml`, bokspecifikation, kapitelplan och projektstatus ska beskriva samma aktuella bokprofil och projektläge.
 ````
 
 ## `project-manifest.json`
@@ -396,9 +546,11 @@ def metadata():
     p=ROOT/'book.yaml'
     if not p.is_file(): raise SystemExit('Saknar book.yaml')
     t=p.read_text(encoding='utf-8')
-    values={k:scalar(t,k) for k in ('title','subtitle','author','language','identifier','date','version')}
-    missing=[k for k in ('title','author','language') if not values[k]]
+    values={k:scalar(t,k) for k in ('title','subtitle','author','language','identifier','date','version','book_kind','book_type')}
+    missing=[k for k in ('title','author','language','book_kind','book_type') if not values[k]]
     if missing: raise SystemExit('Saknad metadata i book.yaml: '+', '.join(missing))
+    if values['book_kind'] not in ('textbook','factbook'):
+        raise SystemExit('Ogiltig book_kind i book.yaml: '+values['book_kind'])
     return values
 
 def chapters():

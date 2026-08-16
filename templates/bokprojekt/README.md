@@ -1,13 +1,14 @@
 # Bokprojekt
 
-Detta projekt är skapat från Lärobokskaparens kanoniska projektmall.
+Detta projekt är skapat från Lärobokskaparens kanoniska projektmall och stödjer både lärobok (`textbook`) och faktabok (`factbook`).
 
 ## Arbetsflöde
-1. Håll bokmetadata i `book.yaml`.
+1. Ange `book_kind` och `book_type` samt övrig metadata i `book.yaml`.
 2. Planera boken i `docs/bokspecifikation.md` och `docs/kapitelplan.md`.
-3. Skriv inledningen i `chapters/00-inledning.md` och övriga kapitel som `NN-kort-slug.md`.
-4. Håll pedagogik, terminologi och projektstatus synkroniserade i `docs/`.
-5. Verifiera projektet före och efter ändringar med `scripts/project_integrity.py`.
-6. Bygg EPUB/PDF reproducerbart med `scripts/export-book.py`.
+3. Skriv inledningen i `chapters/00-inledning.md`.
+4. Använd `kapitelmall-larobok.md` för lärobok eller `kapitelmall-faktabok.md` för faktabok när nya kapitel skapas.
+5. Håll canon, terminologi, källpolicy, faktakontroll och projektstatus synkroniserade vid behov.
+6. Verifiera före och efter ändringar med `scripts/project_integrity.py`.
+7. Bygg EPUB/PDF reproducerbart med `scripts/export-book.py`.
 
-`project-manifest.json` skapas/aktiveras med `init` när ett nytt konkret projekt instansieras från mallen.
+Arbetsnoteringar i `docs/` är inte boktext och ska inte exporteras om de inte uttryckligen införs i bokens kapitel eller källförteckning.

@@ -1,30 +1,34 @@
 # Kvalitetschecklista
 
-Använd vid bokspecifikation, kapitelplan och kapitel.
+Använd gemensamma kontroller och rätt profilkontroller.
 
-## Språk och målgrupp
-- Är allt på valt bokspråk?
-- Matchar nivån läsarens förkunskaper?
-- Är ton och tilltal konsekvent?
+## Gemensamt
+- Är språk, ton och nivå/djup konsekventa?
+- Är centrala begrepp definierade och benämningar konsekventa?
+- Finns logiska luckor, onödiga upprepningar eller motsägelser?
+- Är osäkra/aktuella fakta verifierade eller markerade?
+- Är filnamn, `book.yaml` och kapitelordning stabila?
 
-## Pedagogik
-- Finns tydliga lärandemål?
-- Introduceras få nog nya begrepp?
-- Finns exempel eller scenario?
-- Finns övningar som testar lärandemålen?
-- Finns repetition där det behövs?
+## Lärobok (`textbook`)
+- Är lärandemål tydliga när boktypen kräver dem?
+- Respekteras förkunskaper?
+- Introduceras begrepp i rimlig ordning?
+- Matchar exempel/övningar det som kapitlet lär ut?
+- Är svårighetsökningen kontrollerad?
 
-## Progression
-- Används något före det introducerats?
-- Är kapitlet rätt placerat i boken?
-- Finns för stora nivåhopp?
+## Faktabok (`factbook`)
+- Täcker boken rätt delar av ämnet för målgruppen?
+- Är bredd och djup balanserade?
+- Skiljs fakta, uppskattningar, tolkningar och osäkerheter åt?
+- Har tidskänsliga eller omstridda påståenden rimligt källstöd?
+- Är faktarutor/exempel korrekta och inte missvisande förenklingar?
+- Är texten engagerande utan att offra precision?
 
-## Teknik/fakta
+## Teknik
 - Är kod körbar eller märkt som pseudokod?
 - Är versioner och antaganden dokumenterade?
-- Är osäkra aktuella fakta markerade för verifiering?
 
 ## Export
-- Finns metadata?
-- Finns författare om användaren angett det?
-- Är filnamn och kapitelordning stabila?
+- Är metadata komplett?
+- Är canonical markdown validerad?
+- Hamnar arbetsnoteringar om källor/faktakontroll utanför boktexten om de inte uttryckligen ska publiceras?

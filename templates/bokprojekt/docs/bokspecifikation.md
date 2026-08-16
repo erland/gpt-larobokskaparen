@@ -2,20 +2,37 @@
 
 ## Titel och undertitel
 
+## Bokprofil
+- book_kind: textbook / factbook
+- book_type:
+- Motivering:
+
 ## Språk och författare
 
 ## Ämne och syfte
 
-## Målgrupp och förkunskaper
+## Målgrupp
 
-## Svårighetsgrad
+## Nivå eller faktadjup
 
-## Boktyp och pedagogisk stil
-
-## Omfattning
-
-## Avgränsningar
-
-## Återkommande exempel eller projekt
+## Omfattning och avgränsningar
 
 ## Ton och stil
+
+## Läroboksspecifikt (om textbook)
+- Förkunskaper:
+- Övergripande lärandemål:
+- Pedagogisk modell:
+- Praktik/teori:
+
+## Faktaboksspecifikt (om factbook)
+- Ämnesbredd/fördjupning:
+- Berättande/förklarande/referens:
+- Centrala faktaområden:
+- Källkrav:
+- Tidskänslighet:
+- Synliga referenser: ja/nej
+
+## Omslag och illustrationer
+
+## Återkommande exempel/case/berättargrepp

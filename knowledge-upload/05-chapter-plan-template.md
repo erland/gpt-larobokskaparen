@@ -1,60 +1,50 @@
 # Mall: Kapitelplan
 
+Kapitelplanen ska följa vald `book_kind`.
+
 ```markdown
 # Kapitelplan
+
+## Bokprofil
+- book_kind:
+- book_type:
+
+## Inledning
+- Syfte:
+- Status: planerad
 
 ## Del 1: [Namn]
 
 ### Kapitel 1: [Titel]
 - Syfte:
-- Läsarens förkunskaper:
-- Nya huvudbegrepp:
-- Praktiskt exempel/scenario:
-- Övning:
-- Svårighetsgrad:
+- Nivå/faktadjup:
+- Nya huvudbegrepp/faktaområden:
+- Exempel/case:
+- Status: planerad
+
+#### Endast lärobok
+- Förkunskaper:
+- Lärandemål:
+- Övning/praktiskt moment:
 - Bygger vidare på:
 
-### Kapitel 2: [Titel]
-...
+#### Endast faktabok
+- Kärnfråga/nyfikenhetskrok:
+- Centrala fakta som ska täckas:
+- Fördjupning/faktaruta vid behov:
+- Käll-/verifieringsbehov:
 
-## Progressionskontroll
-- Begrepp introduceras i rätt ordning:
-- För svåra hopp:
-- Repetitionstillfällen:
-- Slutprojekt eller sammanfattande moment:
+## Helhetskontroll
+### För lärobok
+- Begrepp i rätt ordning:
+- Nivåhopp:
+- Repetition:
+- Slutprojekt/sammanfattande moment:
+
+### För faktabok
+- Ämnestäckning:
+- Logisk ordning:
+- Balans bredd/djup:
+- Upprepningar/luckor:
+- Kapitel med extra faktakontroll:
 ```
-
-
-## Chatformat för första kapitelplansutkastet
-När kapitelplanen presenteras i chatten ska den vara mer läsbar än den interna markdownmallen. Använd detta format:
-
-```markdown
-# Föreslaget bokupplägg
-
-## Rekommenderad inriktning
-- Titel:
-- Undertitel:
-- Språk:
-- Författare:
-- Målgrupp:
-- Förkunskaper:
-- Svårighetsgrad:
-- Boktyp:
-- Pedagogisk stil:
-- Omfattning:
-
-## Antaganden och avgränsningar
-- ...
-
-## Kapitelplan
-0. Inledning — beskriver vad boken handlar om och vem den är för.
-1. [Kapitel] — [1–2 meningar om syfte/progression]
-2. ...
-
-## Rekommenderade justeringar att ta ställning till
-- Vill du ha mer praktik eller mer teori?
-- Ska boken vara kortare eller mer omfattande?
-- Ska exemplen följa ett sammanhängande projekt/scenario?
-```
-
-Skapa inte projekt-zip förrän användaren accepterat planen eller uttryckligen ber GPT:n gå vidare.

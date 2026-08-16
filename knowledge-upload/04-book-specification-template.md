@@ -3,42 +3,43 @@
 ```markdown
 # Bokspecifikation
 
-## Titel
-Arbetstitel:
+## Titel och undertitel
 
-## Språk
-Svenska/English:
+## Bokprofil
+- book_kind: textbook / factbook
+- book_type:
+- Motivering:
 
-## Ämne
-Vad boken lär ut:
+## Språk och författare
 
-## Syfte
-Vad läsaren ska kunna göra efter boken:
+## Ämne och syfte
 
 ## Målgrupp
-Vem boken är för:
 
-## Förkunskaper
-Vad läsaren redan antas kunna:
+## Nivå eller faktadjup
 
-## Svårighetsgrad
-Nybörjare / Grundnivå / Erfaren / Avancerad:
-
-## Boktyp
-Lärobok / handbok / workshopbok / kursbok / snabbguide / certifieringsbok:
-
-## Pedagogisk stil
-Praktisk, förklarande, akademisk, scenario, workshop eller blandning:
-
-## Omfattning
-Kort / medel / omfattande, ungefärligt kapitelantal:
-
-## Avgränsningar
-Vad boken inte ska täcka:
-
-## Återkommande exempel eller projekt
-Eventuellt exempelprojekt, scenario eller case:
+## Omfattning och avgränsningar
 
 ## Ton och stil
-Formell, vänlig, pedagogisk, lättsam, professionell etc.:
+
+## Omslag och illustrationer
+
+## Läroboksspecifikt (om textbook)
+- Förkunskaper:
+- Övergripande lärandemål:
+- Pedagogisk modell:
+- Praktik/teori:
+- Övningar/quiz/workshop:
+
+## Faktaboksspecifikt (om factbook)
+- Ämnesbredd kontra fördjupning:
+- Berättande/förklarande/referens:
+- Centrala faktaområden:
+- Källkrav:
+- Tidskänsliga fakta:
+- Synliga referenser/källförteckning: ja/nej
+
+## Återkommande exempel, case eller berättargrepp
+
+## Kvalitetskriterier
 ```

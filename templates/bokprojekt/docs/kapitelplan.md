@@ -1,5 +1,9 @@
 # Kapitelplan
 
+## Bokprofil
+- book_kind:
+- book_type:
+
 ## Inledning
 - Syfte:
 - Status: planerad
@@ -8,16 +12,31 @@
 
 ### Kapitel 1: [Titel]
 - Syfte:
-- Läsarens förkunskaper:
-- Nya huvudbegrepp:
-- Praktiskt exempel/scenario:
-- Övning:
-- Svårighetsgrad:
-- Bygger vidare på:
+- Nivå/faktadjup:
+- Nya huvudbegrepp/faktaområden:
+- Exempel/case:
 - Status: planerad
 
-## Progressionskontroll
-- Begrepp introduceras i rätt ordning:
-- För svåra hopp:
-- Repetitionstillfällen:
-- Slutprojekt/sammanfattande moment:
+#### Lärobok
+- Förkunskaper:
+- Lärandemål:
+- Övning/praktiskt moment:
+- Bygger vidare på:
+
+#### Faktabok
+- Kärnfråga/nyfikenhetskrok:
+- Centrala fakta:
+- Fördjupning/faktaruta:
+- Käll-/verifieringsbehov:
+
+## Helhetskontroll
+### Lärobok
+- Progression:
+- Repetition:
+- Nivåhopp:
+
+### Faktabok
+- Ämnestäckning:
+- Balans bredd/djup:
+- Upprepningar/luckor:
+- Faktakontroll:

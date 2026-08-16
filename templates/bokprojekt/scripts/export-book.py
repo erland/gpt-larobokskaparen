@@ -14,9 +14,11 @@ def metadata():
     p=ROOT/'book.yaml'
     if not p.is_file(): raise SystemExit('Saknar book.yaml')
     t=p.read_text(encoding='utf-8')
-    values={k:scalar(t,k) for k in ('title','subtitle','author','language','identifier','date','version')}
-    missing=[k for k in ('title','author','language') if not values[k]]
+    values={k:scalar(t,k) for k in ('title','subtitle','author','language','identifier','date','version','book_kind','book_type')}
+    missing=[k for k in ('title','author','language','book_kind','book_type') if not values[k]]
     if missing: raise SystemExit('Saknad metadata i book.yaml: '+', '.join(missing))
+    if values['book_kind'] not in ('textbook','factbook'):
+        raise SystemExit('Ogiltig book_kind i book.yaml: '+values['book_kind'])
     return values
 
 def chapters():

@@ -1,6 +1,6 @@
-# Lärobokskaparen GPT v13
+# Lärobokskaparen GPT v14
 
-Detta paket innehåller konfigurationsmaterial för en Custom GPT som hjälper användaren skapa läroböcker, handböcker, kursböcker och praktiska guider om teknologier, metoder och arbetssätt.
+Detta paket innehåller konfigurationsmaterial för en Custom GPT som hjälper användaren skapa både läroböcker och faktaböcker, inklusive handböcker, kursböcker, guider och populärvetenskapliga böcker.
 
 ## Grundprincip
 GPT:n ska alltså inte börja med att skapa en zip när användaren bara vill planera en bok. Den ska först hjälpa användaren att välja målgrupp, förkunskaper, nivå, boktyp, längd, pedagogisk stil, språk och författare. Därefter ska den presentera kapitelplanen direkt i chatten. Projekt-zip skapas först när planen är godkänd eller användaren ber den gå vidare.
@@ -82,6 +82,16 @@ Denna version förtydligar EPUB-exporten:
 - Byggvalideringen kontrollerar att Instructions är högst 8000 tecken och att template-bundlen är synkad.
 - Portabel distribution innehåller även den faktiska `templates/bokprojekt/`-katalogen.
 
+
+## Nytt i v14 – lärobok och faktabok
+
+- `book_kind: textbook | factbook` skiljer huvudprofil från `book_type`.
+- Lärobok och faktabok använder samma kanoniska projektformat och revisionsmodell.
+- Två separata kapitelmallar finns för respektive profil.
+- Faktaböcker får egen planeringslogik med ämnestäckning, faktadjup, källpolicy och faktakontroll i stället för obligatoriska lärandemål/övningar.
+- `docs/kallpolicy.md` och `docs/faktakontroll.md` finns i projektmallen.
+- `docs/innehalls-canon.md` ersätter den tidigare läroboksspecifika `docs/pedagogisk-canon.md`.
+
 ## Distributionspaket
 
 Repositoryt kan bygga två distributioner från samma källfiler:
@@ -146,4 +156,4 @@ Workflowet laddar upp ZIP-filerna både som tillfälliga GitHub Actions-artifact
 
 Bifoga `larobokskaparen-chat-vX.Y.Z.zip` i en ny ChatGPT-konversation och skriv exempelvis:
 
-> Använd Läroboksskaparen i den bifogade ZIP-filen för den här konversationen. Läs `START-HERE.md` först.
+> Använd Lärobokskaparen i den bifogade ZIP-filen för den här konversationen. Läs `START-HERE.md` först.

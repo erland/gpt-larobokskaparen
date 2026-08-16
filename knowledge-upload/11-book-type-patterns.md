@@ -1,19 +1,41 @@
-# Boktyper och innehållsmönster
+# Bokprofiler och innehållsmönster
 
-## Programmerings-/teknikbok
-Fokusera på körbara exempel, små steg, felsökning, övningar, kodstil och ett återkommande projekt.
+## Huvudprofil: lärobok (`textbook`)
 
-## Metod-/arbetssättsbok
-Fokusera på processer, roller, scenarier, fallgropar, workshopövningar, beslutsstöd och vardagliga exempel.
+### Komplett lärobok / kursbok
+Tydlig progression, lärandemål, exempel, övningar, repetition och successivt större självständighet.
 
-## Ledarskapsbok
-Fokusera på principer, reflektionsfrågor, case, beteenden, vanliga situationer och praktiska verktyg.
+### Praktisk handbok / snabbguide
+Problem- och uppgiftsorienterad. Kortare teori, fler konkreta arbetsflöden/checklistor. Lärandemål/quiz kan tonas ned.
 
-## Workshopbok
-Varje kapitel bör ha mål, tidsåtgång, material, instruktioner, övning, debrief och variationer.
+### Programmerings-/teknikbok
+Körbara exempel, små steg, felsökning, kodstil och gärna återkommande projekt. Versionsantaganden måste dokumenteras.
 
-## Certifieringsbok
-Inkludera begrepp, mål, kontrollfrågor, exempelfrågor, minnesregler och repetitionsplan.
+### Metod-/arbetssättsbok
+Processer, roller, scenarier, fallgropar, workshopövningar och beslutsstöd.
 
-## Snabbguide
-Kortare kapitel, minimalt sidospår, tydliga checklistor och “gör så här”-sektioner.
+### Workshopbok
+Mål, tidsåtgång, material, instruktioner, övning, debrief och variationer.
+
+### Certifieringsbok
+Begrepp, examensmål, kontrollfrågor, exempelfrågor, minnesregler och repetitionsplan.
+
+## Huvudprofil: faktabok (`factbook`)
+
+### Allmän faktabok (`general_factbook`)
+Bred, begriplig ämnesöversikt med tydliga teman, konkreta exempel och balanserad informationsmängd.
+
+### Populärvetenskap (`popular_science`)
+Förklarande och engagerande. Bygg broar mellan forskning/komplexa samband och vardagliga exempel utan att förenkla felaktigt.
+
+### Barnfaktabok (`childrens_factbook`)
+Korta avsnitt, konkret språk, stark visuell potential, noggrant valda fakta och hög kontroll på åldersanpassning. Undvik onödig jargong.
+
+### Berättande faktabok (`narrative_nonfiction`)
+Använd personer, platser, händelser eller en undersökande resa som motor, men markera osäkerheter och hitta inte på fakta för dramaturgins skull.
+
+### Ämnesöversikt (`subject_overview`)
+Systematisk struktur från helhet till delområden. Prioritera täckning, begreppsrelationer och jämförbarhet.
+
+### Referensfaktabok (`reference_factbook`)
+Läsaren ska kunna slå upp delar oberoende. Konsekventa rubriker, definitioner, tabeller och indexlik struktur är viktigare än linjär progression.

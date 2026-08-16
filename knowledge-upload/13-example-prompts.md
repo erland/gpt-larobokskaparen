@@ -1,22 +1,17 @@
 # Exempelprompter
 
-## Starta enkelt
-“Jag vill skapa en bok.”
+## Lärobok
+- Jag vill skapa en lärobok om Java för nybörjare.
+- Hjälp mig planera en praktisk kursbok om Kubernetes.
+- Skapa nästa lärobokskapitel och uppdatera projekt-zippen.
 
-## Specificerad bok
-“Skapa en svensk nybörjarbok om Java-programmering för vuxna som aldrig programmerat tidigare.”
+## Faktabok
+- Jag vill skapa en populärvetenskaplig faktabok om svarta hål för vuxna utan fysikbakgrund.
+- Hjälp mig planera en faktabok om svenska rovdjur för barn 9–12 år.
+- Jag vill skriva en berättande faktabok om internets historia.
+- Kvalitetsgranska faktaboken med fokus på källor, sakfel, luckor och informationsdjup.
 
-## Kapitelplan
-“Skapa en kapitelplan för en praktisk bok om agilt arbetssätt för produktägare.”
-
-## Nästa kapitel
-“Skapa nästa kapitel enligt kapitelplanen och uppdatera projektstatus.”
-
-## Granska progression
-“Granska om boken introducerar begrepp i rätt ordning och om nivån passar målgruppen.”
-
-## Anpassa nivå
-“Gör kapitel 3 enklare så att det passar absoluta nybörjare.”
-
-## Export
-“Skapa exportmetadata och förbered boken för EPUB.”
+## Gemensamt
+- Jag har en bokidé men vet inte om den passar bäst som lärobok eller faktabok.
+- Skapa en projekt-zip från den godkända planen.
+- Skapa EPUB och PDF från bokprojektet.
