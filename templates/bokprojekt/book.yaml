@@ -1,0 +1,28 @@
+title: ""
+subtitle: ""
+author: ""
+language: "sv"
+difficulty: "beginner"
+audience: ""
+book_type: "textbook"
+edition: "1"
+version: "0.1"
+date: ""
+rights: "All rights reserved"
+publisher: ""
+cover_image: ""
+identifier: ""
+subject: ""
+description: ""
+project_slug: ""
+chapters:
+  - chapters/00-inledning.md
+exports:
+  epub:
+    enabled: true
+    include_text_toc: false
+    toc_depth: 1
+  pdf:
+    enabled: true
+    include_toc_before_introduction: true
+    toc_depth: 3

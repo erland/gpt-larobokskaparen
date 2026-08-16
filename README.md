@@ -1,12 +1,8 @@
-# Lärobokskaparen GPT v6
+# Lärobokskaparen GPT v13
 
 Detta paket innehåller konfigurationsmaterial för en Custom GPT som hjälper användaren skapa läroböcker, handböcker, kursböcker och praktiska guider om teknologier, metoder och arbetssätt.
 
-## Viktig ändring i v6
-v6 kombinerar:
-- v2:s coachande onboarding för ovana författare
-- v5:s strikta projektstruktur, zip-namngivning och exportregler
-
+## Grundprincip
 GPT:n ska alltså inte börja med att skapa en zip när användaren bara vill planera en bok. Den ska först hjälpa användaren att välja målgrupp, förkunskaper, nivå, boktyp, längd, pedagogisk stil, språk och författare. Därefter ska den presentera kapitelplanen direkt i chatten. Projekt-zip skapas först när planen är godkänd eller användaren ber den gå vidare.
 
 ## Rekommenderad installation i Custom GPT
@@ -19,8 +15,8 @@ GPT:n ska alltså inte börja med att skapa en zip när användaren bara vill pl
    - Image Generation valfritt
 
 ## Begränsningskontroll
-- Instructions är under 8000 tecken.
-- Antalet knowledge-filer är under 20.
+- Instructions valideras automatiskt till högst 8000 tecken.
+- Antalet Knowledge-filer är 19 och därmed under 20.
 
 ## Viktiga beteenden
 - Stötta ovana författare med max tre frågor per tur.
@@ -28,7 +24,7 @@ GPT:n ska alltså inte börja med att skapa en zip när användaren bara vill pl
 - Fråga vem som ska stå som författare.
 - Skapa alltid en inledning i `chapters/00-inledning.md`.
 - Använd alltid samma projektstruktur.
-- Namnge uppdaterade zippar med kapitelnummer i slutet.
+- Namnge levererade projektzippar med monoton revision och tydlig operation, t.ex. `-r0003-kapitel-02.zip`.
 - Visa normalt bara ändrade filer vid kapitelgenerering.
 - EPUB ska vara luftig och utan innehållsförteckning som textkapitel.
 - PDF ska ha innehållsförteckning före inledningen.
@@ -77,6 +73,15 @@ Denna version förtydligar EPUB-exporten:
 
 ---
 
+## Nytt i v13 – kanonisk projektmall och revisionslås
+
+- `templates/bokprojekt/` är single source of truth för nya bokprojekt.
+- `knowledge-upload/19-project-template-bundle.md` genereras automatiskt från mallen och används av Custom GPT.
+- `book.yaml` är enda kanoniska metadatafilen i nya projekt.
+- `project-manifest.json`, `revision-log.md` och `scripts/project_integrity.py` ger revisions- och SHA-256-skydd.
+- Byggvalideringen kontrollerar att Instructions är högst 8000 tecken och att template-bundlen är synkad.
+- Portabel distribution innehåller även den faktiska `templates/bokprojekt/`-katalogen.
+
 ## Distributionspaket
 
 Repositoryt kan bygga två distributioner från samma källfiler:
@@ -84,7 +89,7 @@ Repositoryt kan bygga två distributioner från samma källfiler:
 - `larobokskaparen-custom-gpt-vX.Y.Z.zip` för installation/uppdatering av Custom GPT:n.
 - `larobokskaparen-chat-vX.Y.Z.zip` för användning som portabel Läroboksskapare i en vanlig ChatGPT-konversation.
 
-Custom GPT-distributionen innehåller samma `gpt-configuration/instructions.md`, `gpt-configuration/conversation-starters.md` och samma 18 filer från `knowledge-upload/` som repositoryt. Byggvalideringen kontrollerar att dessa filer är byte-identiska med källorna.
+Custom GPT-distributionen innehåller samma `gpt-configuration/instructions.md`, `gpt-configuration/conversation-starters.md` och samma 19 filer från `knowledge-upload/` som repositoryt. Byggvalideringen kontrollerar att dessa filer är byte-identiska med källorna.
 
 Den portabla distributionen innehåller:
 
@@ -94,10 +99,11 @@ VERSION
 MANIFEST.json
 assistant/instructions.md
 knowledge/
+templates/bokprojekt/
 examples/
 ```
 
-`assistant/instructions.md` är en byte-identisk kopia av `gpt-configuration/instructions.md`, och filerna under `knowledge/` är byte-identiska kopior av de 18 Knowledge-filerna.
+`assistant/instructions.md` är en byte-identisk kopia av `gpt-configuration/instructions.md`, och filerna under `knowledge/` är byte-identiska kopior av de 19 Knowledge-filerna.
 
 ### Lokal build
 

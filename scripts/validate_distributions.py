@@ -1,102 +1,60 @@
 #!/usr/bin/env python3
 from __future__ import annotations
-
-import argparse
-import hashlib
-import json
-import re
-import tempfile
-import zipfile
+import argparse, hashlib, json, re, zipfile
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-EXPECTED_KNOWLEDGE = [
-    "01-purpose-and-workflow.md", "02-guided-interview.md", "03-difficulty-and-pedagogy-model.md",
-    "04-book-specification-template.md", "05-chapter-plan-template.md", "06-chapter-template.md",
-    "07-canon-and-continuity.md", "08-quality-checklist.md", "09-project-status-template.md",
-    "10-export-metadata-template.md", "11-book-type-patterns.md", "12-bilingual-style-guide.md",
-    "13-example-prompts.md", "14-suggested-project-structure.md", "15-export-and-rendering-rules.md",
-    "16-illustration-and-cover-workflow.md", "17-canonical-markdown-and-render-contract.md",
-    "18-local-export-pipeline.md",
-]
-SEMVER = re.compile(r"^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$")
-
-
-def digest(data: bytes) -> str:
-    return hashlib.sha256(data).hexdigest()
-
-
-def read_zip(path: Path) -> dict[str, bytes]:
-    with zipfile.ZipFile(path) as zf:
-        bad = zf.testzip()
-        if bad:
-            raise SystemExit(f"Korrupt ZIP {path.name}: {bad}")
-        return {name: zf.read(name) for name in zf.namelist() if not name.endswith("/")}
-
-
-def main() -> int:
-    p = argparse.ArgumentParser()
-    p.add_argument("--dist-dir", default=str(ROOT / "dist"))
-    p.add_argument("--version")
-    args = p.parse_args()
-    version = (args.version or (ROOT / "VERSION").read_text(encoding="utf-8")).strip()
-    if version.startswith("v"):
-        version = version[1:]
-    if not SEMVER.fullmatch(version):
-        raise SystemExit(f"Ogiltig version: {version}")
-
-    dist = Path(args.dist_dir)
-    custom_path = dist / f"larobokskaparen-custom-gpt-v{version}.zip"
-    portable_path = dist / f"larobokskaparen-chat-v{version}.zip"
-    for path in (custom_path, portable_path):
-        if not path.is_file():
-            raise SystemExit(f"Saknad distribution: {path}")
-
-    custom = read_zip(custom_path)
-    portable = read_zip(portable_path)
-
-    if custom.get("VERSION") != (version + "\n").encode():
-        raise SystemExit("Custom GPT-paketets VERSION matchar inte byggversionen")
-    if portable.get("VERSION") != (version + "\n").encode():
-        raise SystemExit("Portable-paketets VERSION matchar inte byggversionen")
-
-    src_instr = (ROOT / "gpt-configuration/instructions.md").read_bytes()
-    src_starters = (ROOT / "gpt-configuration/conversation-starters.md").read_bytes()
-    if custom.get("gpt-configuration/instructions.md") != src_instr:
-        raise SystemExit("Custom GPT instructions har ändrats")
-    if custom.get("gpt-configuration/conversation-starters.md") != src_starters:
-        raise SystemExit("Custom GPT conversation starters har ändrats")
-    if portable.get("assistant/instructions.md") != src_instr:
-        raise SystemExit("Portable instructions är inte byte-identisk med originalet")
-
-    for name in EXPECTED_KNOWLEDGE:
-        source = (ROOT / "knowledge-upload" / name).read_bytes()
-        if custom.get(f"knowledge-upload/{name}") != source:
-            raise SystemExit(f"Custom GPT Knowledge ändrad: {name}")
-        if portable.get(f"knowledge/{name}") != source:
-            raise SystemExit(f"Portable Knowledge ändrad: {name}")
-
-    try:
-        manifest = json.loads(portable["MANIFEST.json"].decode("utf-8"))
-    except Exception as exc:
-        raise SystemExit(f"Ogiltigt MANIFEST.json: {exc}")
-    if manifest.get("version") != version:
-        raise SystemExit("MANIFEST.json version matchar inte")
-    expected_manifest_knowledge = [f"knowledge/{n}" for n in EXPECTED_KNOWLEDGE]
-    if manifest.get("knowledge") != expected_manifest_knowledge:
-        raise SystemExit("MANIFEST.json har fel Knowledge-lista")
-    for entry in manifest.get("files", []):
-        name = entry["path"]
-        data = portable.get(name)
-        if data is None:
-            raise SystemExit(f"Manifestet refererar saknad fil: {name}")
-        if digest(data) != entry["sha256"]:
-            raise SystemExit(f"SHA-256 mismatch: {name}")
-
-    print(f"OK: distributionerna för {version} är validerade.")
-    print("OK: Instructions, conversation starters och 18 Knowledge-filer är byte-identiska med källorna.")
+ROOT=Path(__file__).resolve().parents[1]
+KNOWLEDGE=sorted(p.name for p in (ROOT/'knowledge-upload').glob('*.md'))
+EXPECTED=[
+"01-purpose-and-workflow.md","02-guided-interview.md","03-difficulty-and-pedagogy-model.md",
+"04-book-specification-template.md","05-chapter-plan-template.md","06-chapter-template.md",
+"07-canon-and-continuity.md","08-quality-checklist.md","09-project-status-template.md",
+"10-export-metadata-template.md","11-book-type-patterns.md","12-bilingual-style-guide.md",
+"13-example-prompts.md","14-suggested-project-structure.md","15-export-and-rendering-rules.md",
+"16-illustration-and-cover-workflow.md","17-canonical-markdown-and-render-contract.md",
+"18-local-export-pipeline.md","19-project-template-bundle.md"]
+SEMVER=re.compile(r"^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$")
+def digest(data): return hashlib.sha256(data).hexdigest()
+def read_zip(path):
+    with zipfile.ZipFile(path) as z:
+        bad=z.testzip()
+        if bad: raise SystemExit(f'Korrupt ZIP {path.name}: {bad}')
+        return {n:z.read(n) for n in z.namelist() if not n.endswith('/')}
+def main():
+    p=argparse.ArgumentParser(); p.add_argument('--dist-dir',default=str(ROOT/'dist')); p.add_argument('--version'); a=p.parse_args()
+    version=(a.version or (ROOT/'VERSION').read_text(encoding='utf-8')).strip().removeprefix('v')
+    if not SEMVER.fullmatch(version): raise SystemExit(f'Ogiltig version: {version}')
+    if KNOWLEDGE!=EXPECTED: raise SystemExit(f'Fel Knowledge-lista: {KNOWLEDGE}')
+    instr=(ROOT/'gpt-configuration/instructions.md').read_text(encoding='utf-8')
+    if len(instr)>8000: raise SystemExit(f'Instructions är {len(instr)} tecken; max 8000')
+    # Verify generated bundle without modifying source.
+    import subprocess, sys
+    subprocess.run([sys.executable,str(ROOT/'scripts/build_distributions.py'),'--output-dir',str(Path(a.dist_dir)/'.validator-build'),'--version',version],check=True,stdout=subprocess.DEVNULL)
+    # Remove temporary nested build outputs immediately; actual dist is validated below.
+    import shutil; shutil.rmtree(Path(a.dist_dir)/'.validator-build',ignore_errors=True)
+    dist=Path(a.dist_dir); cp=dist/f'larobokskaparen-custom-gpt-v{version}.zip'; pp=dist/f'larobokskaparen-chat-v{version}.zip'
+    for x in (cp,pp):
+        if not x.is_file(): raise SystemExit(f'Saknad distribution: {x}')
+    custom=read_zip(cp); portable=read_zip(pp)
+    if custom.get('VERSION')!=(version+'\n').encode() or portable.get('VERSION')!=(version+'\n').encode(): raise SystemExit('VERSION mismatch')
+    src_instr=(ROOT/'gpt-configuration/instructions.md').read_bytes(); starters=(ROOT/'gpt-configuration/conversation-starters.md').read_bytes()
+    if custom.get('gpt-configuration/instructions.md')!=src_instr or portable.get('assistant/instructions.md')!=src_instr: raise SystemExit('Instructions mismatch')
+    if custom.get('gpt-configuration/conversation-starters.md')!=starters: raise SystemExit('Conversation starters mismatch')
+    for name in EXPECTED:
+        src=(ROOT/'knowledge-upload'/name).read_bytes()
+        if custom.get('knowledge-upload/'+name)!=src: raise SystemExit(f'Custom Knowledge mismatch: {name}')
+        if portable.get('knowledge/'+name)!=src: raise SystemExit(f'Portable Knowledge mismatch: {name}')
+    # Portable template must be byte-identical with source template.
+    for path in sorted(p for p in (ROOT/'templates/bokprojekt').rglob('*') if p.is_file() and '__pycache__' not in p.parts and p.suffix != '.pyc'):
+        rel=path.relative_to(ROOT/'templates/bokprojekt').as_posix(); key='templates/bokprojekt/'+rel
+        if portable.get(key)!=path.read_bytes(): raise SystemExit(f'Portable template mismatch: {rel}')
+    m=json.loads(portable['MANIFEST.json'].decode())
+    if m.get('version')!=version or m.get('template_root')!='templates/bokprojekt': raise SystemExit('MANIFEST metadata mismatch')
+    if m.get('knowledge')!=['knowledge/'+n for n in EXPECTED]: raise SystemExit('MANIFEST Knowledge mismatch')
+    for e in m.get('files',[]):
+        if e['path'] not in portable or digest(portable[e['path']])!=e['sha256']: raise SystemExit(f'MANIFEST SHA mismatch: {e["path"]}')
+    print(f'OK: distributionerna för {version} är validerade.')
+    print(f'OK: Instructions är {len(instr)} tecken (max 8000).')
+    print('OK: Conversation starters är byte-identiska med källan; 19 Knowledge-filer och portabel template är byte-identiska med källorna.')
     return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())
+if __name__=='__main__': raise SystemExit(main())
