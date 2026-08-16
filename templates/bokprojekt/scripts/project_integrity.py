@@ -23,10 +23,17 @@ def inventory(root):
     return out
 def summary(files):
     items={}
+    by_number={}
     for path,info in files.items():
         m=CHAPTER_RE.fullmatch(path)
-        if m and m.group(1)!='00': items[path]=info['sha256']
-    nums=sorted(int(CHAPTER_RE.fullmatch(p).group(1)) for p in items)
+        if not m or m.group(1)=='00':
+            continue
+        number=int(m.group(1))
+        if number in by_number:
+            raise ValueError(f'Dubbla kapitelfiler för kapitel {number:02d}: {by_number[number]}, {path}')
+        by_number[number]=path
+        items[path]=info['sha256']
+    nums=sorted(by_number)
     return {'count':len(nums),'latest':nums[-1] if nums else None,'hashes':items}
 def load(root): return json.loads((root/MANIFEST).read_text(encoding='utf-8'))
 def save(root,m): (root/MANIFEST).write_text(json.dumps(m,ensure_ascii=False,indent=2,sort_keys=True)+'\n',encoding='utf-8')

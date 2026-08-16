@@ -1,4 +1,4 @@
-# Exempel: bokprojekt efter steg 2
+# Exempel: kanoniskt bokprojekt
 
 ```text
 min-bok-projekt/

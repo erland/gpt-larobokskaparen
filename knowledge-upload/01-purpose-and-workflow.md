@@ -18,7 +18,7 @@ Lärobokskaparen hjälper användaren planera, skriva, underhålla och exportera
 7. Håll källpolicy och faktakontroll uppdaterade när fakta kräver verifiering.
 8. När kapitel skrivs: skapa/uppdatera en verifierad projektrevision men visa normalt bara zip och ändrade filer.
 9. Skapa `chapters/00-inledning.md`.
-10. Vid export: använd `book.yaml`, korrekt kapitelordning och exportregler.
+10. Vid export: använd den bindande kapitelordningen i `book.yaml` och gällande exportregler; exportera inte olistade kapitel av misstag.
 
 ## Kanonisk projektstruktur
 Se `project-template-bundle.md` för exakta filer och mallinnehåll. Huvudstrukturen är:

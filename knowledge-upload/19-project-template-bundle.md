@@ -21,30 +21,6 @@ Detta projekt är skapat från Lärobokskaparens kanoniska projektmall och stöd
 Arbetsnoteringar i `docs/` är inte boktext och ska inte exporteras om de inte uttryckligen införs i bokens kapitel eller källförteckning.
 ````
 
-## `assets/cover/README.md`
-
-````markdown
-# Omslag
-
-Lägg omslagsbild här när den har skapats.
-````
-
-## `assets/image-prompts/README.md`
-
-````markdown
-# Bildprompter
-
-Spara godkända bildprompter här, en fil per bild-ID.
-````
-
-## `assets/images/README.md`
-
-````markdown
-# Bilder
-
-Inre illustrationer läggs här endast om användaren har valt att använda dem.
-````
-
 ## `book.yaml`
 
 ````yaml
@@ -79,81 +55,60 @@ exports:
     toc_depth: 3
 ````
 
-## `chapters/00-inledning.md`
+## `project-manifest.json`
 
-````markdown
-# Inledning
-
-Beskriv vad boken handlar om, vem den är för, vilka förkunskaper eller vilken läsarnivå som antas, hur boken är upplagd och hur läsaren kan använda den.
+````json
+{
+  "schema_version": 1,
+  "template": true,
+  "project_id": "",
+  "project_slug": "",
+  "revision": 0,
+  "parent_revision": null,
+  "canonical_zip_name": "",
+  "tracked_files": {},
+  "chapters": {},
+  "last_operation": null
+}
 ````
 
-## `chapters/kapitelmall-faktabok.md`
+## `revision-log.md`
 
 ````markdown
-# X. [Titel]
+# Revisionslogg
 
-[Ingress eller nyfikenhetsväckare]
-
-## [Huvudavsnitt]
-
-Förklara ämnet sammanhängande, konkret och anpassat till målgruppen.
-
-## [Fördjupning eller nästa del]
-
-## Konkreta exempel eller fall
-
-## Centrala fakta
-
-- ...
-
-## Visste du att? (valfritt)
-
-## Begrepp att känna till (vid behov)
-
-## Sammanfattning (valfritt)
+| Revision | Tidpunkt (UTC) | Åtgärd | Ändrade filer | Zip-fil |
+|---:|---|---|---|---|
 ````
 
-## `chapters/kapitelmall-larobok.md`
+## `project-index.md`
 
 ````markdown
-# X. [Titel]
+# Projektindex
 
-## Varför detta kapitel finns
+## Projekt
+- Titel:
+- book_kind:
+- book_type:
+- Project-id:
+- Revision:
+- Senaste verifierade zip:
 
-## Lärandemål
-Efter kapitlet ska läsaren kunna:
+## Kapitel
+- Inledning: planerad
+- Skapade kapitel: inga
 
-- ...
+## Faktakontroll
+- Policy: `docs/kallpolicy.md`
+- Register: `docs/faktakontroll.md`
+- Öppna punkter:
 
-## Innan vi börjar
+## Export
+- EPUB: ej skapad
+- PDF: ej skapad
 
-## Huvudförklaring
-
-## Exempel
-
-## Vanliga misstag
-
-## Övningar
-
-### Övning 1
-
-## Snabb sammanfattning
-
-- ...
-
-## Quiz/reflektionsfrågor
-
-1. ...
-
-## Nästa steg
-````
-
-## `code/README.md`
-
-````markdown
-# Kod
-
-Körbar kod för teknikböcker kan läggas här.
+## Synkkontroll
+- `book.yaml`, bokspecifikation, kapitelplan och projektstatus ska beskriva samma aktuella bokprofil och projektläge.
 ````
 
 ## `docs/bokspecifikation.md`
@@ -197,125 +152,6 @@ Körbar kod för teknikböcker kan läggas här.
 ## Omslag och illustrationer
 
 ## Återkommande exempel/case/berättargrepp
-````
-
-## `docs/export-guide.md`
-
-````markdown
-# Exportguide
-
-Exporten använder `book.yaml`, `scripts/export-book.py` och styles under `styles/`.
-
-```bash
-python3 scripts/export-book.py
-```
-
-För EPUB/PDF krävs Pandoc. PDF kräver dessutom en Pandoc-kompatibel PDF-engine, som XeLaTeX, om inte exporteraren anpassats till annan engine.
-````
-
-## `docs/faktakontroll.md`
-
-````markdown
-# Faktakontroll
-
-Använd detta som arbetsregister. Det är inte automatiskt en publicerad källförteckning.
-
-| ID | Kapitel | Påstående/faktaområde | Status | Källa/verifiering | Kontrollerad | Kommentar |
-|---|---|---|---|---|---|---|
-| F001 | | | Ej kontrollerad | | | |
-
-## Statusvärden
-- Ej kontrollerad
-- Verifierad
-- Behöver uppdateras
-- Osäker/omstridd
-- Ej relevant
-
-## Öppna verifieringspunkter
-- ...
-
-## Publiceringskontroll
-- [ ] Alla högprioriterade påståenden är verifierade.
-- [ ] Statistik har årtal/definition där det behövs.
-- [ ] Tidskänsliga uppgifter har kontrollerats på nytt.
-- [ ] Källnoteringar som inte ska publiceras ligger utanför kapiteltexten.
-````
-
-## `docs/illustration-plan.md`
-
-````markdown
-# Illustrationsplan
-
-Inre illustrationer är avstängda tills användaren uttryckligen önskar dem.
-
-| Bild-ID | Kapitel | Syfte | Fil | Promptfil | Status |
-|---|---|---|---|---|---|
-````
-
-## `docs/innehalls-canon.md`
-
-````markdown
-# Innehålls-canon
-
-## Gemensam profil
-- Språk:
-- book_kind:
-- book_type:
-- Nivå/faktadjup:
-- Läsarprofil:
-- Ton:
-
-## Terminologi och fasta definitioner
-| Begrepp | Första kapitel | Definition | Kommentar |
-|---|---:|---|---|
-
-## Återkommande exempel, case eller berättargrepp
-- Namn:
-- Syfte:
-- Regler:
-
-## Läroboksspecifikt
-- Pedagogisk progression:
-- Kod-/metodstil:
-- Förkunskaper som senare kapitel får anta:
-
-## Faktaboksspecifikt
-- Fasta sakförhållanden som återkommer:
-- Kända osäkerheter/tolkningar:
-- Tidskänsliga delar:
-
-## Versions- och faktaval
-- Verktyg/ramverk/versioner:
-- Antaganden:
-- Delar som kräver färsk verifiering:
-````
-
-## `docs/kallpolicy.md`
-
-````markdown
-# Källpolicy
-
-## Syfte
-Beskriv vilken källnivå boken behöver. Policyn används särskilt för faktaböcker och för aktuellt/omstritt innehåll.
-
-## Grundkrav
-- Primärkällor prioriteras när det är praktiskt och relevant.
-- Aktuella påståenden ska verifieras nära skriv-/publiceringstillfället.
-- Statistik ska ha källa, årtal och tydlig definition.
-- Om trovärdiga källor skiljer sig ska skillnaden beskrivas sakligt.
-- Osäkerhet får inte skrivas om till säker fakta.
-
-## Projektets val
-- Kravnivå: låg / normal / hög / akademisk
-- Synliga referenser i boktext: ja / nej
-- Källförteckning i slutet: ja / nej
-- Referensstil:
-- Maximal ålder på tidskänsliga källor:
-- Särskilt betrodda källtyper/domäner:
-- Källtyper som bör undvikas:
-
-## Anteckning
-Källarbetsmaterial hör normalt hemma i `docs/faktakontroll.md` och ska inte exporteras som boktext av misstag.
 ````
 
 ## `docs/kapitelplan.md`
@@ -397,6 +233,109 @@ Planering
 - ...
 ````
 
+## `docs/innehalls-canon.md`
+
+````markdown
+# Innehålls-canon
+
+## Gemensam profil
+- Språk:
+- book_kind:
+- book_type:
+- Nivå/faktadjup:
+- Läsarprofil:
+- Ton:
+
+## Terminologi och fasta definitioner
+| Begrepp | Första kapitel | Definition | Kommentar |
+|---|---:|---|---|
+
+## Återkommande exempel, case eller berättargrepp
+- Namn:
+- Syfte:
+- Regler:
+
+## Läroboksspecifikt
+- Pedagogisk progression:
+- Kod-/metodstil:
+- Förkunskaper som senare kapitel får anta:
+
+## Faktaboksspecifikt
+- Fasta sakförhållanden som återkommer:
+- Kända osäkerheter/tolkningar:
+- Tidskänsliga delar:
+
+## Versions- och faktaval
+- Verktyg/ramverk/versioner:
+- Antaganden:
+- Delar som kräver färsk verifiering:
+````
+
+## `docs/terminologi.md`
+
+````markdown
+# Terminologi
+
+| Term | Definition | Första användning | Kommentar |
+|---|---|---|---|
+````
+
+## `docs/kallpolicy.md`
+
+````markdown
+# Källpolicy
+
+## Syfte
+Beskriv vilken källnivå boken behöver. Policyn används särskilt för faktaböcker och för aktuellt/omstritt innehåll.
+
+## Grundkrav
+- Primärkällor prioriteras när det är praktiskt och relevant.
+- Aktuella påståenden ska verifieras nära skriv-/publiceringstillfället.
+- Statistik ska ha källa, årtal och tydlig definition.
+- Om trovärdiga källor skiljer sig ska skillnaden beskrivas sakligt.
+- Osäkerhet får inte skrivas om till säker fakta.
+
+## Projektets val
+- Kravnivå: låg / normal / hög / akademisk
+- Synliga referenser i boktext: ja / nej
+- Källförteckning i slutet: ja / nej
+- Referensstil:
+- Maximal ålder på tidskänsliga källor:
+- Särskilt betrodda källtyper/domäner:
+- Källtyper som bör undvikas:
+
+## Anteckning
+Källarbetsmaterial hör normalt hemma i `docs/faktakontroll.md` och ska inte exporteras som boktext av misstag.
+````
+
+## `docs/faktakontroll.md`
+
+````markdown
+# Faktakontroll
+
+Använd detta som arbetsregister. Det är inte automatiskt en publicerad källförteckning.
+
+| ID | Kapitel | Påstående/faktaområde | Status | Källa/verifiering | Kontrollerad | Kommentar |
+|---|---|---|---|---|---|---|
+| F001 | | | Ej kontrollerad | | | |
+
+## Statusvärden
+- Ej kontrollerad
+- Verifierad
+- Behöver uppdateras
+- Osäker/omstridd
+- Ej relevant
+
+## Öppna verifieringspunkter
+- ...
+
+## Publiceringskontroll
+- [ ] Alla högprioriterade påståenden är verifierade.
+- [ ] Statistik har årtal/definition där det behövs.
+- [ ] Tidskänsliga uppgifter har kontrollerats på nytt.
+- [ ] Källnoteringar som inte ska publiceras ligger utanför kapiteltexten.
+````
+
 ## `docs/quality-checklist.md`
 
 ````markdown
@@ -429,21 +368,98 @@ Planering
 - [ ] Arbetsnoteringar från `docs/` exporteras inte av misstag.
 ````
 
-## `docs/terminologi.md`
+## `docs/illustration-plan.md`
 
 ````markdown
-# Terminologi
+# Illustrationsplan
 
-| Term | Definition | Första användning | Kommentar |
-|---|---|---|---|
+Inre illustrationer är avstängda tills användaren uttryckligen önskar dem.
+
+| Bild-ID | Kapitel | Syfte | Fil | Promptfil | Status |
+|---|---|---|---|---|---|
 ````
 
-## `examples/README.md`
+## `docs/export-guide.md`
 
 ````markdown
-# Exempel
+# Exportguide
 
-Scenarier, data och andra icke-kodexempel kan läggas här.
+Exporten använder `book.yaml`, `scripts/export-book.py` och styles under `styles/`.
+
+```bash
+python3 scripts/export-book.py
+```
+
+För EPUB/PDF krävs Pandoc. PDF kräver dessutom en Pandoc-kompatibel PDF-engine, som XeLaTeX, om inte exporteraren anpassats till annan engine.
+````
+
+## `chapters/00-inledning.md`
+
+````markdown
+# Inledning
+
+Beskriv vad boken handlar om, vem den är för, vilka förkunskaper eller vilken läsarnivå som antas, hur boken är upplagd och hur läsaren kan använda den.
+````
+
+## `chapters/kapitelmall-larobok.md`
+
+````markdown
+# X. [Titel]
+
+## Varför detta kapitel finns
+
+## Lärandemål
+Efter kapitlet ska läsaren kunna:
+
+- ...
+
+## Innan vi börjar
+
+## Huvudförklaring
+
+## Exempel
+
+## Vanliga misstag
+
+## Övningar
+
+### Övning 1
+
+## Snabb sammanfattning
+
+- ...
+
+## Quiz/reflektionsfrågor
+
+1. ...
+
+## Nästa steg
+````
+
+## `chapters/kapitelmall-faktabok.md`
+
+````markdown
+# X. [Titel]
+
+[Ingress eller nyfikenhetsväckare]
+
+## [Huvudavsnitt]
+
+Förklara ämnet sammanhängande, konkret och anpassat till målgruppen.
+
+## [Fördjupning eller nästa del]
+
+## Konkreta exempel eller fall
+
+## Centrala fakta
+
+- ...
+
+## Visste du att? (valfritt)
+
+## Begrepp att känna till (vid behov)
+
+## Sammanfattning (valfritt)
 ````
 
 ## `exercises/README.md`
@@ -454,148 +470,68 @@ Scenarier, data och andra icke-kodexempel kan läggas här.
 Separata övningsfiler kan läggas här när bokupplägget kräver det.
 ````
 
-## `exports/README.md`
+## `examples/README.md`
 
 ````markdown
-# Exporter
+# Exempel
 
-Genererade EPUB/PDF ska normalt inte vara kanoniskt manus. Logga exporter i `exportlogg.md`.
+Scenarier, data och andra icke-kodexempel kan läggas här.
 ````
 
-## `exports/exportlogg.md`
+## `code/README.md`
 
 ````markdown
-# Exportlogg
+# Kod
 
-| Tidpunkt | Format | Fil | Källrevision | Kommentar |
-|---|---|---|---:|---|
+Körbar kod för teknikböcker kan läggas här.
 ````
 
-## `project-index.md`
+## `assets/cover/README.md`
 
 ````markdown
-# Projektindex
+# Omslag
 
-## Projekt
-- Titel:
-- book_kind:
-- book_type:
-- Project-id:
-- Revision:
-- Senaste verifierade zip:
-
-## Kapitel
-- Inledning: planerad
-- Skapade kapitel: inga
-
-## Faktakontroll
-- Policy: `docs/kallpolicy.md`
-- Register: `docs/faktakontroll.md`
-- Öppna punkter:
-
-## Export
-- EPUB: ej skapad
-- PDF: ej skapad
-
-## Synkkontroll
-- `book.yaml`, bokspecifikation, kapitelplan och projektstatus ska beskriva samma aktuella bokprofil och projektläge.
+Lägg omslagsbild här när den har skapats.
 ````
 
-## `project-manifest.json`
-
-````json
-{
-  "schema_version": 1,
-  "template": true,
-  "project_id": "",
-  "project_slug": "",
-  "revision": 0,
-  "parent_revision": null,
-  "canonical_zip_name": "",
-  "tracked_files": {},
-  "chapters": {},
-  "last_operation": null
-}
-````
-
-## `revision-log.md`
+## `assets/images/README.md`
 
 ````markdown
-# Revisionslogg
+# Bilder
 
-| Revision | Tidpunkt (UTC) | Åtgärd | Ändrade filer | Zip-fil |
-|---:|---|---|---|---|
+Inre illustrationer läggs här endast om användaren har valt att använda dem.
 ````
 
-## `scripts/export-book.py`
+## `assets/image-prompts/README.md`
 
-````python
-#!/usr/bin/env python3
-from __future__ import annotations
-import argparse, re, shutil, subprocess, tempfile
-from pathlib import Path
+````markdown
+# Bildprompter
 
-ROOT = Path(__file__).resolve().parents[1]
-
-def scalar(text: str, key: str) -> str:
-    m = re.search(rf"(?m)^{re.escape(key)}:\s*(?:\"([^\"]*)\"|'([^']*)'|([^#\n]*))", text)
-    if not m: return ""
-    return next((g for g in m.groups() if g is not None), "").strip()
-
-def metadata():
-    p=ROOT/'book.yaml'
-    if not p.is_file(): raise SystemExit('Saknar book.yaml')
-    t=p.read_text(encoding='utf-8')
-    values={k:scalar(t,k) for k in ('title','subtitle','author','language','identifier','date','version','book_kind','book_type')}
-    missing=[k for k in ('title','author','language','book_kind','book_type') if not values[k]]
-    if missing: raise SystemExit('Saknad metadata i book.yaml: '+', '.join(missing))
-    if values['book_kind'] not in ('textbook','factbook'):
-        raise SystemExit('Ogiltig book_kind i book.yaml: '+values['book_kind'])
-    return values
-
-def chapters():
-    intro=ROOT/'chapters/00-inledning.md'
-    if not intro.is_file(): raise SystemExit('Saknar chapters/00-inledning.md')
-    numbered=[]
-    for p in (ROOT/'chapters').glob('*.md'):
-        m=re.match(r'^(\d{2})-[a-z0-9][a-z0-9-]*\.md$', p.name, re.I)
-        if m and m.group(1)!='00': numbered.append((int(m.group(1)),p))
-    numbered.sort()
-    return [intro]+[p for _,p in numbered]
-
-def validate_markdown(paths):
-    errors=[]
-    for p in paths:
-        t=p.read_text(encoding='utf-8')
-        if re.search(r'(?m)^#{4,}\s',t): errors.append(f'{p.name}: H4 eller djupare rubrik')
-        if t.count('```') % 2: errors.append(f'{p.name}: obalanserade kodblock')
-    if errors: raise SystemExit('Markdown-validering misslyckades:\n- '+'\n- '.join(errors))
-
-def run(cmd):
-    print('+',' '.join(str(x) for x in cmd)); subprocess.run(cmd,check=True)
-
-def main():
-    a=argparse.ArgumentParser(); a.add_argument('--format',choices=['epub','pdf','all'],default='all'); args=a.parse_args()
-    if not shutil.which('pandoc'): raise SystemExit('Pandoc saknas. Installera Pandoc och kör igen.')
-    md=metadata(); ch=chapters(); validate_markdown(ch); (ROOT/'exports').mkdir(exist_ok=True)
-    with tempfile.TemporaryDirectory() as td:
-        merged=Path(td)/'book.md'; merged.write_text('\n\n'.join(p.read_text(encoding='utf-8').strip() for p in ch)+'\n',encoding='utf-8')
-        common=['pandoc',str(merged),'--from=gfm','--metadata-file',str(ROOT/'book.yaml')]
-        if args.format in ('epub','all'):
-            run(common+['--to=epub3','--toc','--toc-depth=1','--css',str(ROOT/'styles/epub.css'),'--output',str(ROOT/'exports/book.epub')])
-        if args.format in ('pdf','all'):
-            run(common+['--toc','--toc-depth=3','--output',str(ROOT/'exports/book.pdf')])
-    return 0
-if __name__=='__main__': raise SystemExit(main())
+Spara godkända bildprompter här, en fil per bild-ID.
 ````
 
-## `scripts/export-book.sh`
+## `styles/epub.css`
 
-````bash
-#!/usr/bin/env bash
-set -euo pipefail
-cd "$(dirname "$0")/.."
-python3 scripts/export-book.py "$@"
+````css
+body { line-height: 1.6; }
+p { margin: 0 0 0.8em; }
+h1, h2, h3 { line-height: 1.2; }
+h1 { text-align: center; margin: 1.2em 0 0.7em; }
+img { max-width: 100%; height: auto; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #999; padding: 0.35em 0.5em; vertical-align: top; }
+pre { white-space: pre-wrap; padding: 0.7em; }
+````
+
+## `styles/pdf.css`
+
+````css
+@page { margin: 22mm 20mm 22mm 20mm; }
+body { line-height: 1.5; }
+h1 { break-before: page; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #999; padding: 0.35em 0.5em; vertical-align: top; }
+img { max-width: 100%; height: auto; }
 ````
 
 ## `scripts/project_integrity.py`
@@ -626,10 +562,17 @@ def inventory(root):
     return out
 def summary(files):
     items={}
+    by_number={}
     for path,info in files.items():
         m=CHAPTER_RE.fullmatch(path)
-        if m and m.group(1)!='00': items[path]=info['sha256']
-    nums=sorted(int(CHAPTER_RE.fullmatch(p).group(1)) for p in items)
+        if not m or m.group(1)=='00':
+            continue
+        number=int(m.group(1))
+        if number in by_number:
+            raise ValueError(f'Dubbla kapitelfiler för kapitel {number:02d}: {by_number[number]}, {path}')
+        by_number[number]=path
+        items[path]=info['sha256']
+    nums=sorted(by_number)
     return {'count':len(nums),'latest':nums[-1] if nums else None,'hashes':items}
 def load(root): return json.loads((root/MANIFEST).read_text(encoding='utf-8'))
 def save(root,m): (root/MANIFEST).write_text(json.dumps(m,ensure_ascii=False,indent=2,sort_keys=True)+'\n',encoding='utf-8')
@@ -698,28 +641,182 @@ def main():
 if __name__=='__main__': raise SystemExit(main())
 ````
 
-## `styles/epub.css`
+## `scripts/export-book.py`
 
-````css
-body { line-height: 1.6; }
-p { margin: 0 0 0.8em; }
-h1, h2, h3 { line-height: 1.2; }
-h1 { text-align: center; margin: 1.2em 0 0.7em; }
-img { max-width: 100%; height: auto; }
-table { border-collapse: collapse; width: 100%; }
-th, td { border: 1px solid #999; padding: 0.35em 0.5em; vertical-align: top; }
-pre { white-space: pre-wrap; padding: 0.7em; }
+````python
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import argparse
+import re
+import shutil
+import subprocess
+import tempfile
+from pathlib import Path, PurePosixPath
+
+ROOT = Path(__file__).resolve().parents[1]
+NUMBERED_CHAPTER_RE = re.compile(r"^\d{2}-[a-z0-9][a-z0-9-]*\.md$", re.I)
+
+
+def scalar(text: str, key: str) -> str:
+    m = re.search(rf"(?m)^{re.escape(key)}:\s*(?:\"([^\"]*)\"|'([^']*)'|([^#\n]*))", text)
+    if not m:
+        return ""
+    return next((g for g in m.groups() if g is not None), "").strip()
+
+
+def read_book_yaml() -> str:
+    path = ROOT / "book.yaml"
+    if not path.is_file():
+        raise SystemExit("Saknar book.yaml")
+    return path.read_text(encoding="utf-8")
+
+
+def metadata(text: str) -> dict[str, str]:
+    keys = ("title", "subtitle", "author", "language", "identifier", "date", "version", "book_kind", "book_type")
+    values = {key: scalar(text, key) for key in keys}
+    missing = [key for key in ("title", "author", "language", "book_kind", "book_type") if not values[key]]
+    if missing:
+        raise SystemExit("Saknad metadata i book.yaml: " + ", ".join(missing))
+    if values["book_kind"] not in ("textbook", "factbook"):
+        raise SystemExit("Ogiltig book_kind i book.yaml: " + values["book_kind"])
+    return values
+
+
+def chapter_entries(text: str) -> list[str]:
+    lines = text.splitlines()
+    start = None
+    base_indent = 0
+    for i, line in enumerate(lines):
+        m = re.match(r"^(\s*)chapters:\s*(?:#.*)?$", line)
+        if m:
+            start = i + 1
+            base_indent = len(m.group(1))
+            break
+    if start is None:
+        raise SystemExit("book.yaml saknar chapters:-lista")
+
+    entries: list[str] = []
+    for line in lines[start:]:
+        if not line.strip() or line.lstrip().startswith("#"):
+            continue
+        indent = len(line) - len(line.lstrip())
+        if indent <= base_indent and not line.lstrip().startswith("-"):
+            break
+        m = re.match(r"^\s*-\s*(?:\"([^\"]+)\"|'([^']+)'|([^#\n]+?))\s*(?:#.*)?$", line)
+        if not m:
+            if indent > base_indent:
+                raise SystemExit(f"Ogiltig post under chapters: i book.yaml: {line.strip()}")
+            break
+        value = next(g for g in m.groups() if g is not None).strip()
+        entries.append(value)
+    if not entries:
+        raise SystemExit("chapters: i book.yaml är tom")
+    return entries
+
+
+def resolve_chapters(text: str) -> list[Path]:
+    entries = chapter_entries(text)
+    if len(entries) != len(set(entries)):
+        duplicates = sorted({x for x in entries if entries.count(x) > 1})
+        raise SystemExit("Dubbellistade kapitel i book.yaml: " + ", ".join(duplicates))
+    if entries[0] != "chapters/00-inledning.md":
+        raise SystemExit("Första posten under chapters: ska vara chapters/00-inledning.md")
+
+    paths: list[Path] = []
+    for entry in entries:
+        pure = PurePosixPath(entry)
+        if pure.is_absolute() or ".." in pure.parts or len(pure.parts) != 2 or pure.parts[0] != "chapters":
+            raise SystemExit(f"Ogiltig kapitelsökväg i book.yaml: {entry}")
+        path = ROOT / pure.as_posix()
+        if not path.is_file():
+            raise SystemExit(f"Listad kapitelfil saknas: {entry}")
+        if path.name.startswith("kapitelmall-"):
+            raise SystemExit(f"Kapitelmall får inte exporteras: {entry}")
+        paths.append(path)
+
+    listed = {path.relative_to(ROOT).as_posix() for path in paths}
+    unlisted = []
+    for path in sorted((ROOT / "chapters").glob("*.md")):
+        if not NUMBERED_CHAPTER_RE.fullmatch(path.name):
+            continue
+        rel = path.relative_to(ROOT).as_posix()
+        if rel not in listed:
+            unlisted.append(rel)
+    if unlisted:
+        raise SystemExit("Numrerade kapitelfiler finns men saknas i book.yaml: " + ", ".join(unlisted))
+    return paths
+
+
+def validate_markdown(paths: list[Path]) -> None:
+    errors = []
+    for path in paths:
+        text = path.read_text(encoding="utf-8")
+        if re.search(r"(?m)^#{4,}\s", text):
+            errors.append(f"{path.name}: H4 eller djupare rubrik")
+        if text.count("```") % 2:
+            errors.append(f"{path.name}: obalanserade kodblock")
+    if errors:
+        raise SystemExit("Markdown-validering misslyckades:\n- " + "\n- ".join(errors))
+
+
+def run(cmd: list[str]) -> None:
+    print("+", " ".join(str(x) for x in cmd))
+    subprocess.run(cmd, check=True)
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--format", choices=["epub", "pdf", "all"], default="all")
+    args = parser.parse_args()
+    if not shutil.which("pandoc"):
+        raise SystemExit("Pandoc saknas. Installera Pandoc och kör igen.")
+
+    book_yaml = read_book_yaml()
+    metadata(book_yaml)
+    chapters = resolve_chapters(book_yaml)
+    validate_markdown(chapters)
+    (ROOT / "exports").mkdir(exist_ok=True)
+
+    with tempfile.TemporaryDirectory() as td:
+        merged = Path(td) / "book.md"
+        merged.write_text("\n\n".join(path.read_text(encoding="utf-8").strip() for path in chapters) + "\n", encoding="utf-8")
+        common = ["pandoc", str(merged), "--from=gfm", "--metadata-file", str(ROOT / "book.yaml")]
+        if args.format in ("epub", "all"):
+            run(common + ["--to=epub3", "--toc", "--toc-depth=1", "--css", str(ROOT / "styles/epub.css"), "--output", str(ROOT / "exports/book.epub")])
+        if args.format in ("pdf", "all"):
+            run(common + ["--toc", "--toc-depth=3", "--output", str(ROOT / "exports/book.pdf")])
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
 ````
 
-## `styles/pdf.css`
+## `scripts/export-book.sh`
 
-````css
-@page { margin: 22mm 20mm 22mm 20mm; }
-body { line-height: 1.5; }
-h1 { break-before: page; }
-table { border-collapse: collapse; width: 100%; }
-th, td { border: 1px solid #999; padding: 0.35em 0.5em; vertical-align: top; }
-img { max-width: 100%; height: auto; }
+````bash
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(dirname "$0")/.."
+python3 scripts/export-book.py "$@"
+````
+
+## `exports/README.md`
+
+````markdown
+# Exporter
+
+Genererade EPUB/PDF ska normalt inte vara kanoniskt manus. Logga exporter i `exportlogg.md`.
+````
+
+## `exports/exportlogg.md`
+
+````markdown
+# Exportlogg
+
+| Tidpunkt | Format | Fil | Källrevision | Kommentar |
+|---|---|---|---:|---|
 ````
 
 ## Obligatoriskt projektbeteende

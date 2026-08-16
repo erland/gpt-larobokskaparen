@@ -43,3 +43,6 @@ exports:
 - `title`, `author`, `language`, `identifier`, `date` och `version` är ifyllda.
 - `book_kind` är giltigt och `book_type` passar profilen.
 - `chapters` börjar med `chapters/00-inledning.md` och anger verkliga kapitel i rätt ordning.
+
+## Kapitelordning
+`chapters:` i `book.yaml` är bindande exportordning. Alla exporterade kapitel ska vara explicit listade exakt en gång. Olistade numrerade kapitelfiler ska rapporteras i stället för att smygexporteras.
