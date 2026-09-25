@@ -39,10 +39,24 @@ jobs:
             version="0.0.0-dev+${GITHUB_SHA::7}"
           fi
           echo "version=$version" >> "$GITHUB_OUTPUT"
+      - name: Install validation dependencies
+        run: python3 -m pip install --disable-pip-version-check PyYAML jsonschema
+      - name: Validate GPT Builder 1.5 project contracts
+        run: python3 scripts/validate_project_contracts.py
+      - name: Validate project hygiene
+        run: python3 scripts/validate_project_hygiene.py
+      - name: Validate model/runtime robustness
+        run: python3 scripts/validate_model_robustness.py
       - name: Build distributions
         run: python3 scripts/build_distributions.py --version "${{ steps.version.outputs.version }}"
       - name: Validate distributions
         run: python3 scripts/validate_distributions.py --version "${{ steps.version.outputs.version }}"
+      - name: Validate runtime parity
+        run: python3 scripts/validate_runtime_parity.py --version "${{ steps.version.outputs.version }}"
+      - name: Validate release asset set
+        run: python3 scripts/validate_release_assets.py --version "${{ steps.version.outputs.version }}"
+      - name: Validate final release readiness
+        run: python3 scripts/validate_release_readiness.py
       - name: Upload workflow artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -50,8 +64,15 @@ jobs:
           path: dist/*.zip
           if-no-files-found: error
           retention-days: 14
-      - name: Attach ZIP files to GitHub Release
+      - name: Attach active runtime assets to GitHub Release
         if: github.event_name == 'release'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" dist/*.zip --clobber
+        shell: bash
+        run: |
+          mapfile -t assets < <(python3 scripts/validate_release_assets.py \
+            --version "${{ steps.version.outputs.version }}" \
+            --print-paths)
+          gh release upload "${{ github.event.release.tag_name }}" \
+            "${assets[@]}" \
+            --clobber

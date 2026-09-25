@@ -13,7 +13,10 @@ import tempfile
 import zipfile
 from pathlib import Path
 
+import yaml
+
 ROOT = Path(__file__).resolve().parents[1]
+CFG_PATH = ROOT / "gpt-project.yaml"
 EXPECTED = [
     "01-purpose-and-workflow.md", "02-guided-interview.md", "03-difficulty-and-pedagogy-model.md",
     "04-book-specification-template.md", "05-chapter-plan-template.md", "06-chapter-template.md",
@@ -25,6 +28,25 @@ EXPECTED = [
 ]
 SEMVER = re.compile(r"^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$")
 STALE_TERMS = ("docs/pedagogisk-canon.md", "docs/export-metadata.yaml", "docs/book-specification.md", "docs/chapter-plan.md", "chapters/kapitelmall.md")
+
+def load_config() -> dict:
+    data=yaml.safe_load(CFG_PATH.read_text(encoding="utf-8"))
+    if not isinstance(data,dict):
+        raise SystemExit("Ogiltig gpt-project.yaml")
+    return data
+
+def active_runtimes(cfg: dict) -> list[str]:
+    return [
+        runtime_id
+        for runtime_id,runtime_cfg in (cfg.get("runtime") or {}).items()
+        if isinstance(runtime_cfg,dict) and runtime_cfg.get("status")=="active"
+    ]
+
+def artifact_path(cfg: dict, runtime_id: str, version: str, dist: Path) -> Path:
+    pattern=cfg["runtime"][runtime_id].get("artifact_name")
+    if not pattern:
+        raise SystemExit(f"Runtime {runtime_id} saknar artifact_name")
+    return dist/pattern.format(version=version)
 
 
 def digest(data: bytes) -> str:
@@ -87,8 +109,13 @@ def main() -> int:
     parser.add_argument("--version")
     args = parser.parse_args()
 
+    cfg=load_config()
     build_module = load_module(ROOT / "scripts/build_distributions.py", "build_distributions_for_validation")
     version = build_module.resolve_version(args.version)
+    runtimes=active_runtimes(cfg)
+    unsupported=sorted(set(runtimes)-{"custom_gpt","chatgpt_chat","claude_projects","opencode","openai_plugin"})
+    if unsupported:
+        raise SystemExit("Aktiv runtime saknar valideringsadapter: " + ", ".join(unsupported))
 
 
     if (ROOT / "VERSION").exists():
@@ -160,22 +187,33 @@ def main() -> int:
     shutil.rmtree(Path(args.dist_dir) / ".validator-build", ignore_errors=True)
 
     dist = Path(args.dist_dir)
-    custom_path = dist / f"larobokskaparen-custom-gpt-v{version}.zip"
-    portable_path = dist / f"larobokskaparen-chat-v{version}.zip"
-    for path in (custom_path, portable_path):
-        if not path.is_file():
-            raise SystemExit(f"Saknad distribution: {path}")
-
+    expected_paths={runtime_id: artifact_path(cfg,runtime_id,version,dist) for runtime_id in runtimes}
+    expected_names={p.name for p in expected_paths.values()}
+    actual_names={p.name for p in dist.glob("*.zip")}
+    if actual_names != expected_names:
+        raise SystemExit(f"Fel distributionsmängd: actual={sorted(actual_names)} expected={sorted(expected_names)}")
+    custom_path=expected_paths["custom_gpt"]
+    portable_path=expected_paths["chatgpt_chat"]
+    claude_path=expected_paths["claude_projects"]
+    opencode_path=expected_paths["opencode"]
+    plugin_path=expected_paths["openai_plugin"]
     custom = read_zip(custom_path)
     portable = read_zip(portable_path)
-    if custom.get("VERSION") != (version + "\n").encode() or portable.get("VERSION") != (version + "\n").encode():
+    claude = read_zip(claude_path)
+    opencode = read_zip(opencode_path)
+    plugin = read_zip(plugin_path)
+    if custom.get("VERSION") != (version + "\n").encode() or portable.get("VERSION") != (version + "\n").encode() or claude.get("VERSION") != (version + "\n").encode() or opencode.get("VERSION") != (version + "\n").encode():
         raise SystemExit("VERSION mismatch")
 
-    src_instructions = (ROOT / "gpt-configuration/instructions.md").read_bytes()
-    starters = (ROOT / "gpt-configuration/conversation-starters.md").read_bytes()
-    if custom.get("gpt-configuration/instructions.md") != src_instructions or portable.get("assistant/instructions.md") != src_instructions:
+    custom_cfg=cfg["runtime"]["custom_gpt"]
+    chat_cfg=cfg["runtime"]["chatgpt_chat"]
+    src_instructions = (ROOT / custom_cfg["instruction"]["source"]).read_bytes()
+    starters = (ROOT / custom_cfg["conversation_starters"]).read_bytes()
+    claude_cfg=cfg["runtime"]["claude_projects"]
+    opencode_cfg=cfg["runtime"]["opencode"]
+    if custom.get(custom_cfg["instruction"]["source"]) != src_instructions or portable.get("assistant/instructions.md") != (ROOT/chat_cfg["source"]["instructions"]).read_bytes() or claude.get("assistant/instructions.md") != (ROOT/claude_cfg["source"]["instructions"]).read_bytes() or opencode.get("assistant/instructions.md") != (ROOT/opencode_cfg["source"]["instructions"]).read_bytes():
         raise SystemExit("Instructions mismatch")
-    if custom.get("gpt-configuration/conversation-starters.md") != starters:
+    if custom.get(custom_cfg["conversation_starters"]) != starters:
         raise SystemExit("Conversation starters mismatch")
 
     for name in EXPECTED:
@@ -184,20 +222,67 @@ def main() -> int:
             raise SystemExit(f"Custom Knowledge mismatch: {name}")
         if portable.get("knowledge/" + name) != src:
             raise SystemExit(f"Portable Knowledge mismatch: {name}")
+        if claude.get("knowledge/" + name) != src:
+            raise SystemExit(f"Claude Knowledge mismatch: {name}")
+        if opencode.get("knowledge/" + name) != src:
+            raise SystemExit(f"OpenCode Knowledge mismatch: {name}")
 
     for path in sorted(p for p in template_root.rglob("*") if p.is_file() and "__pycache__" not in p.parts and p.suffix != ".pyc"):
         rel = path.relative_to(template_root).as_posix()
         if portable.get("templates/bokprojekt/" + rel) != path.read_bytes():
             raise SystemExit(f"Portable template mismatch: {rel}")
+        if claude.get("templates/bokprojekt/" + rel) != path.read_bytes():
+            raise SystemExit(f"Claude template mismatch: {rel}")
+        if opencode.get("templates/bokprojekt/" + rel) != path.read_bytes():
+            raise SystemExit(f"OpenCode template mismatch: {rel}")
 
     manifest = json.loads(portable["MANIFEST.json"].decode())
+    claude_manifest = json.loads(claude["MANIFEST.json"].decode())
+    opencode_manifest = json.loads(opencode["MANIFEST.json"].decode())
+    plugin_cfg=cfg["runtime"]["openai_plugin"]
+    plugin_root=plugin_cfg["manifest"]["name"] + "/"
+    plugin_manifest=json.loads(plugin[plugin_root+"plugin.json"].decode())
+    skill_path=plugin_root+"skills/"+plugin_cfg["skill"]["id"]+"/SKILL.md"
+    if plugin_manifest.get("$schema")!="https://agent-plugins.org/schemas/1.0.0/plugin.schema.json":
+        raise SystemExit("Plugin schema mismatch")
+    if plugin_manifest.get("version")!=version or plugin_manifest.get("name")!=plugin_cfg["manifest"]["name"]:
+        raise SystemExit("Plugin manifest metadata mismatch")
+    if skill_path not in plugin:
+        raise SystemExit("Plugin SKILL.md saknas")
+    skill_text=plugin[skill_path].decode("utf-8")
+    if "## Kanoniskt beteendekontrakt" not in skill_text or "Påstå aldrig att ett ZIP-projekt" not in skill_text:
+        raise SystemExit("Plugin skill saknar canonical/runtime-gap-kontrakt")
+    allowed_script_prefix=plugin_root+"skills/"+plugin_cfg["skill"]["id"]+"/references/templates/bokprojekt/"
+    unexpected_python=[name for name in plugin if name.endswith(".py") and not name.startswith(allowed_script_prefix)]
+    if unexpected_python:
+        raise SystemExit("Plugin-distributionen innehåller Python utanför bokprojektmallen: "+", ".join(sorted(unexpected_python)))
+    if plugin_root+"mcp.json" in plugin:
+        raise SystemExit("Plugin-distributionen får inte påstå en MCP-integration som inte finns")
     if manifest.get("version") != version or manifest.get("template_root") != "templates/bokprojekt":
         raise SystemExit("MANIFEST metadata mismatch")
+    if claude_manifest.get("version") != version or claude_manifest.get("format") != "claude-projects" or claude_manifest.get("template_root") != "templates/bokprojekt":
+        raise SystemExit("Claude MANIFEST metadata mismatch")
+    if opencode_manifest.get("version") != version or opencode_manifest.get("format") != "opencode" or opencode_manifest.get("template_root") != "templates/bokprojekt":
+        raise SystemExit("OpenCode MANIFEST metadata mismatch")
     if manifest.get("knowledge") != ["knowledge/" + name for name in EXPECTED]:
         raise SystemExit("MANIFEST Knowledge mismatch")
     for entry in manifest.get("files", []):
         if entry["path"] not in portable or digest(portable[entry["path"]]) != entry["sha256"]:
             raise SystemExit(f"MANIFEST SHA mismatch: {entry['path']}")
+
+    # Pluginen ska bära samma Knowledge, exempel och bokprojektmall som baslinjen.
+    skill_ref=plugin_root+"skills/"+plugin_cfg["skill"]["id"]+"/references/"
+    for name in EXPECTED:
+        src=(ROOT/"knowledge-upload"/name).read_bytes()
+        if plugin.get(skill_ref+"knowledge/"+name)!=src:
+            raise SystemExit(f"Plugin Knowledge mismatch: {name}")
+    for path in sorted(p for p in template_root.rglob("*") if p.is_file() and "__pycache__" not in p.parts and p.suffix != ".pyc"):
+        rel=path.relative_to(template_root).as_posix()
+        if plugin.get(skill_ref+"templates/bokprojekt/"+rel)!=path.read_bytes():
+            raise SystemExit(f"Plugin template mismatch: {rel}")
+    canonical=(ROOT/plugin_cfg["skill"]["source_instruction"]).read_text(encoding="utf-8").strip()
+    if canonical not in skill_text:
+        raise SystemExit("Plugin skill bäddar inte in canonical instruktion")
 
     print(f"OK: distributionerna för {version} är validerade.")
     print(f"OK: Instructions är {len(instructions)} tecken (max 8000); {len(knowledge)} Knowledge-filer (max 20).")

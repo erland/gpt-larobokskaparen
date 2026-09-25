@@ -74,10 +74,15 @@ Pandoc används som standard när det finns. Exportscriptet läser kapitel **i e
 
 ## Distributioner
 
-Repositoryt bygger två ZIP-paket från samma källor:
+Repositoryt bygger aktiva runtime-paket deklarativt från `gpt-project.yaml`. För närvarande är fem runtimes aktiva:
 
 - `larobokskaparen-custom-gpt-vX.Y.Z.zip` – för installation/uppdatering av Custom GPT.
 - `larobokskaparen-chat-vX.Y.Z.zip` – portabel version för en vanlig ChatGPT-konversation.
+- `larobokskaparen-claude-projects-vX.Y.Z.zip` – portabel Claude Projects-distribution med samma canonical instruktion, Knowledge och bokprojektmall.
+- `larobokskaparen-opencode-vX.Y.Z.zip` – OpenCode-distribution för workspace-/script-orienterat bokprojektarbete.
+- `larobokskaparen-openai-plugin-vX.Y.Z.zip` – skills-first OpenAI Plugin med bokmetodik, Knowledge och bokprojektmall.
+
+OpenAI Plugin behandlar scripts i bokprojektmallen som referens-/mallinnehåll, inte som automatiskt körbara pluginverktyg. ZIP-state, integritets-/revisionsscript och EPUB/PDF-export används endast när värdklienten faktiskt erbjuder motsvarande fil- och exekveringsförmåga.
 
 Den portabla distributionen innehåller:
 
@@ -106,7 +111,7 @@ På en exakt `v<SemVer>`-tagg kan buildscriptet även läsa versionen från Git.
 
 ### GitHub Release
 
-Release-taggen är versionskälla och ska följa `v<SemVer>`, till exempel `v1.4.0`. Workflowet bygger och validerar båda distributionerna med taggens version och bifogar dem som release-assets.
+Release-taggen är versionskälla och ska följa `v<SemVer>`, till exempel `v1.4.0`. Workflowet bygger och validerar samtliga aktiva runtime-distributioner med taggens version. Den exakta release-assetuppsättningen härleds deklarativt från `gpt-project.yaml`; saknade eller oväntade ZIP-filer stoppar releasen.
 
 ## Portabel användning
 

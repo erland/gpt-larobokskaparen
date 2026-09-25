@@ -1,0 +1,317 @@
+schema_version: 1
+project:
+  id: larobokskaparen
+  name: Lärobokskaparen
+  profile: zip_first_advanced
+  orchestration: stateful
+
+instructions:
+  canonical: gpt-configuration/instructions.md
+  core_contract:
+    enabled: true
+    required_markers:
+      - "# Lärobokskaparen – GPT-instruktioner"
+      - "## Startflöde"
+      - "## Kanoniskt bokprojekt"
+      - "## Markdown och lokal export"
+      - "## EPUB/PDF"
+      - "## Kvalitet"
+    required_runtime_dependencies: []
+    max_required_file_hops: 1
+    knowledge_may_not_be_required_for_core_behavior: true
+
+knowledge_architecture:
+  canonical_root: knowledge-upload
+  template_source_of_truth: templates/bokprojekt
+  generated_template_bundle: knowledge-upload/19-project-template-bundle.md
+
+capabilities:
+  contract_version: 1
+  schema: schemas/capability-contract.schema.json
+  recommendation_mode: inferred_from_use_case
+  ask_user_only_when_business_choice_is_ambiguous: true
+  requirements:
+    web:
+      level: recommended
+      reason: "Färsk verifiering behövs för aktuella, externa eller lätt föränderliga fakta."
+    filesystem:
+      read: required
+      write: required
+    shell:
+      level: recommended
+      reason: "Projektintegritet, validering och lokal EPUB/PDF-export använder deterministiska scripts."
+    code_execution:
+      level: required
+      reason: "Stateful ZIP-/workspace-flöde och projektverktyg behöver exekvering för full funktion."
+    structured_data:
+      level: required
+      reason: "book.yaml, project-manifest.json och projektstatus är bärande kontrakt."
+    persistent_state:
+      level: required
+      reason: "Bokprojektet är långlivat och måste kunna återupptas utan att chatthistorik är enda sanningskälla."
+    external_tools:
+      level: optional
+      reason: "Kärnflödet ska inte kräva leverantörsspecifika externa integrationer."
+      preferred_protocols:
+        - mcp
+    image_generation:
+      level: optional
+      reason: "Omslag och inre illustrationer används endast när användaren vill ha dem."
+
+artifacts:
+  contract_version: 1
+  schema: schemas/artifact-contract.schema.json
+  outputs:
+    book_project_zip:
+      kind: package
+      format: zip
+      requirement: conditional
+      condition: "project_created_or_modified"
+      persistence: persistent
+      multiplicity: one
+      description: "Komplett bokprojekt med canonical metadata, manifest, revision och alla projektfiler."
+    project_status:
+      kind: metadata
+      format: markdown
+      requirement: conditional
+      condition: "stateful_project_work"
+      persistence: persistent
+      multiplicity: one
+      description: "Projektstatus för det genererade bokprojektet."
+    project_manifest:
+      kind: metadata
+      format: json
+      requirement: conditional
+      condition: "stateful_project_work"
+      persistence: persistent
+      multiplicity: one
+      description: "Integritets- och revisionsmanifest för bokprojektet."
+    epub:
+      kind: document
+      format: epub
+      requirement: conditional
+      condition: "export_requested"
+      persistence: persistent
+      multiplicity: one
+      description: "Publicerbar EPUB byggd från canonical bokprojekt."
+    pdf:
+      kind: document
+      format: pdf
+      requirement: conditional
+      condition: "export_requested"
+      persistence: persistent
+      multiplicity: one
+      description: "Publicerbar PDF byggd från canonical bokprojekt."
+    cover_image:
+      kind: document
+      format: image
+      requirement: optional
+      persistence: persistent
+      multiplicity: one
+      description: "Omslagsbild när användaren har valt att skapa en sådan."
+
+workspace_state:
+  contract_version: 1
+  schema: schemas/workspace-state-contract.schema.json
+  workspace:
+    requirement: required
+    persistence: required
+    portable: true
+    separate_from_assistant: true
+    artifact: book_project_zip
+    description: "Bokprojektets filer är den långlivade arbetsytan och ska kunna flyttas mellan runtimes."
+  state:
+    requirement: required
+    persistence: required
+    authority: workspace_file
+    format: json
+    path: project-manifest.json
+    conversation_fallback: false
+    description: "project-manifest.json tillsammans med book.yaml och revision-loggen är auktoritativt projekttillstånd."
+  runtime_preferences:
+    chat: workspace_file
+    agent: workspace_file
+
+tools:
+  contract_version: 1
+  schema: schemas/tool-contract.schema.json
+  tools:
+    - id: distribution-build
+      type: script
+      requirement: required
+      purpose: "Bygga runtime-distributioner."
+      script: scripts/build_distributions.py
+      deterministic: true
+      mutates_workspace: true
+      working_directory: repository
+      runtime_fallback: block
+    - id: distribution-validation
+      type: script
+      requirement: required
+      purpose: "Validera runtime-distributioner, Knowledge, templatebundle och bokprojektkontrakt."
+      script: scripts/validate_distributions.py
+      deterministic: true
+      mutates_workspace: false
+      working_directory: repository
+      runtime_fallback: block
+    - id: project-integrity
+      type: script
+      requirement: required
+      purpose: "Initiera, verifiera och versionssäkra genererade bokprojekt."
+      script: templates/bokprojekt/scripts/project_integrity.py
+      deterministic: true
+      mutates_workspace: true
+      working_directory: workspace
+      runtime_fallback: block
+    - id: project-validation
+      type: script
+      requirement: required
+      purpose: "Validera bokprojektets metadata, kapitel, bilder och integritet."
+      script: templates/bokprojekt/scripts/validate_project.py
+      deterministic: true
+      mutates_workspace: false
+      working_directory: workspace
+      runtime_fallback: block
+    - id: book-export
+      type: script
+      requirement: recommended
+      purpose: "Exportera bokprojekt till EPUB och PDF när nödvändiga lokala verktyg finns."
+      script: templates/bokprojekt/scripts/export-book.py
+      deterministic: true
+      mutates_workspace: true
+      working_directory: workspace
+      runtime_fallback: manual
+    - id: book-build
+      type: script
+      requirement: recommended
+      purpose: "Köra validering och bygga EPUB/PDF samt checksummor."
+      script: templates/bokprojekt/scripts/build_book.py
+      deterministic: true
+      mutates_workspace: true
+      working_directory: workspace
+      runtime_fallback: manual
+
+runtime:
+  chatgpt_chat:
+    status: active
+    adapter_id: chatgpt_chat
+    artifact_name: larobokskaparen-chat-v{version}.zip
+    source:
+      start_here: portable/START-HERE.md
+      instructions: gpt-configuration/instructions.md
+      knowledge: knowledge-upload
+      examples: examples
+      template_root: templates/bokprojekt
+  custom_gpt:
+    status: active
+    adapter_id: chatgpt_custom
+    artifact_name: larobokskaparen-custom-gpt-v{version}.zip
+    instruction:
+      mode: identical
+      max_characters: 8000
+      source: gpt-configuration/instructions.md
+    conversation_starters: gpt-configuration/conversation-starters.md
+    knowledge:
+      strategy: compiled
+      max_files: 20
+      source: knowledge-upload
+    examples: examples
+  claude_projects:
+    status: active
+    adapter_id: claude_projects
+    artifact_name: larobokskaparen-claude-projects-v{version}.zip
+    source:
+      start_here: portable/START-HERE.md
+      instructions: gpt-configuration/instructions.md
+      knowledge: knowledge-upload
+      examples: examples
+      template_root: templates/bokprojekt
+    compatibility:
+      instruction_mode: identical
+      knowledge_strategy: compiled
+      workspace_model: zip_project
+      persistent_state: workspace_file
+      script_execution: runtime_managed
+  opencode:
+    status: active
+    adapter_id: opencode
+    artifact_name: larobokskaparen-opencode-v{version}.zip
+    source:
+      start_here: portable/START-HERE.md
+      instructions: gpt-configuration/instructions.md
+      knowledge: knowledge-upload
+      examples: examples
+      template_root: templates/bokprojekt
+    compatibility:
+      instruction_mode: identical
+      knowledge_strategy: compiled
+      workspace_model: agent_workspace
+      persistent_state: workspace_file
+      script_execution: runtime_managed
+      project_integrity: supported
+      local_export: supported_when_dependencies_available
+  openai_plugin:
+    status: active
+    adapter_id: openai_plugin
+    artifact_name: larobokskaparen-openai-plugin-v{version}.zip
+    manifest:
+      name: larobokskaparen
+      display_name: Lärobokskaparen
+      description: "Planera, skriva, underhålla och kvalitetssäkra läroböcker och faktaböcker med en stateful bokprojektmodell."
+      category: Productivity
+    skill:
+      id: larobokskaparen
+      source_instruction: gpt-configuration/instructions.md
+      knowledge: knowledge-upload
+      examples: examples
+      template_root: templates/bokprojekt
+    compatibility:
+      architecture: skills_first
+      external_integrations: none
+      workspace_zip_state: host_capability_dependent
+      bundled_script_execution: not_assumed
+      project_integrity_scripts: host_capability_dependent
+      epub_pdf_export: host_capability_dependent
+      behavior_gap: "Pluginen får inte påstå att ZIP-projekt, revisionsmanifest, scripts eller EPUB/PDF har skapats eller verifierats om värdklienten saknar motsvarande fil-/exekveringsförmåga."
+
+build_system:
+  current:
+    script: scripts/build_distributions.py
+    validation_script: scripts/validate_distributions.py
+    selection: runtime_status_active
+    targets:
+      - chatgpt_chat
+      - custom_gpt
+      - claude_projects
+      - opencode
+      - openai_plugin
+    compatibility_mode: preserve_existing_artifact_layout
+  migration_target:
+    runtimes:
+      - chatgpt_chat
+      - custom_gpt
+      - claude_projects
+      - opencode
+      - openai_plugin
+
+testing:
+  distribution_validation: scripts/validate_distributions.py
+  project_validation: templates/bokprojekt/scripts/validate_project.py
+  project_integrity: templates/bokprojekt/scripts/project_integrity.py
+
+ci:
+  enabled: true
+  workflow: .github/workflows/build-distributions.yml
+
+release:
+  github:
+    enabled: true
+    workflow: .github/workflows/build-distributions.yml
+    version_source: release_tag
+
+migration:
+  target_builder_version: 1.5.0
+  strategy: behavior_preserving
+  canonical_instruction_must_be_preserved: true
+  current_distribution_count: 2
+  target_distribution_count: 5
