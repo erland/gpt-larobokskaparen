@@ -227,21 +227,6 @@ build_system:
       - opencode
       - openai_plugin
 
-workspace_state:
-  project_workspace:
-    status: required
-    model: zip_project
-    canonical_metadata: book.yaml
-    integrity_manifest: project-manifest.json
-    revision_log: revision-log.md
-  generated_project:
-    source_of_truth: templates/bokprojekt
-    state_files:
-      - book.yaml
-      - project-manifest.json
-      - revision-log.md
-      - project-index.md
-
 testing:
   distribution_validation: scripts/validate_distributions.py
   project_validation: templates/bokprojekt/scripts/validate_project.py
