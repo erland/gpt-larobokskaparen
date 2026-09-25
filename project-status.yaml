@@ -9,10 +9,11 @@ plan:
 
 progress:
   current_phase: migration_to_gpt_builder_1_5_0
-  current_step: 2
-  last_completed_step: 1
+  current_step: 3
+  last_completed_step: 2
   completed_steps:
     - 1
+    - 2
   skipped_steps: []
   inserted_steps: []
 
@@ -20,14 +21,14 @@ state:
   overall: warning
   blocking_issues: []
   warnings:
-    - "Projektet använder ännu legacy build/validation utan 1.5.0-kontrakt."
+    - "Build-systemet använder fortfarande legacy-strukturen och ska migreras i steg 3."
     - "Claude Projects, OpenCode och OpenAI Plugin är planerade men ännu inte aktiverade."
     - "OpenAI Plugin förväntas ha dokumenterade runtime-gap för ZIP, scriptkörning och EPUB/PDF om värdklienten saknar motsvarande förmåga."
 
 next_step:
-  recommended: 2
-  title: Inför plattformsneutrala kontrakt och scheman
-  reason: "Projektstatus och migrationsplan finns nu. Nästa säkra steg är att modellera capabilities, artifacts, workspace/state och tools innan build-systemet ändras."
+  recommended: 3
+  title: Migrera distributionsbygget
+  reason: "Plattformsneutrala capabilities, artifacts, stateful workspace/state och tools är nu modellerade och validerade. Nästa steg är att låta build-systemet konsumera gpt-project.yaml utan att bryta befintliga ChatGPT-distributioner."
 
 resume:
   supported: true
@@ -37,4 +38,4 @@ resume:
     - docs/development-plan.md
     - STATUS.md
     - PROJECT.md
-  human_readable_status: "Steg 1 av 9 är klart. Fortsätt med 1.5.0-kontrakt och scheman."
+  human_readable_status: "Steg 1–2 av 9 är klara. Fortsätt med migrering av distributionsbygget."
