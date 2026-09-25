@@ -217,7 +217,21 @@ runtime:
       source: knowledge-upload
     examples: examples
   claude_projects:
-    status: planned
+    status: active
+    adapter_id: claude_projects
+    artifact_name: larobokskaparen-claude-projects-v{version}.zip
+    source:
+      start_here: portable/START-HERE.md
+      instructions: gpt-configuration/instructions.md
+      knowledge: knowledge-upload
+      examples: examples
+      template_root: templates/bokprojekt
+    compatibility:
+      instruction_mode: identical
+      knowledge_strategy: compiled
+      workspace_model: zip_project
+      persistent_state: workspace_file
+      script_execution: runtime_managed
   opencode:
     status: planned
   openai_plugin:
@@ -231,6 +245,7 @@ build_system:
     targets:
       - chatgpt_chat
       - custom_gpt
+      - claude_projects
     compatibility_mode: preserve_existing_artifact_layout
   migration_target:
     runtimes:
