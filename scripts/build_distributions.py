@@ -10,7 +10,10 @@ import subprocess
 import zipfile
 from pathlib import Path
 
+import yaml
+
 ROOT = Path(__file__).resolve().parents[1]
+CFG_PATH = ROOT / "gpt-project.yaml"
 KNOWLEDGE_DIR = ROOT / "knowledge-upload"
 CONFIG_DIR = ROOT / "gpt-configuration"
 EXAMPLES_DIR = ROOT / "examples"
@@ -71,6 +74,31 @@ TEMPLATE_FILE_ORDER = [
 
 SEMVER = re.compile(r"^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$")
 ZIP_DT = (1980, 1, 1, 0, 0, 0)
+
+def load_config() -> dict:
+    data = yaml.safe_load(CFG_PATH.read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        raise SystemExit("Ogiltig gpt-project.yaml")
+    return data
+
+def active_runtimes(cfg: dict) -> list[str]:
+    return [
+        runtime_id
+        for runtime_id, runtime_cfg in (cfg.get("runtime") or {}).items()
+        if isinstance(runtime_cfg, dict) and runtime_cfg.get("status") == "active"
+    ]
+
+def runtime_cfg(cfg: dict, runtime_id: str) -> dict:
+    value = (cfg.get("runtime") or {}).get(runtime_id)
+    if not isinstance(value, dict):
+        raise SystemExit(f"Saknad runtime-konfiguration: {runtime_id}")
+    return value
+
+def artifact_path(cfg: dict, runtime_id: str, version: str, output_dir: Path) -> Path:
+    pattern = runtime_cfg(cfg, runtime_id).get("artifact_name")
+    if not pattern:
+        raise SystemExit(f"Runtime {runtime_id} saknar artifact_name")
+    return output_dir / pattern.format(version=version)
 
 
 def sha256(path: Path) -> str:
@@ -178,22 +206,32 @@ def copy_tree_files(src: Path, dst: Path) -> None:
         target=dst/path.relative_to(src); target.parent.mkdir(parents=True,exist_ok=True); shutil.copy2(path,target)
 
 
-def build_custom(stage: Path, version: str) -> None:
+def build_custom(cfg: dict, stage: Path, version: str) -> None:
+    rcfg = runtime_cfg(cfg, "custom_gpt")
     shutil.copy2(ROOT / "README.md", stage / "README.md")
     (stage / "VERSION").write_text(version + "\n", encoding="utf-8")
-    copy_tree_files(CONFIG_DIR, stage / "gpt-configuration")
-    copy_tree_files(KNOWLEDGE_DIR, stage / "knowledge-upload")
-    copy_tree_files(EXAMPLES_DIR, stage / "examples")
+    instruction_source = ROOT / rcfg["instruction"]["source"]
+    starters_source = ROOT / rcfg["conversation_starters"]
+    instruction_target = stage / rcfg["instruction"]["source"]
+    starters_target = stage / rcfg["conversation_starters"]
+    instruction_target.parent.mkdir(parents=True, exist_ok=True)
+    starters_target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(instruction_source, instruction_target)
+    shutil.copy2(starters_source, starters_target)
+    copy_tree_files(ROOT / rcfg["knowledge"]["source"], stage / rcfg["knowledge"]["source"])
+    copy_tree_files(ROOT / rcfg.get("examples", "examples"), stage / "examples")
 
 
-def build_portable(stage: Path, version: str) -> None:
-    shutil.copy2(PORTABLE_DIR / "START-HERE.md", stage / "START-HERE.md")
+def build_portable(cfg: dict, stage: Path, version: str) -> None:
+    rcfg = runtime_cfg(cfg, "chatgpt_chat")
+    source = rcfg["source"]
+    shutil.copy2(ROOT / source["start_here"], stage / "START-HERE.md")
     (stage / "VERSION").write_text(version + "\n", encoding="utf-8")
     (stage / "assistant").mkdir(parents=True, exist_ok=True)
-    shutil.copy2(CONFIG_DIR / "instructions.md", stage / "assistant" / "instructions.md")
-    copy_tree_files(KNOWLEDGE_DIR, stage / "knowledge")
-    copy_tree_files(EXAMPLES_DIR, stage / "examples")
-    copy_tree_files(TEMPLATE_ROOT, stage / "templates" / "bokprojekt")
+    shutil.copy2(ROOT / source["instructions"], stage / "assistant" / "instructions.md")
+    copy_tree_files(ROOT / source["knowledge"], stage / "knowledge")
+    copy_tree_files(ROOT / source.get("examples", "examples"), stage / "examples")
+    copy_tree_files(ROOT / source["template_root"], stage / "templates" / "bokprojekt")
     files=[]
     for path in sorted(p for p in stage.rglob("*") if p.is_file() and p.name != "MANIFEST.json"):
         files.append({"path":path.relative_to(stage).as_posix(),"sha256":sha256(path)})
@@ -215,10 +253,30 @@ def main() -> int:
     if args.sync_bundle:
         sync_bundle(); print(f"Synkad: {BUNDLE_PATH.relative_to(ROOT)}")
         if args.version is None: return 0
-    validate_sources(); version=resolve_version(args.version); output_dir=Path(args.output_dir).resolve(); work=output_dir/".build"
+    cfg=load_config()
+    validate_sources()
+    version=resolve_version(args.version)
+    output_dir=Path(args.output_dir).resolve()
+    work=output_dir/".build"
+    runtimes=active_runtimes(cfg)
+    supported={"custom_gpt","chatgpt_chat"}
+    unsupported=sorted(set(runtimes)-supported)
+    if unsupported:
+        raise SystemExit("Aktiv runtime saknar build-adapter: " + ", ".join(unsupported))
     if work.exists(): shutil.rmtree(work)
-    work.mkdir(parents=True); custom=work/"custom"; portable=work/"portable"; custom.mkdir(); portable.mkdir()
-    build_custom(custom,version); build_portable(portable,version)
-    a=output_dir/f"larobokskaparen-custom-gpt-v{version}.zip"; b=output_dir/f"larobokskaparen-chat-v{version}.zip"; deterministic_zip(custom,a); deterministic_zip(portable,b); shutil.rmtree(work)
-    print(f"Byggd: {a}"); print(f"Byggd: {b}"); return 0
+    work.mkdir(parents=True)
+    built=[]
+    if "custom_gpt" in runtimes:
+        custom=work/"custom"; custom.mkdir()
+        build_custom(cfg,custom,version)
+        out=artifact_path(cfg,"custom_gpt",version,output_dir)
+        deterministic_zip(custom,out); built.append(out)
+    if "chatgpt_chat" in runtimes:
+        portable=work/"portable"; portable.mkdir()
+        build_portable(cfg,portable,version)
+        out=artifact_path(cfg,"chatgpt_chat",version,output_dir)
+        deterministic_zip(portable,out); built.append(out)
+    shutil.rmtree(work)
+    for path in built: print(f"Byggd: {path}")
+    return 0
 if __name__ == "__main__": raise SystemExit(main())
