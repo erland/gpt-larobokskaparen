@@ -259,7 +259,7 @@ def main() -> int:
     output_dir=Path(args.output_dir).resolve()
     work=output_dir/".build"
     runtimes=active_runtimes(cfg)
-    supported={"custom_gpt","chatgpt_chat","claude_projects"}
+    supported={"custom_gpt","chatgpt_chat","claude_projects","opencode"}
     unsupported=sorted(set(runtimes)-supported)
     if unsupported:
         raise SystemExit("Aktiv runtime saknar build-adapter: " + ", ".join(unsupported))
@@ -281,6 +281,11 @@ def main() -> int:
         build_portable_agent(cfg,"claude_projects",claude,version,"claude-projects")
         out=artifact_path(cfg,"claude_projects",version,output_dir)
         deterministic_zip(claude,out); built.append(out)
+    if "opencode" in runtimes:
+        opencode=work/"opencode"; opencode.mkdir()
+        build_portable_agent(cfg,"opencode",opencode,version,"opencode")
+        out=artifact_path(cfg,"opencode",version,output_dir)
+        deterministic_zip(opencode,out); built.append(out)
     shutil.rmtree(work)
     for path in built: print(f"Byggd: {path}")
     return 0
