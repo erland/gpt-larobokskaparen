@@ -194,17 +194,28 @@ tools:
 runtime:
   chatgpt_chat:
     status: active
-    source: portable/START-HERE.md
+    adapter_id: chatgpt_chat
+    artifact_name: larobokskaparen-chat-v{version}.zip
+    source:
+      start_here: portable/START-HERE.md
+      instructions: gpt-configuration/instructions.md
+      knowledge: knowledge-upload
+      examples: examples
+      template_root: templates/bokprojekt
   custom_gpt:
     status: active
+    adapter_id: chatgpt_custom
+    artifact_name: larobokskaparen-custom-gpt-v{version}.zip
     instruction:
       mode: identical
       max_characters: 8000
       source: gpt-configuration/instructions.md
+    conversation_starters: gpt-configuration/conversation-starters.md
     knowledge:
       strategy: compiled
       max_files: 20
       source: knowledge-upload
+    examples: examples
   claude_projects:
     status: planned
   opencode:
@@ -216,9 +227,11 @@ build_system:
   current:
     script: scripts/build_distributions.py
     validation_script: scripts/validate_distributions.py
+    selection: runtime_status_active
     targets:
       - chatgpt_chat
       - custom_gpt
+    compatibility_mode: preserve_existing_artifact_layout
   migration_target:
     runtimes:
       - chatgpt_chat
