@@ -22,20 +22,21 @@ def payload(path):
 def main(version):
     cfg=config()
     chat_files,chat_manifest=payload(artifact(cfg,'chatgpt_chat',version))
-    claude_files,claude_manifest=payload(artifact(cfg,'claude_projects',version))
-    if set(chat_files)!=set(claude_files):
-        raise SystemExit(
-            'Runtime parity file mismatch: '
-            f'chat-only={sorted(set(chat_files)-set(claude_files))}, '
-            f'claude-only={sorted(set(claude_files)-set(chat_files))}'
-        )
-    mismatched=[name for name in chat_files if chat_files[name]!=claude_files[name]]
-    if mismatched:
-        raise SystemExit(f'Runtime parity content mismatch: {mismatched}')
-    for key in ('version','entrypoint','instructions','knowledge','template_root'):
-        if chat_manifest.get(key)!=claude_manifest.get(key):
-            raise SystemExit(f'Manifest parity mismatch for {key}')
-    print('OK: ChatGPT Chat and Claude Projects have content parity')
+    for runtime_id,label in [('claude_projects','Claude Projects'),('opencode','OpenCode')]:
+        other_files,other_manifest=payload(artifact(cfg,runtime_id,version))
+        if set(chat_files)!=set(other_files):
+            raise SystemExit(
+                f'Runtime parity file mismatch for {label}: '
+                f'chat-only={sorted(set(chat_files)-set(other_files))}, '
+                f'{runtime_id}-only={sorted(set(other_files)-set(chat_files))}'
+            )
+        mismatched=[name for name in chat_files if chat_files[name]!=other_files[name]]
+        if mismatched:
+            raise SystemExit(f'Runtime parity content mismatch for {label}: {mismatched}')
+        for key in ('version','entrypoint','instructions','knowledge','template_root'):
+            if chat_manifest.get(key)!=other_manifest.get(key):
+                raise SystemExit(f'Manifest parity mismatch for {label}/{key}')
+    print('OK: ChatGPT Chat, Claude Projects and OpenCode have content parity')
 
 if __name__=='__main__':
     p=argparse.ArgumentParser(); p.add_argument('--version'); a=p.parse_args()
