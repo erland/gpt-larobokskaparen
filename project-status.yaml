@@ -9,14 +9,15 @@ plan:
 
 progress:
   current_phase: migration_to_gpt_builder_1_5_0
-  current_step: 6
-  last_completed_step: 5
+  current_step: 7
+  last_completed_step: 6
   completed_steps:
     - 1
     - 2
     - 3
     - 4
     - 5
+    - 6
   skipped_steps: []
   inserted_steps: []
 
@@ -24,13 +25,12 @@ state:
   overall: warning
   blocking_issues: []
   warnings:
-    - "OpenAI Plugin är planerad men ännu inte aktiverad."
-    - "OpenAI Plugin förväntas ha dokumenterade runtime-gap för ZIP, scriptkörning och EPUB/PDF om värdklienten saknar motsvarande förmåga."
+    - "OpenAI Plugin har avsiktliga runtime-gap för ZIP/workspace-state, scriptkörning och EPUB/PDF när värdklienten saknar motsvarande förmågor."
 
 next_step:
-  recommended: 6
-  title: Lägg till OpenAI Plugin
-  reason: "OpenCode byggs och valideras nu med samma canonical instruktion, Knowledge, exempel och bokprojektmall som ChatGPT Chat. Nästa steg är plugin-distributionen med explicit runtime-gap för stateful fil-/exportfunktioner."
+  recommended: 7
+  title: Runtime parity, hygiene och robustness
+  reason: "Alla fem mål-runtimes är nu aktiva. Nästa steg är tvärgående kontroller av stateful projektmodell, runtime-parity, project hygiene och dokumenterade plugin-gap innan CI/release generaliseras."
 
 resume:
   supported: true
@@ -40,4 +40,4 @@ resume:
     - docs/development-plan.md
     - STATUS.md
     - PROJECT.md
-  human_readable_status: "Steg 1–5 av 9 är klara. Fortsätt med OpenAI Plugin."
+  human_readable_status: "Steg 1–6 av 9 är klara. Fortsätt med runtime parity, hygiene och robustness."
