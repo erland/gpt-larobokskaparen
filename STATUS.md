@@ -4,23 +4,22 @@ Migrering till **GPT Byggaren 1.5.0** pågår.
 
 ## Nuvarande läge
 
-- Steg 1–5 av 9 är klara.
+- Steg 1–6 av 9 är klara.
+- Samtliga fem mål-runtimes är nu aktiva: ChatGPT Chat, Custom GPT, Claude Projects, OpenCode och OpenAI Plugin.
 - `gpt-configuration/instructions.md` är fortsatt canonical beteendeinstruktion.
 - `templates/bokprojekt/` är fortsatt single source of truth för bokprojekt.
-- Projektet är klassificerat som **stateful**.
-- Build och distributionsvalidering väljer aktiva runtimes deklarativt från `gpt-project.yaml`.
-- ChatGPT Chat, Custom GPT och Claude Projects är fortsatt aktiva.
-- **OpenCode är nu aktiv runtime** och byggs som `larobokskaparen-opencode-v{version}.zip`.
-- OpenCode använder samma canonical instruktion, Knowledge, exempel och hela bokprojektmallen som ChatGPT Chat.
-- OpenCode är deklarerad som workspace-/script-orienterad med stöd för project integrity och lokal export när runtime-miljön har nödvändiga beroenden.
-- CI verifierar byte-identisk parity mellan ChatGPT Chat, Claude Projects och OpenCode, bortsett från runtime-specifik manifestmetadata.
-- Befintlig template-bundle-synk, bokprojektintegritet och exportordning fortsätter passera.
-- OpenAI Plugin är planerad men inte aktiverad.
+- Projektet är fortsatt klassificerat som **stateful**.
+- OpenAI Plugin byggs som `larobokskaparen-openai-plugin-v{version}.zip` med skills-first-struktur.
+- Pluginen inkluderar canonical bokmetodik, Knowledge, exempel och hela bokprojektmallen.
+- Python-skript under pluginens bokprojektmall följer med som **referensinnehåll/projektmall**, inte som påstått körbara pluginverktyg.
+- ZIP/workspace-state, project-integrity-scripts och EPUB/PDF-export är explicit beroende av värdklientens faktiska fil-/exekveringsförmåga.
+- Pluginen får inte påstå att projekt-ZIP, revision, manifest, EPUB eller PDF har skapats eller verifierats om värdklienten inte faktiskt kan göra det.
+- CI passerar kontraktsvalidering, build av fem runtimes, distributionsvalidering, portabel runtime-parity och artifact-upload.
 
 ## Nästa steg
 
-**Steg 6 – Lägg till OpenAI Plugin.**
+**Steg 7 – Runtime parity, hygiene och robustness.**
 
-Skapa en skills-first plugin-distribution som bevarar bokmetodik, Knowledge och bokprojektmodell, men dokumenterar att ZIP/workspace-state, scriptkörning och EPUB/PDF-export är beroende av värdklientens faktiska förmågor.
+Inför tvärgående kontroller för alla fem runtimes, verifiera den stateful bokprojektmodellen, projektträdets hygiene och de avsiktliga plugin-avvikelserna innan releaseflödet generaliseras.
 
 Maskinläsbar status finns i `project-status.yaml`.
