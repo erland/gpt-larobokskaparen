@@ -233,7 +233,23 @@ runtime:
       persistent_state: workspace_file
       script_execution: runtime_managed
   opencode:
-    status: planned
+    status: active
+    adapter_id: opencode
+    artifact_name: larobokskaparen-opencode-v{version}.zip
+    source:
+      start_here: portable/START-HERE.md
+      instructions: gpt-configuration/instructions.md
+      knowledge: knowledge-upload
+      examples: examples
+      template_root: templates/bokprojekt
+    compatibility:
+      instruction_mode: identical
+      knowledge_strategy: compiled
+      workspace_model: agent_workspace
+      persistent_state: workspace_file
+      script_execution: runtime_managed
+      project_integrity: supported
+      local_export: supported_when_dependencies_available
   openai_plugin:
     status: planned
 
@@ -246,6 +262,7 @@ build_system:
       - chatgpt_chat
       - custom_gpt
       - claude_projects
+      - opencode
     compatibility_mode: preserve_existing_artifact_layout
   migration_target:
     runtimes:
