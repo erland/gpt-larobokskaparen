@@ -39,6 +39,10 @@ jobs:
             version="0.0.0-dev+${GITHUB_SHA::7}"
           fi
           echo "version=$version" >> "$GITHUB_OUTPUT"
+      - name: Install validation dependencies
+        run: python3 -m pip install --disable-pip-version-check PyYAML jsonschema
+      - name: Validate GPT Builder 1.5 project contracts
+        run: python3 scripts/validate_project_contracts.py
       - name: Build distributions
         run: python3 scripts/build_distributions.py --version "${{ steps.version.outputs.version }}"
       - name: Validate distributions
