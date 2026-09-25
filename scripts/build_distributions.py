@@ -259,7 +259,7 @@ def main() -> int:
     output_dir=Path(args.output_dir).resolve()
     work=output_dir/".build"
     runtimes=active_runtimes(cfg)
-    supported={"custom_gpt","chatgpt_chat","claude_projects","opencode"}
+    supported={"custom_gpt","chatgpt_chat","claude_projects","opencode","openai_plugin"}
     unsupported=sorted(set(runtimes)-supported)
     if unsupported:
         raise SystemExit("Aktiv runtime saknar build-adapter: " + ", ".join(unsupported))
@@ -286,6 +286,66 @@ def main() -> int:
         build_portable_agent(cfg,"opencode",opencode,version,"opencode")
         out=artifact_path(cfg,"opencode",version,output_dir)
         deterministic_zip(opencode,out); built.append(out)
+    if "openai_plugin" in runtimes:
+        rcfg=runtime_cfg(cfg,"openai_plugin")
+        plugin_root=work/"openai-plugin"/rcfg["manifest"]["name"]
+        skill_root=plugin_root/"skills"/rcfg["skill"]["id"]
+        refs=skill_root/"references"
+        refs.mkdir(parents=True,exist_ok=True)
+        manifest={
+            "$schema":"https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+            "name":rcfg["manifest"]["name"],
+            "version":version,
+            "description":rcfg["manifest"]["description"],
+            "author":{"name":"Erland Lindmark"},
+            "extensions":{
+                "com.openai":{
+                    "interface":{
+                        "displayName":rcfg["manifest"]["display_name"],
+                        "shortDescription":"Skapa och förvalta läroböcker och faktaböcker",
+                        "longDescription":rcfg["manifest"]["description"],
+                        "developerName":"Erland Lindmark",
+                        "category":rcfg["manifest"]["category"],
+                        "capabilities":["Interactive"],
+                        "defaultPrompt":[
+                            "Hjälp mig planera en lärobok.",
+                            "Hjälp mig skapa en faktabok från grunden.",
+                            "Fortsätt arbeta med mitt bokprojekt."
+                        ]
+                    }
+                }
+            }
+        }
+        (plugin_root/"plugin.json").write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
+        canonical=(ROOT/rcfg["skill"]["source_instruction"]).read_text(encoding="utf-8").strip()
+        skill_text=(
+            "---\n"
+            f"name: {rcfg['skill']['id']}\n"
+            "description: Planera, skriva, underhålla och kvalitetssäkra läroböcker och faktaböcker. "
+            "Använd när användaren vill skapa eller fortsätta ett bokprojekt, planera kapitel, skriva innehåll, "
+            "hantera bokprojektfiler eller förbereda export.\n"
+            "---\n\n"
+            "# Lärobokskaparen\n\n"
+            "Följ det kanoniska beteendekontraktet nedan. Referensmaterial finns i references/knowledge/, "
+            "bokprojektmallen i references/templates/bokprojekt/ och exempel i references/examples/.\n\n"
+            "## Plugin-runtime\n\n"
+            "Detta är en skills-first-distribution utan inbyggd MCP-server eller extern appintegration.\n\n"
+            "- Använd värdklientens fil-/workspace-/exekveringsförmåga när den faktiskt finns.\n"
+            "- Påstå aldrig att ett ZIP-projekt, project-manifest, revision, EPUB eller PDF har skapats, "
+            "uppdaterats eller verifierats om värdklienten inte faktiskt kan genomföra det.\n"
+            "- Bundlade Python-skript är inte en förutsättning för plugin-runtime och ingår därför inte.\n"
+            "- När full stateful projektfunktion saknas: bevara bokmetodik, planering, kvalitetsregler och "
+            "projektschema, men redovisa kort att filbaserad integritet/revision/export kräver en runtime med stöd.\n"
+            "- project-manifest.json och book.yaml får endast behandlas som verifierad state när de faktiskt kan läsas/skrivas i arbetsytan.\n\n"
+            "## Kanoniskt beteendekontrakt\n\n"
+            + canonical + "\n"
+        )
+        (skill_root/"SKILL.md").write_text(skill_text,encoding="utf-8")
+        copy_tree_files(ROOT/rcfg["skill"]["knowledge"],refs/"knowledge")
+        copy_tree_files(ROOT/rcfg["skill"]["examples"],refs/"examples")
+        copy_tree_files(ROOT/rcfg["skill"]["template_root"],refs/"templates"/"bokprojekt")
+        out=artifact_path(cfg,"openai_plugin",version,output_dir)
+        deterministic_zip(plugin_root.parent,out); built.append(out)
     shutil.rmtree(work)
     for path in built: print(f"Byggd: {path}")
     return 0
