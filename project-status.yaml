@@ -1,0 +1,40 @@
+schema_version: 1
+project:
+  id: larobokskaparen
+  name: Lärobokskaparen
+
+plan:
+  path: docs/development-plan.md
+  total_steps: 9
+
+progress:
+  current_phase: migration_to_gpt_builder_1_5_0
+  current_step: 2
+  last_completed_step: 1
+  completed_steps:
+    - 1
+  skipped_steps: []
+  inserted_steps: []
+
+state:
+  overall: warning
+  blocking_issues: []
+  warnings:
+    - "Projektet använder ännu legacy build/validation utan 1.5.0-kontrakt."
+    - "Claude Projects, OpenCode och OpenAI Plugin är planerade men ännu inte aktiverade."
+    - "OpenAI Plugin förväntas ha dokumenterade runtime-gap för ZIP, scriptkörning och EPUB/PDF om värdklienten saknar motsvarande förmåga."
+
+next_step:
+  recommended: 2
+  title: Inför plattformsneutrala kontrakt och scheman
+  reason: "Projektstatus och migrationsplan finns nu. Nästa säkra steg är att modellera capabilities, artifacts, workspace/state och tools innan build-systemet ändras."
+
+resume:
+  supported: true
+  required_files:
+    - gpt-project.yaml
+    - project-status.yaml
+    - docs/development-plan.md
+    - STATUS.md
+    - PROJECT.md
+  human_readable_status: "Steg 1 av 9 är klart. Fortsätt med 1.5.0-kontrakt och scheman."
