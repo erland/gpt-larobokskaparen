@@ -36,7 +36,35 @@ def main(version):
         for key in ('version','entrypoint','instructions','knowledge','template_root'):
             if chat_manifest.get(key)!=other_manifest.get(key):
                 raise SystemExit(f'Manifest parity mismatch for {label}/{key}')
-    print('OK: ChatGPT Chat, Claude Projects and OpenCode have content parity')
+    canonical=(ROOT/cfg['instructions']['canonical']).read_bytes()
+
+    custom_path=artifact(cfg,'custom_gpt',version)
+    with zipfile.ZipFile(custom_path) as z:
+        custom_instruction=z.read(cfg['runtime']['custom_gpt']['instruction']['source'])
+        if custom_instruction!=canonical:
+            raise SystemExit('Custom GPT canonical instruction mismatch')
+
+    plugin_cfg=cfg['runtime']['openai_plugin']
+    plugin_path=artifact(cfg,'openai_plugin',version)
+    root=plugin_cfg['manifest']['name']+'/'
+    skill_path=root+'skills/'+plugin_cfg['skill']['id']+'/SKILL.md'
+    with zipfile.ZipFile(plugin_path) as z:
+        skill=z.read(skill_path)
+        if canonical.decode('utf-8').strip().encode('utf-8') not in skill:
+            raise SystemExit('OpenAI Plugin skill does not embed canonical instruction')
+        knowledge_root=ROOT/plugin_cfg['skill']['knowledge']
+        prefix=root+'skills/'+plugin_cfg['skill']['id']+'/references/knowledge/'
+        for p in sorted(knowledge_root.glob('*.md')):
+            if z.read(prefix+p.name)!=p.read_bytes():
+                raise SystemExit(f'Plugin Knowledge mismatch: {p.name}')
+        template_root=ROOT/plugin_cfg['skill']['template_root']
+        tprefix=root+'skills/'+plugin_cfg['skill']['id']+'/references/templates/bokprojekt/'
+        for p in sorted(x for x in template_root.rglob('*') if x.is_file() and '__pycache__' not in x.parts and x.suffix!='.pyc'):
+            rel=p.relative_to(template_root).as_posix()
+            if z.read(tprefix+rel)!=p.read_bytes():
+                raise SystemExit(f'Plugin template mismatch: {rel}')
+
+    print('OK: runtime parity verified across all five active runtimes')
 
 if __name__=='__main__':
     p=argparse.ArgumentParser(); p.add_argument('--version'); a=p.parse_args()
