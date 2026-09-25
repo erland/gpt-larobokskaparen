@@ -113,7 +113,7 @@ def main() -> int:
     build_module = load_module(ROOT / "scripts/build_distributions.py", "build_distributions_for_validation")
     version = build_module.resolve_version(args.version)
     runtimes=active_runtimes(cfg)
-    unsupported=sorted(set(runtimes)-{"custom_gpt","chatgpt_chat","claude_projects"})
+    unsupported=sorted(set(runtimes)-{"custom_gpt","chatgpt_chat","claude_projects","opencode"})
     if unsupported:
         raise SystemExit("Aktiv runtime saknar valideringsadapter: " + ", ".join(unsupported))
 
@@ -195,10 +195,12 @@ def main() -> int:
     custom_path=expected_paths["custom_gpt"]
     portable_path=expected_paths["chatgpt_chat"]
     claude_path=expected_paths["claude_projects"]
+    opencode_path=expected_paths["opencode"]
     custom = read_zip(custom_path)
     portable = read_zip(portable_path)
     claude = read_zip(claude_path)
-    if custom.get("VERSION") != (version + "\n").encode() or portable.get("VERSION") != (version + "\n").encode() or claude.get("VERSION") != (version + "\n").encode():
+    opencode = read_zip(opencode_path)
+    if custom.get("VERSION") != (version + "\n").encode() or portable.get("VERSION") != (version + "\n").encode() or claude.get("VERSION") != (version + "\n").encode() or opencode.get("VERSION") != (version + "\n").encode():
         raise SystemExit("VERSION mismatch")
 
     custom_cfg=cfg["runtime"]["custom_gpt"]
@@ -206,7 +208,8 @@ def main() -> int:
     src_instructions = (ROOT / custom_cfg["instruction"]["source"]).read_bytes()
     starters = (ROOT / custom_cfg["conversation_starters"]).read_bytes()
     claude_cfg=cfg["runtime"]["claude_projects"]
-    if custom.get(custom_cfg["instruction"]["source"]) != src_instructions or portable.get("assistant/instructions.md") != (ROOT/chat_cfg["source"]["instructions"]).read_bytes() or claude.get("assistant/instructions.md") != (ROOT/claude_cfg["source"]["instructions"]).read_bytes():
+    opencode_cfg=cfg["runtime"]["opencode"]
+    if custom.get(custom_cfg["instruction"]["source"]) != src_instructions or portable.get("assistant/instructions.md") != (ROOT/chat_cfg["source"]["instructions"]).read_bytes() or claude.get("assistant/instructions.md") != (ROOT/claude_cfg["source"]["instructions"]).read_bytes() or opencode.get("assistant/instructions.md") != (ROOT/opencode_cfg["source"]["instructions"]).read_bytes():
         raise SystemExit("Instructions mismatch")
     if custom.get(custom_cfg["conversation_starters"]) != starters:
         raise SystemExit("Conversation starters mismatch")
@@ -219,6 +222,8 @@ def main() -> int:
             raise SystemExit(f"Portable Knowledge mismatch: {name}")
         if claude.get("knowledge/" + name) != src:
             raise SystemExit(f"Claude Knowledge mismatch: {name}")
+        if opencode.get("knowledge/" + name) != src:
+            raise SystemExit(f"OpenCode Knowledge mismatch: {name}")
 
     for path in sorted(p for p in template_root.rglob("*") if p.is_file() and "__pycache__" not in p.parts and p.suffix != ".pyc"):
         rel = path.relative_to(template_root).as_posix()
@@ -226,13 +231,18 @@ def main() -> int:
             raise SystemExit(f"Portable template mismatch: {rel}")
         if claude.get("templates/bokprojekt/" + rel) != path.read_bytes():
             raise SystemExit(f"Claude template mismatch: {rel}")
+        if opencode.get("templates/bokprojekt/" + rel) != path.read_bytes():
+            raise SystemExit(f"OpenCode template mismatch: {rel}")
 
     manifest = json.loads(portable["MANIFEST.json"].decode())
     claude_manifest = json.loads(claude["MANIFEST.json"].decode())
+    opencode_manifest = json.loads(opencode["MANIFEST.json"].decode())
     if manifest.get("version") != version or manifest.get("template_root") != "templates/bokprojekt":
         raise SystemExit("MANIFEST metadata mismatch")
     if claude_manifest.get("version") != version or claude_manifest.get("format") != "claude-projects" or claude_manifest.get("template_root") != "templates/bokprojekt":
         raise SystemExit("Claude MANIFEST metadata mismatch")
+    if opencode_manifest.get("version") != version or opencode_manifest.get("format") != "opencode" or opencode_manifest.get("template_root") != "templates/bokprojekt":
+        raise SystemExit("OpenCode MANIFEST metadata mismatch")
     if manifest.get("knowledge") != ["knowledge/" + name for name in EXPECTED]:
         raise SystemExit("MANIFEST Knowledge mismatch")
     for entry in manifest.get("files", []):
