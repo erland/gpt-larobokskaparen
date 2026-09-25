@@ -74,11 +74,12 @@ Pandoc används som standard när det finns. Exportscriptet läser kapitel **i e
 
 ## Distributioner
 
-Repositoryt bygger aktiva runtime-paket deklarativt från `gpt-project.yaml`. För närvarande är tre runtimes aktiva:
+Repositoryt bygger aktiva runtime-paket deklarativt från `gpt-project.yaml`. För närvarande är fyra runtimes aktiva:
 
 - `larobokskaparen-custom-gpt-vX.Y.Z.zip` – för installation/uppdatering av Custom GPT.
 - `larobokskaparen-chat-vX.Y.Z.zip` – portabel version för en vanlig ChatGPT-konversation.
 - `larobokskaparen-claude-projects-vX.Y.Z.zip` – portabel Claude Projects-distribution med samma canonical instruktion, Knowledge och bokprojektmall.
+- `larobokskaparen-opencode-vX.Y.Z.zip` – OpenCode-distribution för workspace-/script-orienterat bokprojektarbete.
 
 Den portabla distributionen innehåller:
 
