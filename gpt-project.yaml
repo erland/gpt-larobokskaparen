@@ -251,7 +251,28 @@ runtime:
       project_integrity: supported
       local_export: supported_when_dependencies_available
   openai_plugin:
-    status: planned
+    status: active
+    adapter_id: openai_plugin
+    artifact_name: larobokskaparen-openai-plugin-v{version}.zip
+    manifest:
+      name: larobokskaparen
+      display_name: Lärobokskaparen
+      description: "Planera, skriva, underhålla och kvalitetssäkra läroböcker och faktaböcker med en stateful bokprojektmodell."
+      category: Productivity
+    skill:
+      id: larobokskaparen
+      source_instruction: gpt-configuration/instructions.md
+      knowledge: knowledge-upload
+      examples: examples
+      template_root: templates/bokprojekt
+    compatibility:
+      architecture: skills_first
+      external_integrations: none
+      workspace_zip_state: host_capability_dependent
+      bundled_script_execution: not_assumed
+      project_integrity_scripts: host_capability_dependent
+      epub_pdf_export: host_capability_dependent
+      behavior_gap: "Pluginen får inte påstå att ZIP-projekt, revisionsmanifest, scripts eller EPUB/PDF har skapats eller verifierats om värdklienten saknar motsvarande fil-/exekveringsförmåga."
 
 build_system:
   current:
@@ -263,6 +284,7 @@ build_system:
       - custom_gpt
       - claude_projects
       - opencode
+      - openai_plugin
     compatibility_mode: preserve_existing_artifact_layout
   migration_target:
     runtimes:
