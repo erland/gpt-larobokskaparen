@@ -9,8 +9,8 @@ plan:
 
 progress:
   current_phase: migration_to_gpt_builder_1_5_0
-  current_step: 8
-  last_completed_step: 7
+  current_step: 9
+  last_completed_step: 8
   completed_steps:
     - 1
     - 2
@@ -19,6 +19,7 @@ progress:
     - 5
     - 6
     - 7
+    - 8
   skipped_steps: []
   inserted_steps: []
 
@@ -27,12 +28,11 @@ state:
   blocking_issues: []
   warnings:
     - "OpenAI Plugin har avsiktliga runtime-gap för ZIP/workspace-state, scriptkörning och EPUB/PDF när värdklienten saknar motsvarande förmågor."
-    - "GitHub Release-flödet är ännu generiskt dist/*.zip och ska göras deklarativt mot aktiva runtime-assets i steg 8."
 
 next_step:
-  recommended: 8
-  title: CI och release
-  reason: "Alla fem runtimes passerar nu kontrakt, hygiene, stateful robustness, distributionsvalidering och runtime parity. Nästa steg är att generalisera releaseflödet mot de aktiva runtime-assets som deklareras i gpt-project.yaml."
+  recommended: 9
+  title: Slutlig release-readiness
+  reason: "CI och releaseflödet verifierar nu exakt de aktiva runtime-assets som deklareras i gpt-project.yaml. Nästa steg är slutlig dokumentations-, status- och PR-kontroll inför merge och stabil release."
 
 resume:
   supported: true
@@ -42,4 +42,4 @@ resume:
     - docs/development-plan.md
     - STATUS.md
     - PROJECT.md
-  human_readable_status: "Steg 1–7 av 9 är klara. Fortsätt med CI- och releasegeneralisering."
+  human_readable_status: "Steg 1–8 av 9 är klara. Fortsätt med slutlig release-readiness."
