@@ -1,0 +1,99 @@
+schema_version: 1
+project:
+  id: larobokskaparen
+  name: Lärobokskaparen
+  profile: zip_first_advanced
+  orchestration: stateful
+
+instructions:
+  canonical: gpt-configuration/instructions.md
+  core_contract:
+    enabled: true
+    required_markers:
+      - "# Lärobokskaparen – GPT-instruktioner"
+      - "## Startflöde"
+      - "## Kanoniskt bokprojekt"
+      - "## Markdown och lokal export"
+      - "## EPUB/PDF"
+      - "## Kvalitet"
+    required_runtime_dependencies: []
+    max_required_file_hops: 1
+    knowledge_may_not_be_required_for_core_behavior: true
+
+knowledge_architecture:
+  canonical_root: knowledge-upload
+  template_source_of_truth: templates/bokprojekt
+  generated_template_bundle: knowledge-upload/19-project-template-bundle.md
+
+runtime:
+  chatgpt_chat:
+    status: active
+    source: portable/START-HERE.md
+  custom_gpt:
+    status: active
+    instruction:
+      mode: identical
+      max_characters: 8000
+      source: gpt-configuration/instructions.md
+    knowledge:
+      strategy: compiled
+      max_files: 20
+      source: knowledge-upload
+  claude_projects:
+    status: planned
+  opencode:
+    status: planned
+  openai_plugin:
+    status: planned
+
+build_system:
+  current:
+    script: scripts/build_distributions.py
+    validation_script: scripts/validate_distributions.py
+    targets:
+      - chatgpt_chat
+      - custom_gpt
+  migration_target:
+    runtimes:
+      - chatgpt_chat
+      - custom_gpt
+      - claude_projects
+      - opencode
+      - openai_plugin
+
+workspace_state:
+  project_workspace:
+    status: required
+    model: zip_project
+    canonical_metadata: book.yaml
+    integrity_manifest: project-manifest.json
+    revision_log: revision-log.md
+  generated_project:
+    source_of_truth: templates/bokprojekt
+    state_files:
+      - book.yaml
+      - project-manifest.json
+      - revision-log.md
+      - project-index.md
+
+testing:
+  distribution_validation: scripts/validate_distributions.py
+  project_validation: templates/bokprojekt/scripts/validate_project.py
+  project_integrity: templates/bokprojekt/scripts/project_integrity.py
+
+ci:
+  enabled: true
+  workflow: .github/workflows/build-distributions.yml
+
+release:
+  github:
+    enabled: true
+    workflow: .github/workflows/build-distributions.yml
+    version_source: release_tag
+
+migration:
+  target_builder_version: 1.5.0
+  strategy: behavior_preserving
+  canonical_instruction_must_be_preserved: true
+  current_distribution_count: 2
+  target_distribution_count: 5
