@@ -43,11 +43,15 @@ jobs:
         run: python3 -m pip install --disable-pip-version-check PyYAML jsonschema
       - name: Validate GPT Builder 1.5 project contracts
         run: python3 scripts/validate_project_contracts.py
+      - name: Validate project hygiene
+        run: python3 scripts/validate_project_hygiene.py
+      - name: Validate model/runtime robustness
+        run: python3 scripts/validate_model_robustness.py
       - name: Build distributions
         run: python3 scripts/build_distributions.py --version "${{ steps.version.outputs.version }}"
       - name: Validate distributions
         run: python3 scripts/validate_distributions.py --version "${{ steps.version.outputs.version }}"
-      - name: Validate ChatGPT/Claude runtime parity
+      - name: Validate runtime parity
         run: python3 scripts/validate_runtime_parity.py --version "${{ steps.version.outputs.version }}"
       - name: Upload workflow artifacts
         uses: actions/upload-artifact@v4
