@@ -222,8 +222,8 @@ def build_custom(cfg: dict, stage: Path, version: str) -> None:
     copy_tree_files(ROOT / rcfg.get("examples", "examples"), stage / "examples")
 
 
-def build_portable(cfg: dict, stage: Path, version: str) -> None:
-    rcfg = runtime_cfg(cfg, "chatgpt_chat")
+def build_portable_agent(cfg: dict, runtime_id: str, stage: Path, version: str, format_name: str) -> None:
+    rcfg = runtime_cfg(cfg, runtime_id)
     source = rcfg["source"]
     shutil.copy2(ROOT / source["start_here"], stage / "START-HERE.md")
     (stage / "VERSION").write_text(version + "\n", encoding="utf-8")
@@ -235,7 +235,7 @@ def build_portable(cfg: dict, stage: Path, version: str) -> None:
     files=[]
     for path in sorted(p for p in stage.rglob("*") if p.is_file() and p.name != "MANIFEST.json"):
         files.append({"path":path.relative_to(stage).as_posix(),"sha256":sha256(path)})
-    manifest={"package":"larobokskaparen","format":"portable-chat-assistant","format_version":2,"version":version,"entrypoint":"START-HERE.md","instructions":"assistant/instructions.md","knowledge":[f"knowledge/{n}" for n in EXPECTED_KNOWLEDGE],"template_root":"templates/bokprojekt","files":files}
+    manifest={"package":"larobokskaparen","format":format_name,"format_version":2,"adapter_id":rcfg.get("adapter_id",runtime_id),"version":version,"entrypoint":"START-HERE.md","instructions":"assistant/instructions.md","knowledge":[f"knowledge/{n}" for n in EXPECTED_KNOWLEDGE],"template_root":"templates/bokprojekt","files":files}
     (stage/"MANIFEST.json").write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
 
 
@@ -259,7 +259,7 @@ def main() -> int:
     output_dir=Path(args.output_dir).resolve()
     work=output_dir/".build"
     runtimes=active_runtimes(cfg)
-    supported={"custom_gpt","chatgpt_chat"}
+    supported={"custom_gpt","chatgpt_chat","claude_projects"}
     unsupported=sorted(set(runtimes)-supported)
     if unsupported:
         raise SystemExit("Aktiv runtime saknar build-adapter: " + ", ".join(unsupported))
@@ -273,9 +273,14 @@ def main() -> int:
         deterministic_zip(custom,out); built.append(out)
     if "chatgpt_chat" in runtimes:
         portable=work/"portable"; portable.mkdir()
-        build_portable(cfg,portable,version)
+        build_portable_agent(cfg,"chatgpt_chat",portable,version,"portable-chat-assistant")
         out=artifact_path(cfg,"chatgpt_chat",version,output_dir)
         deterministic_zip(portable,out); built.append(out)
+    if "claude_projects" in runtimes:
+        claude=work/"claude-projects"; claude.mkdir()
+        build_portable_agent(cfg,"claude_projects",claude,version,"claude-projects")
+        out=artifact_path(cfg,"claude_projects",version,output_dir)
+        deterministic_zip(claude,out); built.append(out)
     shutil.rmtree(work)
     for path in built: print(f"Byggd: {path}")
     return 0
