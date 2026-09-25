@@ -25,6 +25,172 @@ knowledge_architecture:
   template_source_of_truth: templates/bokprojekt
   generated_template_bundle: knowledge-upload/19-project-template-bundle.md
 
+capabilities:
+  contract_version: 1
+  schema: schemas/capability-contract.schema.json
+  recommendation_mode: inferred_from_use_case
+  ask_user_only_when_business_choice_is_ambiguous: true
+  requirements:
+    web:
+      level: recommended
+      reason: "Färsk verifiering behövs för aktuella, externa eller lätt föränderliga fakta."
+    filesystem:
+      read: required
+      write: required
+    shell:
+      level: recommended
+      reason: "Projektintegritet, validering och lokal EPUB/PDF-export använder deterministiska scripts."
+    code_execution:
+      level: required
+      reason: "Stateful ZIP-/workspace-flöde och projektverktyg behöver exekvering för full funktion."
+    structured_data:
+      level: required
+      reason: "book.yaml, project-manifest.json och projektstatus är bärande kontrakt."
+    persistent_state:
+      level: required
+      reason: "Bokprojektet är långlivat och måste kunna återupptas utan att chatthistorik är enda sanningskälla."
+    external_tools:
+      level: optional
+      reason: "Kärnflödet ska inte kräva leverantörsspecifika externa integrationer."
+      preferred_protocols:
+        - mcp
+    image_generation:
+      level: optional
+      reason: "Omslag och inre illustrationer används endast när användaren vill ha dem."
+
+artifacts:
+  contract_version: 1
+  schema: schemas/artifact-contract.schema.json
+  outputs:
+    book_project_zip:
+      kind: package
+      format: zip
+      requirement: conditional
+      condition: "project_created_or_modified"
+      persistence: persistent
+      multiplicity: one
+      description: "Komplett bokprojekt med canonical metadata, manifest, revision och alla projektfiler."
+    project_status:
+      kind: metadata
+      format: markdown
+      requirement: conditional
+      condition: "stateful_project_work"
+      persistence: persistent
+      multiplicity: one
+      description: "Projektstatus för det genererade bokprojektet."
+    project_manifest:
+      kind: metadata
+      format: json
+      requirement: conditional
+      condition: "stateful_project_work"
+      persistence: persistent
+      multiplicity: one
+      description: "Integritets- och revisionsmanifest för bokprojektet."
+    epub:
+      kind: document
+      format: epub
+      requirement: conditional
+      condition: "export_requested"
+      persistence: persistent
+      multiplicity: one
+      description: "Publicerbar EPUB byggd från canonical bokprojekt."
+    pdf:
+      kind: document
+      format: pdf
+      requirement: conditional
+      condition: "export_requested"
+      persistence: persistent
+      multiplicity: one
+      description: "Publicerbar PDF byggd från canonical bokprojekt."
+    cover_image:
+      kind: document
+      format: image
+      requirement: optional
+      persistence: persistent
+      multiplicity: one
+      description: "Omslagsbild när användaren har valt att skapa en sådan."
+
+workspace_state:
+  contract_version: 1
+  schema: schemas/workspace-state-contract.schema.json
+  workspace:
+    requirement: required
+    persistence: required
+    portable: true
+    separate_from_assistant: true
+    artifact: book_project_zip
+    description: "Bokprojektets filer är den långlivade arbetsytan och ska kunna flyttas mellan runtimes."
+  state:
+    requirement: required
+    persistence: required
+    authority: workspace_file
+    format: json
+    path: project-manifest.json
+    conversation_fallback: false
+    description: "project-manifest.json tillsammans med book.yaml och revision-loggen är auktoritativt projekttillstånd."
+  runtime_preferences:
+    chat: workspace_file
+    agent: workspace_file
+
+tools:
+  contract_version: 1
+  schema: schemas/tool-contract.schema.json
+  tools:
+    - id: distribution-build
+      type: script
+      requirement: required
+      purpose: "Bygga runtime-distributioner."
+      script: scripts/build_distributions.py
+      deterministic: true
+      mutates_workspace: true
+      working_directory: repository
+      runtime_fallback: block
+    - id: distribution-validation
+      type: script
+      requirement: required
+      purpose: "Validera runtime-distributioner, Knowledge, templatebundle och bokprojektkontrakt."
+      script: scripts/validate_distributions.py
+      deterministic: true
+      mutates_workspace: false
+      working_directory: repository
+      runtime_fallback: block
+    - id: project-integrity
+      type: script
+      requirement: required
+      purpose: "Initiera, verifiera och versionssäkra genererade bokprojekt."
+      script: templates/bokprojekt/scripts/project_integrity.py
+      deterministic: true
+      mutates_workspace: true
+      working_directory: workspace
+      runtime_fallback: block
+    - id: project-validation
+      type: script
+      requirement: required
+      purpose: "Validera bokprojektets metadata, kapitel, bilder och integritet."
+      script: templates/bokprojekt/scripts/validate_project.py
+      deterministic: true
+      mutates_workspace: false
+      working_directory: workspace
+      runtime_fallback: block
+    - id: book-export
+      type: script
+      requirement: recommended
+      purpose: "Exportera bokprojekt till EPUB och PDF när nödvändiga lokala verktyg finns."
+      script: templates/bokprojekt/scripts/export-book.py
+      deterministic: true
+      mutates_workspace: true
+      working_directory: workspace
+      runtime_fallback: manual
+    - id: book-build
+      type: script
+      requirement: recommended
+      purpose: "Köra validering och bygga EPUB/PDF samt checksummor."
+      script: templates/bokprojekt/scripts/build_book.py
+      deterministic: true
+      mutates_workspace: true
+      working_directory: workspace
+      runtime_fallback: manual
+
 runtime:
   chatgpt_chat:
     status: active
