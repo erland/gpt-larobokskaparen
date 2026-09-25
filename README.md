@@ -111,7 +111,7 @@ På en exakt `v<SemVer>`-tagg kan buildscriptet även läsa versionen från Git.
 
 ### GitHub Release
 
-Release-taggen är versionskälla och ska följa `v<SemVer>`, till exempel `v1.4.0`. Workflowet bygger och validerar båda distributionerna med taggens version och bifogar dem som release-assets.
+Release-taggen är versionskälla och ska följa `v<SemVer>`, till exempel `v1.4.0`. Workflowet bygger och validerar samtliga aktiva runtime-distributioner med taggens version. Den exakta release-assetuppsättningen härleds deklarativt från `gpt-project.yaml`; saknade eller oväntade ZIP-filer stoppar releasen.
 
 ## Portabel användning
 
