@@ -252,8 +252,10 @@ def main() -> int:
     skill_text=plugin[skill_path].decode("utf-8")
     if "## Kanoniskt beteendekontrakt" not in skill_text or "Påstå aldrig att ett ZIP-projekt" not in skill_text:
         raise SystemExit("Plugin skill saknar canonical/runtime-gap-kontrakt")
-    if any(name.endswith(".py") for name in plugin):
-        raise SystemExit("Plugin-distributionen får inte paketera Python-skript som runtime-verktyg")
+    allowed_script_prefix=plugin_root+"skills/"+plugin_cfg["skill"]["id"]+"/references/templates/bokprojekt/"
+    unexpected_python=[name for name in plugin if name.endswith(".py") and not name.startswith(allowed_script_prefix)]
+    if unexpected_python:
+        raise SystemExit("Plugin-distributionen innehåller Python utanför bokprojektmallen: "+", ".join(sorted(unexpected_python)))
     if plugin_root+"mcp.json" in plugin:
         raise SystemExit("Plugin-distributionen får inte påstå en MCP-integration som inte finns")
     if manifest.get("version") != version or manifest.get("template_root") != "templates/bokprojekt":
