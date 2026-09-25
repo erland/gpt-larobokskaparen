@@ -113,7 +113,7 @@ def main() -> int:
     build_module = load_module(ROOT / "scripts/build_distributions.py", "build_distributions_for_validation")
     version = build_module.resolve_version(args.version)
     runtimes=active_runtimes(cfg)
-    unsupported=sorted(set(runtimes)-{"custom_gpt","chatgpt_chat","claude_projects","opencode"})
+    unsupported=sorted(set(runtimes)-{"custom_gpt","chatgpt_chat","claude_projects","opencode","openai_plugin"})
     if unsupported:
         raise SystemExit("Aktiv runtime saknar valideringsadapter: " + ", ".join(unsupported))
 
@@ -196,10 +196,12 @@ def main() -> int:
     portable_path=expected_paths["chatgpt_chat"]
     claude_path=expected_paths["claude_projects"]
     opencode_path=expected_paths["opencode"]
+    plugin_path=expected_paths["openai_plugin"]
     custom = read_zip(custom_path)
     portable = read_zip(portable_path)
     claude = read_zip(claude_path)
     opencode = read_zip(opencode_path)
+    plugin = read_zip(plugin_path)
     if custom.get("VERSION") != (version + "\n").encode() or portable.get("VERSION") != (version + "\n").encode() or claude.get("VERSION") != (version + "\n").encode() or opencode.get("VERSION") != (version + "\n").encode():
         raise SystemExit("VERSION mismatch")
 
@@ -237,6 +239,23 @@ def main() -> int:
     manifest = json.loads(portable["MANIFEST.json"].decode())
     claude_manifest = json.loads(claude["MANIFEST.json"].decode())
     opencode_manifest = json.loads(opencode["MANIFEST.json"].decode())
+    plugin_cfg=cfg["runtime"]["openai_plugin"]
+    plugin_root=plugin_cfg["manifest"]["name"] + "/"
+    plugin_manifest=json.loads(plugin[plugin_root+"plugin.json"].decode())
+    skill_path=plugin_root+"skills/"+plugin_cfg["skill"]["id"]+"/SKILL.md"
+    if plugin_manifest.get("$schema")!="https://agent-plugins.org/schemas/1.0.0/plugin.schema.json":
+        raise SystemExit("Plugin schema mismatch")
+    if plugin_manifest.get("version")!=version or plugin_manifest.get("name")!=plugin_cfg["manifest"]["name"]:
+        raise SystemExit("Plugin manifest metadata mismatch")
+    if skill_path not in plugin:
+        raise SystemExit("Plugin SKILL.md saknas")
+    skill_text=plugin[skill_path].decode("utf-8")
+    if "## Kanoniskt beteendekontrakt" not in skill_text or "Påstå aldrig att ett ZIP-projekt" not in skill_text:
+        raise SystemExit("Plugin skill saknar canonical/runtime-gap-kontrakt")
+    if any(name.endswith(".py") for name in plugin):
+        raise SystemExit("Plugin-distributionen får inte paketera Python-skript som runtime-verktyg")
+    if plugin_root+"mcp.json" in plugin:
+        raise SystemExit("Plugin-distributionen får inte påstå en MCP-integration som inte finns")
     if manifest.get("version") != version or manifest.get("template_root") != "templates/bokprojekt":
         raise SystemExit("MANIFEST metadata mismatch")
     if claude_manifest.get("version") != version or claude_manifest.get("format") != "claude-projects" or claude_manifest.get("template_root") != "templates/bokprojekt":
@@ -248,6 +267,20 @@ def main() -> int:
     for entry in manifest.get("files", []):
         if entry["path"] not in portable or digest(portable[entry["path"]]) != entry["sha256"]:
             raise SystemExit(f"MANIFEST SHA mismatch: {entry['path']}")
+
+    # Pluginen ska bära samma Knowledge, exempel och bokprojektmall som baslinjen.
+    skill_ref=plugin_root+"skills/"+plugin_cfg["skill"]["id"]+"/references/"
+    for name in EXPECTED:
+        src=(ROOT/"knowledge-upload"/name).read_bytes()
+        if plugin.get(skill_ref+"knowledge/"+name)!=src:
+            raise SystemExit(f"Plugin Knowledge mismatch: {name}")
+    for path in sorted(p for p in template_root.rglob("*") if p.is_file() and "__pycache__" not in p.parts and p.suffix != ".pyc"):
+        rel=path.relative_to(template_root).as_posix()
+        if plugin.get(skill_ref+"templates/bokprojekt/"+rel)!=path.read_bytes():
+            raise SystemExit(f"Plugin template mismatch: {rel}")
+    canonical=(ROOT/plugin_cfg["skill"]["source_instruction"]).read_text(encoding="utf-8").strip()
+    if canonical not in skill_text:
+        raise SystemExit("Plugin skill bäddar inte in canonical instruktion")
 
     print(f"OK: distributionerna för {version} är validerade.")
     print(f"OK: Instructions är {len(instructions)} tecken (max 8000); {len(knowledge)} Knowledge-filer (max 20).")
