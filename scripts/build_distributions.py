@@ -428,7 +428,38 @@ def main() -> int:
 
         out=artifact_path(cfg,"openai_plugin",version,output_dir)
         deterministic_zip(plugin_root,out); built.append(out)
+    checksum_lines=[]
+    artifacts=[]
+    type_by_runtime={
+        "chatgpt_chat":"chat_zip",
+        "custom_gpt":"custom_gpt_zip",
+        "claude_projects":"claude_projects_zip",
+        "opencode":"opencode_zip",
+        "openai_plugin":"plugin_zip",
+    }
+    for runtime_id in runtimes:
+        path=artifact_path(cfg,runtime_id,version,output_dir)
+        checksum_lines.append(f"{sha256(path)}  {path.name}")
+        artifacts.append({
+            "type":type_by_runtime[runtime_id],
+            "runtime_id":runtime_id,
+            "file":path.name,
+            "sha256":sha256(path),
+            "bytes":path.stat().st_size,
+        })
+    (output_dir/"SHA256SUMS.txt").write_text("\n".join(checksum_lines)+"\n",encoding="utf-8")
+    (output_dir/"DELIVERY-MANIFEST.json").write_text(
+        json.dumps({
+            "schema_version":1,
+            "project":cfg["project"]["id"],
+            "version":version,
+            "artifacts":artifacts,
+        },ensure_ascii=False,indent=2)+"\n",
+        encoding="utf-8",
+    )
     shutil.rmtree(work)
     for path in built: print(f"Byggd: {path}")
+    print(f"Byggd: {output_dir/'SHA256SUMS.txt'}")
+    print(f"Byggd: {output_dir/'DELIVERY-MANIFEST.json'}")
     return 0
 if __name__ == "__main__": raise SystemExit(main())
