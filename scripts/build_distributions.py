@@ -401,7 +401,13 @@ def main() -> int:
             "capabilities":cfg["capabilities"],
             "artifacts":cfg["artifacts"],
             "workspace_state":cfg["workspace_state"],
-            "tools":cfg["tools"],
+            "tools":{
+                **cfg["tools"],
+                "tools":[
+                    tool for tool in cfg["tools"].get("tools",[])
+                    if tool.get("id") in {"project-integrity","project-validation","book-export","book-build"}
+                ],
+            },
             "adapter":adapter,
         }
         (plugin_root/"runtime-contract.json").write_text(json.dumps(contract,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
