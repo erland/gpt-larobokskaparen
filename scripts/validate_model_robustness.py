@@ -31,9 +31,19 @@ def main():
     if cfg['runtime']['custom_gpt']['instruction']['source']!=cfg['instructions']['canonical']:
         errors.append('Custom GPT använder inte canonical instruction')
     plugin=cfg['runtime']['openai_plugin']['compatibility']
-    if plugin.get('workspace_zip_state')!='host_capability_dependent': errors.append('Plugin workspace gap saknas')
-    if plugin.get('bundled_script_execution')!='not_assumed': errors.append('Plugin script gap saknas')
-    if plugin.get('epub_pdf_export')!='host_capability_dependent': errors.append('Plugin export gap saknas')
+    if plugin.get('compatibility')!='ready_runtime_dependent': errors.append('Plugin compatibility saknas/fel')
+    for key in ('workspace','filesystem_read','filesystem_write','code_execution','persistent_state'):
+        if plugin.get(key)!='required_host_runtime': errors.append(f'Plugin host dependency saknas: {key}')
+    if plugin.get('state_authority')!='workspace_file' or plugin.get('conversation_fallback') is not False:
+        errors.append('Plugin state authority/fallback fel')
+    if plugin.get('mcp_generated') is not False: errors.append('Plugin får inte generera MCP')
+    resources=plugin.get('script_resources') or []
+    required={x.get('path') for x in resources if x.get('requirement')=='required'}
+    if required != {
+        'skills/larobokskaparen/scripts/project_integrity.py',
+        'skills/larobokskaparen/scripts/validate_project.py',
+    }:
+        errors.append('Plugin required script_resources mismatch')
     if not plugin.get('behavior_gap'): errors.append('Plugin behavior_gap saknas')
     if errors:
         print('FAILED: model/runtime robustness')
