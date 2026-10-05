@@ -240,9 +240,9 @@ def main() -> int:
     claude_manifest = json.loads(claude["MANIFEST.json"].decode())
     opencode_manifest = json.loads(opencode["MANIFEST.json"].decode())
     plugin_cfg=cfg["runtime"]["openai_plugin"]
-    plugin_root=plugin_cfg["manifest"]["name"] + "/"
-    plugin_manifest=json.loads(plugin[plugin_root+"plugin.json"].decode())
-    skill_path=plugin_root+"skills/"+plugin_cfg["skill"]["id"]+"/SKILL.md"
+    plugin_root=""
+    plugin_manifest=json.loads(plugin["plugin.json"].decode())
+    skill_path="skills/"+plugin_cfg["skill"]["id"]+"/SKILL.md"
     if plugin_manifest.get("$schema")!="https://agent-plugins.org/schemas/1.0.0/plugin.schema.json":
         raise SystemExit("Plugin schema mismatch")
     if plugin_manifest.get("version")!=version or plugin_manifest.get("name")!=plugin_cfg["manifest"]["name"]:
@@ -252,11 +252,41 @@ def main() -> int:
     skill_text=plugin[skill_path].decode("utf-8")
     if "## Kanoniskt beteendekontrakt" not in skill_text or "Påstå aldrig att ett ZIP-projekt" not in skill_text:
         raise SystemExit("Plugin skill saknar canonical/runtime-gap-kontrakt")
-    allowed_script_prefix=plugin_root+"skills/"+plugin_cfg["skill"]["id"]+"/references/templates/bokprojekt/"
-    unexpected_python=[name for name in plugin if name.endswith(".py") and not name.startswith(allowed_script_prefix)]
+    required_root={"plugin.json","README.md","VERSION","MANIFEST.json","runtime-contract.json"}
+    if not required_root.issubset(set(plugin)):
+        raise SystemExit("Plugin ZIP saknar obligatoriska rotfiler: "+", ".join(sorted(required_root-set(plugin))))
+    if any(name.startswith(plugin_cfg["manifest"]["name"]+"/") for name in plugin):
+        raise SystemExit("Plugin ZIP får inte ha en wrapper-/toppkatalog")
+    runtime_contract=json.loads(plugin["runtime-contract.json"].decode())
+    adapter=runtime_contract.get("adapter",{})
+    if runtime_contract.get("runtime_id")!="openai_plugin":
+        raise SystemExit("Plugin runtime-contract runtime_id mismatch")
+    if adapter.get("mode")!="skills_first" or adapter.get("compatibility")!="ready_runtime_dependent":
+        raise SystemExit("Plugin runtime adapter mismatch")
+    for key in ("workspace","filesystem_read","filesystem_write","code_execution","persistent_state"):
+        if adapter.get(key)!="required_host_runtime":
+            raise SystemExit(f"Plugin host dependency mismatch: {key}")
+    if adapter.get("state_authority")!="workspace_file" or adapter.get("conversation_fallback") is not False:
+        raise SystemExit("Plugin state authority/fallback mismatch")
+    if adapter.get("mcp_generated") is not False:
+        raise SystemExit("Plugin får inte generera MCP-wrapper")
+    declared_scripts={item.get("path") for item in adapter.get("script_resources",[])}
+    expected_scripts={
+        "skills/larobokskaparen/scripts/project_integrity.py",
+        "skills/larobokskaparen/scripts/validate_project.py",
+        "skills/larobokskaparen/scripts/export-book.py",
+        "skills/larobokskaparen/scripts/build_book.py",
+        "skills/larobokskaparen/scripts/publishing/fix-epub-after-pandoc.py",
+    }
+    if declared_scripts!=expected_scripts:
+        raise SystemExit("Plugin script_resources mismatch")
+    for path in expected_scripts:
+        if path not in plugin:
+            raise SystemExit(f"Plugin saknar deklarerad script resource: {path}")
+    unexpected_python=[name for name in plugin if name.endswith(".py") and name not in expected_scripts]
     if unexpected_python:
-        raise SystemExit("Plugin-distributionen innehåller Python utanför bokprojektmallen: "+", ".join(sorted(unexpected_python)))
-    if plugin_root+"mcp.json" in plugin:
+        raise SystemExit("Plugin-distributionen innehåller odeklarerad Python: "+", ".join(sorted(unexpected_python)))
+    if "mcp.json" in plugin:
         raise SystemExit("Plugin-distributionen får inte påstå en MCP-integration som inte finns")
     if manifest.get("version") != version or manifest.get("template_root") != "templates/bokprojekt":
         raise SystemExit("MANIFEST metadata mismatch")
@@ -270,16 +300,25 @@ def main() -> int:
         if entry["path"] not in portable or digest(portable[entry["path"]]) != entry["sha256"]:
             raise SystemExit(f"MANIFEST SHA mismatch: {entry['path']}")
 
-    # Pluginen ska bära samma Knowledge, exempel och bokprojektmall som baslinjen.
-    skill_ref=plugin_root+"skills/"+plugin_cfg["skill"]["id"]+"/references/"
+    # Pluginen ska bära samma Knowledge och exempel som references.
+    skill_ref="skills/"+plugin_cfg["skill"]["id"]+"/references/"
     for name in EXPECTED:
         src=(ROOT/"knowledge-upload"/name).read_bytes()
         if plugin.get(skill_ref+"knowledge/"+name)!=src:
             raise SystemExit(f"Plugin Knowledge mismatch: {name}")
+    script_map={
+        "scripts/project_integrity.py":"skills/larobokskaparen/scripts/project_integrity.py",
+        "scripts/validate_project.py":"skills/larobokskaparen/scripts/validate_project.py",
+        "scripts/export-book.py":"skills/larobokskaparen/scripts/export-book.py",
+        "scripts/build_book.py":"skills/larobokskaparen/scripts/build_book.py",
+        "publishing/fix-epub-after-pandoc.py":"skills/larobokskaparen/scripts/publishing/fix-epub-after-pandoc.py",
+    }
+    asset_prefix="skills/"+plugin_cfg["skill"]["id"]+"/assets/bokprojekt/"
     for path in sorted(p for p in template_root.rglob("*") if p.is_file() and "__pycache__" not in p.parts and p.suffix != ".pyc"):
         rel=path.relative_to(template_root).as_posix()
-        if plugin.get(skill_ref+"templates/bokprojekt/"+rel)!=path.read_bytes():
-            raise SystemExit(f"Plugin template mismatch: {rel}")
+        target=script_map.get(rel,asset_prefix+rel)
+        if plugin.get(target)!=path.read_bytes():
+            raise SystemExit(f"Plugin asset/script mismatch: {rel}")
     canonical=(ROOT/plugin_cfg["skill"]["source_instruction"]).read_text(encoding="utf-8").strip()
     if canonical not in skill_text:
         raise SystemExit("Plugin skill bäddar inte in canonical instruktion")
