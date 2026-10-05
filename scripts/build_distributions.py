@@ -288,10 +288,15 @@ def main() -> int:
         deterministic_zip(opencode,out); built.append(out)
     if "openai_plugin" in runtimes:
         rcfg=runtime_cfg(cfg,"openai_plugin")
-        plugin_root=work/"openai-plugin"/rcfg["manifest"]["name"]
+        plugin_root=work/"openai-plugin"
         skill_root=plugin_root/"skills"/rcfg["skill"]["id"]
         refs=skill_root/"references"
+        assets=skill_root/"assets"/"bokprojekt"
+        scripts_root=skill_root/"scripts"
         refs.mkdir(parents=True,exist_ok=True)
+        assets.mkdir(parents=True,exist_ok=True)
+        scripts_root.mkdir(parents=True,exist_ok=True)
+
         manifest={
             "$schema":"https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
             "name":rcfg["manifest"]["name"],
@@ -317,6 +322,7 @@ def main() -> int:
             }
         }
         (plugin_root/"plugin.json").write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
+
         canonical=(ROOT/rcfg["skill"]["source_instruction"]).read_text(encoding="utf-8").strip()
         skill_text=(
             "---\n"
@@ -326,27 +332,102 @@ def main() -> int:
             "hantera bokprojektfiler eller förbereda export.\n"
             "---\n\n"
             "# Lärobokskaparen\n\n"
-            "Följ det kanoniska beteendekontraktet nedan. Referensmaterial finns i references/knowledge/, "
-            "bokprojektmallen i references/templates/bokprojekt/ och exempel i references/examples/.\n\n"
+            "Följ det kanoniska beteendekontraktet nedan. Knowledge finns i references/knowledge/, "
+            "exempel i references/examples/, bokprojektmallen i assets/bokprojekt/ och körbara projektverktyg i scripts/.\n\n"
             "## Plugin-runtime\n\n"
             "Detta är en skills-first-distribution utan inbyggd MCP-server eller extern appintegration.\n\n"
-            "- Använd värdklientens fil-/workspace-/exekveringsförmåga när den faktiskt finns.\n"
-            "- Påstå aldrig att ett ZIP-projekt, project-manifest, revision, EPUB eller PDF har skapats, "
-            "uppdaterats eller verifierats om värdklienten inte faktiskt kan genomföra det.\n"
-            "- Python-skript som förekommer i references/templates/bokprojekt/ är en del av den portabla bokprojektmallen, inte exekverbara plugin-verktyg.\n"
-            "- Plugin-runtime får inte anta att dessa scripts kan köras; faktisk exekvering kräver stöd i värdklienten.\n"
-            "- När full stateful projektfunktion saknas: bevara bokmetodik, planering, kvalitetsregler och "
-            "projektschema, men redovisa kort att filbaserad integritet/revision/export kräver en runtime med stöd.\n"
-            "- project-manifest.json och book.yaml får endast behandlas som verifierad state när de faktiskt kan läsas/skrivas i arbetsytan.\n\n"
+            "- Workspace read/write, code execution och persistent workspace-state krävs för full stateful projektfunktion.\n"
+            "- project-manifest.json tillsammans med book.yaml och revision-log.md är auktoritativ state; chattminne är inte fallback.\n"
+            "- För att skapa ett konkret bokprojekt: materialisera assets/bokprojekt/ och kopiera deklarerade scriptresurser till motsvarande scripts/ respektive publishing/ sökvägar i projektet.\n"
+            "- project_integrity.py och validate_project.py är obligatoriska runtimeverktyg för initiering/integritet/validering; blockera sådana operationer om hosten inte kan köra dem.\n"
+            "- export-book.py och build_book.py används när export efterfrågas; de kräver host execution och externa verktyg som Pandoc/XeLaTeX där relevant.\n"
+            "- Påstå aldrig att ett ZIP-projekt, project-manifest, revision, EPUB eller PDF har skapats, uppdaterats eller verifierats om värdklienten inte faktiskt genomfört operationen.\n"
+            "- Planering och textarbete får fortsätta utan full runtimekapacitet, men får inte framställas som verifierad stateful projektändring.\n"
+            "- Ingen MCP-wrapper genereras.\n\n"
             "## Kanoniskt beteendekontrakt\n\n"
             + canonical + "\n"
         )
         (skill_root/"SKILL.md").write_text(skill_text,encoding="utf-8")
+
         copy_tree_files(ROOT/rcfg["skill"]["knowledge"],refs/"knowledge")
         copy_tree_files(ROOT/rcfg["skill"]["examples"],refs/"examples")
-        copy_tree_files(ROOT/rcfg["skill"]["template_root"],refs/"templates"/"bokprojekt")
+
+        runtime_script_map={
+            "scripts/project_integrity.py":"project_integrity.py",
+            "scripts/validate_project.py":"validate_project.py",
+            "scripts/export-book.py":"export-book.py",
+            "scripts/build_book.py":"build_book.py",
+            "publishing/fix-epub-after-pandoc.py":"publishing/fix-epub-after-pandoc.py",
+        }
+        template_root=ROOT/rcfg["skill"]["template_root"]
+        for path in sorted(p for p in template_root.rglob("*") if p.is_file() and "__pycache__" not in p.parts and p.suffix!=".pyc"):
+            rel=path.relative_to(template_root).as_posix()
+            if rel in runtime_script_map:
+                target=scripts_root/runtime_script_map[rel]
+            else:
+                target=assets/rel
+            target.parent.mkdir(parents=True,exist_ok=True)
+            shutil.copy2(path,target)
+
+        adapter={
+            "mode":"skills_first",
+            "compatibility":"ready_runtime_dependent",
+            "workspace":"required_host_runtime",
+            "filesystem_read":"required_host_runtime",
+            "filesystem_write":"required_host_runtime",
+            "code_execution":"required_host_runtime",
+            "persistent_state":"required_host_runtime",
+            "state_authority":"workspace_file",
+            "state_files":["project-manifest.json","book.yaml","revision-log.md"],
+            "conversation_fallback":False,
+            "mcp_generated":False,
+            "script_resources":[
+                {"path":"skills/larobokskaparen/scripts/project_integrity.py","requirement":"required","materialize_to":"scripts/project_integrity.py"},
+                {"path":"skills/larobokskaparen/scripts/validate_project.py","requirement":"required","materialize_to":"scripts/validate_project.py"},
+                {"path":"skills/larobokskaparen/scripts/export-book.py","requirement":"recommended","materialize_to":"scripts/export-book.py"},
+                {"path":"skills/larobokskaparen/scripts/build_book.py","requirement":"recommended","materialize_to":"scripts/build_book.py"},
+                {"path":"skills/larobokskaparen/scripts/publishing/fix-epub-after-pandoc.py","requirement":"recommended","materialize_to":"publishing/fix-epub-after-pandoc.py"},
+            ],
+            "fallback_policy":{
+                "without_workspace_or_write":"allow_planning_and_text_only_do_not_claim_stateful_project_change",
+                "without_code_execution":"block_integrity_validation_and_do_not_claim_verified_revision",
+                "without_export_dependencies":"allow_book_project_work_but_do_not_claim_epub_or_pdf_created",
+            },
+        }
+        contract={
+            "schema_version":1,
+            "runtime_id":"openai_plugin",
+            "version":version,
+            "capabilities":cfg["capabilities"],
+            "artifacts":cfg["artifacts"],
+            "workspace_state":cfg["workspace_state"],
+            "tools":cfg["tools"],
+            "adapter":adapter,
+        }
+        (plugin_root/"runtime-contract.json").write_text(json.dumps(contract,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
+        (plugin_root/"README.md").write_text(
+            "# Lärobokskaparen – OpenAI Plugin\n\n"
+            "Skills-first peer-runtime enligt GPT Byggaren 1.5.1. plugin.json ligger i ZIP-roten. "
+            "Knowledge är references, bokprojektmallen är assets och runtimeverktygen deklareras som script resources. "
+            "Full stateful funktion kräver host workspace read/write, code execution och persistent state. Ingen MCP-wrapper ingår.\n",
+            encoding="utf-8",
+        )
+        (plugin_root/"VERSION").write_text(version+"\n",encoding="utf-8")
+
+        files=[]
+        for path in sorted(p for p in plugin_root.rglob("*") if p.is_file() and p.name!="MANIFEST.json"):
+            files.append({"path":path.relative_to(plugin_root).as_posix(),"sha256":sha256(path)})
+        package_manifest={
+            "schema_version":1,
+            "runtime_id":"openai_plugin",
+            "version":version,
+            "entrypoint":"plugin.json",
+            "files":files,
+        }
+        (plugin_root/"MANIFEST.json").write_text(json.dumps(package_manifest,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
+
         out=artifact_path(cfg,"openai_plugin",version,output_dir)
-        deterministic_zip(plugin_root.parent,out); built.append(out)
+        deterministic_zip(plugin_root,out); built.append(out)
     shutil.rmtree(work)
     for path in built: print(f"Byggd: {path}")
     return 0
