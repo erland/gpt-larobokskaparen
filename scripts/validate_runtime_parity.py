@@ -46,23 +46,39 @@ def main(version):
 
     plugin_cfg=cfg['runtime']['openai_plugin']
     plugin_path=artifact(cfg,'openai_plugin',version)
-    root=plugin_cfg['manifest']['name']+'/'
-    skill_path=root+'skills/'+plugin_cfg['skill']['id']+'/SKILL.md'
+    root=''
+    skill_path='skills/'+plugin_cfg['skill']['id']+'/SKILL.md'
     with zipfile.ZipFile(plugin_path) as z:
         skill=z.read(skill_path)
         if canonical.decode('utf-8').strip().encode('utf-8') not in skill:
             raise SystemExit('OpenAI Plugin skill does not embed canonical instruction')
         knowledge_root=ROOT/plugin_cfg['skill']['knowledge']
-        prefix=root+'skills/'+plugin_cfg['skill']['id']+'/references/knowledge/'
+        prefix='skills/'+plugin_cfg['skill']['id']+'/references/knowledge/'
         for p in sorted(knowledge_root.glob('*.md')):
             if z.read(prefix+p.name)!=p.read_bytes():
                 raise SystemExit(f'Plugin Knowledge mismatch: {p.name}')
         template_root=ROOT/plugin_cfg['skill']['template_root']
-        tprefix=root+'skills/'+plugin_cfg['skill']['id']+'/references/templates/bokprojekt/'
+        contract=json.loads(z.read('runtime-contract.json'))
+        adapter=contract.get('adapter',{})
+        if adapter.get('compatibility')!='ready_runtime_dependent':
+            raise SystemExit('OpenAI Plugin compatibility mismatch')
+        if adapter.get('state_authority')!='workspace_file' or adapter.get('conversation_fallback') is not False:
+            raise SystemExit('OpenAI Plugin state contract mismatch')
+        if adapter.get('mcp_generated') is not False:
+            raise SystemExit('OpenAI Plugin MCP declaration mismatch')
+        script_map={
+            'scripts/project_integrity.py':'skills/larobokskaparen/scripts/project_integrity.py',
+            'scripts/validate_project.py':'skills/larobokskaparen/scripts/validate_project.py',
+            'scripts/export-book.py':'skills/larobokskaparen/scripts/export-book.py',
+            'scripts/build_book.py':'skills/larobokskaparen/scripts/build_book.py',
+            'publishing/fix-epub-after-pandoc.py':'skills/larobokskaparen/scripts/publishing/fix-epub-after-pandoc.py',
+        }
+        aprefix='skills/'+plugin_cfg['skill']['id']+'/assets/bokprojekt/'
         for p in sorted(x for x in template_root.rglob('*') if x.is_file() and '__pycache__' not in x.parts and x.suffix!='.pyc'):
             rel=p.relative_to(template_root).as_posix()
-            if z.read(tprefix+rel)!=p.read_bytes():
-                raise SystemExit(f'Plugin template mismatch: {rel}')
+            target=script_map.get(rel,aprefix+rel)
+            if z.read(target)!=p.read_bytes():
+                raise SystemExit(f'Plugin asset/script mismatch: {rel}')
 
     print('OK: runtime parity verified across all five active runtimes')
 
