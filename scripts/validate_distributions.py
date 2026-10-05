@@ -270,6 +270,9 @@ def main() -> int:
         raise SystemExit("Plugin state authority/fallback mismatch")
     if adapter.get("mcp_generated") is not False:
         raise SystemExit("Plugin får inte generera MCP-wrapper")
+    runtime_tool_ids={item.get("id") for item in runtime_contract.get("tools",{}).get("tools",[])}
+    if runtime_tool_ids!={"project-integrity","project-validation","book-export","book-build"}:
+        raise SystemExit("Plugin runtime-contract innehåller fel tool-scope")
     declared_scripts={item.get("path") for item in adapter.get("script_resources",[])}
     expected_scripts={
         "skills/larobokskaparen/scripts/project_integrity.py",
