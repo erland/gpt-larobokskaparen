@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 from pathlib import Path
 import argparse
+import hashlib
+import json
 import sys
 import yaml
 
@@ -34,10 +36,32 @@ def main():
         print('expected:',*expected,sep='\n- ',file=sys.stderr)
         print('actual:',*actual,sep='\n- ',file=sys.stderr)
         return 1
+    sums_path=a.dist/'SHA256SUMS.txt'
+    delivery_path=a.dist/'DELIVERY-MANIFEST.json'
+    if not sums_path.is_file() or not delivery_path.is_file():
+        print('FAILED: release metadata missing',file=sys.stderr)
+        return 1
+    sums={}
+    for line in sums_path.read_text(encoding='utf-8').splitlines():
+        digest,name=line.split(None,1)
+        sums[name.strip()]=digest
+    def sha(path):
+        return hashlib.sha256(path.read_bytes()).hexdigest()
+    for name in expected:
+        if sums.get(name)!=sha(a.dist/name):
+            print(f'FAILED: checksum mismatch {name}',file=sys.stderr)
+            return 1
+    delivery=json.loads(delivery_path.read_text(encoding='utf-8'))
+    delivered=sorted(item.get('file') for item in delivery.get('artifacts',[]))
+    if delivered!=expected:
+        print('FAILED: delivery manifest asset set differs',file=sys.stderr)
+        return 1
     if a.print_paths:
         for name in expected: print(str(a.dist/name))
+        print(str(sums_path))
+        print(str(delivery_path))
     else:
-        print(f'OK: {len(expected)} release assets verified')
+        print(f'OK: {len(expected)} release assets plus checksums/delivery manifest verified')
     return 0
 
 if __name__=='__main__': raise SystemExit(main())

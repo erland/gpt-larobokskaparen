@@ -6,7 +6,7 @@ Lärobokskaparen hjälper användare att planera, skriva, underhålla och export
 
 ## Canonical projektmodell
 
-GPT Byggaren 1.5.0-modellen definieras i `gpt-project.yaml`. Den kanoniska beteendeinstruktionen är `gpt-configuration/instructions.md`.
+GPT Byggaren 1.5.1-modellen definieras i `gpt-project.yaml`. Den kanoniska beteendeinstruktionen är `gpt-configuration/instructions.md`.
 
 Plattformneutrala kontrakt beskriver:
 
@@ -43,7 +43,7 @@ Projektet bygger och validerar fem aktiva distributioner:
 
 ChatGPT Chat, Claude Projects och OpenCode använder samma canonical instruktion, Knowledge, exempel och bokprojektmall. Custom GPT använder samma canonical instruktion och Knowledge.
 
-OpenAI Plugin använder Agent Plugins 1.0 med skills-first-struktur. Den bär samma bokmetodik, Knowledge och bokprojektmall, men ZIP/workspace-state, scriptkörning och EPUB/PDF-export är beroende av värdklientens faktiska förmågor.
+OpenAI Plugin använder Agent Plugins 1.0 med skills-first-struktur. `plugin.json` ligger direkt i ZIP-roten. Knowledge paketeras som references, bokprojektmallen som assets och projektets integritets-/validerings-/exportverktyg som deklarerade script resources. Full stateful funktion är `ready_runtime_dependent` och kräver host workspace read/write, code execution och persistent state. Ingen MCP-wrapper genereras.
 
 ## Kvalitet och release
 
@@ -54,7 +54,8 @@ CI verifierar:
 - stateful model/runtime robustness,
 - distributionsbygge och struktur,
 - runtime parity över fem runtimes,
-- exakt release-assetuppsättning.
+- exakt release-assetuppsättning,
+- SHA-256-checksummor och delivery manifest.
 
 GitHub Release använder release-taggen som versionskälla och publicerar exakt de aktiva runtime-artifacts som deklareras i `gpt-project.yaml`.
 

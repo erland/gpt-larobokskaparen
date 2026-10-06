@@ -80,9 +80,9 @@ Repositoryt bygger aktiva runtime-paket deklarativt från `gpt-project.yaml`. F�
 - `larobokskaparen-chat-vX.Y.Z.zip` – portabel version för en vanlig ChatGPT-konversation.
 - `larobokskaparen-claude-projects-vX.Y.Z.zip` – portabel Claude Projects-distribution med samma canonical instruktion, Knowledge och bokprojektmall.
 - `larobokskaparen-opencode-vX.Y.Z.zip` – OpenCode-distribution för workspace-/script-orienterat bokprojektarbete.
-- `larobokskaparen-openai-plugin-vX.Y.Z.zip` – skills-first OpenAI Plugin med bokmetodik, Knowledge och bokprojektmall.
+- `larobokskaparen-openai-plugin-vX.Y.Z.zip` – skills-first OpenAI Plugin med bokmetodik, Knowledge, bokprojekt-assets och deklarerade runtime-scripts.
 
-OpenAI Plugin behandlar scripts i bokprojektmallen som referens-/mallinnehåll, inte som automatiskt körbara pluginverktyg. ZIP-state, integritets-/revisionsscript och EPUB/PDF-export används endast när värdklienten faktiskt erbjuder motsvarande fil- och exekveringsförmåga.
+OpenAI Plugin följer GPT Byggaren 1.5.1: `plugin.json` ligger direkt i ZIP-roten, Knowledge ligger som references, bokprojektmallen som assets och project-integrity/validation/export-scripts som deklarerade script resources. Full stateful projektfunktion kräver workspace read/write, code execution och persistent state från hosten. `project-manifest.json`/workspace är fortsatt auktoritativ state och chattminne är inte fallback.
 
 Den portabla distributionen innehåller:
 
@@ -111,7 +111,7 @@ På en exakt `v<SemVer>`-tagg kan buildscriptet även läsa versionen från Git.
 
 ### GitHub Release
 
-Release-taggen är versionskälla och ska följa `v<SemVer>`, till exempel `v1.4.0`. Workflowet bygger och validerar samtliga aktiva runtime-distributioner med taggens version. Den exakta release-assetuppsättningen härleds deklarativt från `gpt-project.yaml`; saknade eller oväntade ZIP-filer stoppar releasen.
+Release-taggen är versionskälla och ska följa `v<SemVer>`, till exempel `v1.4.0`. Workflowet bygger och validerar samtliga aktiva runtime-distributioner med taggens version. Den exakta ZIP-uppsättningen härleds deklarativt från `gpt-project.yaml`; dessutom genereras och valideras `SHA256SUMS.txt` och `DELIVERY-MANIFEST.json`.
 
 ## Portabel användning
 

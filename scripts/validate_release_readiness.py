@@ -24,6 +24,14 @@ def main():
         errors.append('State authority är inte workspace_file')
     if cfg['workspace_state']['state'].get('conversation_fallback') is not False:
         errors.append('Conversation fallback måste vara false')
+    plugin=cfg['runtime']['openai_plugin']['compatibility']
+    if plugin.get('compatibility')!='ready_runtime_dependent':
+        errors.append('OpenAI Plugin är inte ready_runtime_dependent')
+    if plugin.get('state_authority')!='workspace_file' or plugin.get('conversation_fallback') is not False:
+        errors.append('OpenAI Plugin state contract avviker')
+    for rel in ['dist/SHA256SUMS.txt','dist/DELIVERY-MANIFEST.json']:
+        if not (ROOT/rel).is_file():
+            errors.append(f'Release metadata saknas: {rel}')
     if errors:
         print('FAILED: release readiness')
         for e in errors: print('-',e)

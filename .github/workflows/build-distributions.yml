@@ -61,7 +61,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: larobokskaparen-distributions-v${{ steps.version.outputs.version }}
-          path: dist/*.zip
+          path: |
+            dist/*.zip
+            dist/SHA256SUMS.txt
+            dist/DELIVERY-MANIFEST.json
           if-no-files-found: error
           retention-days: 14
       - name: Attach active runtime assets to GitHub Release

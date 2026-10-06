@@ -8,7 +8,7 @@ plan:
   total_steps: 9
 
 progress:
-  current_phase: migration_to_gpt_builder_1_5_0
+  current_phase: plugin_modernization_gpt_builder_1_5_1
   current_step: 9
   last_completed_step: 9
   completed_steps:
@@ -28,12 +28,12 @@ state:
   overall: pass
   blocking_issues: []
   warnings:
-    - "OpenAI Plugin har avsiktliga runtime-gap för ZIP/workspace-state, scriptkörning och EPUB/PDF när värdklienten saknar motsvarande förmågor."
+    - "OpenAI Plugin är ready_runtime_dependent: full stateful funktion kräver host workspace read/write, code execution och persistent state; chattminne är inte fallback."
 
 next_step:
-  recommended: merge
-  title: Merge och nästa stabila release
-  reason: "Migreringen till GPT Byggaren 1.5.0 är komplett. Samtliga fem runtimes byggs och valideras, den stateful bokprojektmodellen är bevarad och releaseflödet är deklarativt."
+  recommended: validate_and_merge
+  title: Validera och mergea pluginmodernisering
+  reason: "OpenAI Plugin är moderniserad enligt GPT Byggaren 1.5.1 med korrekt ZIP-root, runtime contract, assets/references/script resources samt release checksums/delivery manifest."
 
 resume:
   supported: true
@@ -43,4 +43,4 @@ resume:
     - docs/development-plan.md
     - STATUS.md
     - PROJECT.md
-  human_readable_status: "Migreringen till GPT Byggaren 1.5.0 är klar. PR kan mergas när CI är grön."
+  human_readable_status: "GPT Byggaren 1.5.1-pluginmoderniseringen är implementerad och ska mergas när aktuell PR-CI är grön."
