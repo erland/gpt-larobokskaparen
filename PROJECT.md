@@ -2,66 +2,40 @@
 
 ## Syfte
 
-Lärobokskaparen hjälper användare att planera, skriva, underhålla och exportera läroböcker, faktaböcker och närliggande bokformat.
+Lärobokskaparen hjälper till att planera, skriva, underhålla och exportera läroböcker, faktaböcker och närliggande bokformat.
 
-## Canonical projektmodell
+## Kanonisk arkitektur
 
-GPT Byggaren 1.5.1-modellen definieras i `gpt-project.yaml`. Den kanoniska beteendeinstruktionen är `gpt-configuration/instructions.md`.
+Projektet är migrerat till **GPT Byggaren v1.6.22**. Projektprofilen finns i `gpt-project.yaml`; gemensamma arbetsprinciper finns i `canonical/core.md` och beteendet är uppdelat i tre Skills under `canonical/skills/`: bokplanering, bokskrivande och bokprojekt/publicering.
 
-Plattformneutrala kontrakt beskriver:
+`gpt-configuration/instructions.md` finns kvar som ursprunglig beteendereferens. `templates/bokprojekt/` är fortsatt single source of truth för *genererade bokprojekt*. `knowledge-upload/19-project-template-bundle.md` är den genererade Knowledge-projektionen.
 
-- capabilities,
-- artifacts,
-- workspace/state,
-- verktyg,
-- runtime-mål,
-- build- och releaseflöde.
+## Två skilda verktygsnivåer
 
-`templates/bokprojekt/` är fortsatt single source of truth för genererade bokprojekt och `knowledge-upload/19-project-template-bundle.md` är dess genererade Knowledge-projektion.
+**GPT-distributionsprojektet** (detta repository) använder `scripts/build_distributions.py`, `scripts/validate_distributions.py`, `scripts/lint_gpt_project.py` och övriga `scripts/validate_*.py` för att skapa och kontrollera GPT-paket. Det är **inte** dessa skript som ska köras inne i ett genererat bokprojekt.
 
-## Stateful bokprojektmodell
+**Bokprojekten** utgår från `templates/bokprojekt/`. Deras integritet, kapitelvalidering och export styrs av `templates/bokprojekt/scripts/project_integrity.py`, `validate_project.py`, `export-book.py` och `build_book.py`. När mallen kopieras till ett bokprojekt ligger filerna i dess lokala `scripts/`. De generiska motsvarigheterna i repositoryts rot är byggarresurser och får inte ersätta bokprojektmallens verktyg utan särskild verifiering.
 
-Genererade bokprojekt är workspace-orienterade och använder bland annat:
+Auktoritativt bokprojektstillstånd är `book.yaml`, `project-manifest.json` och `revision-log.md`; chattminnet är inte en fallback.
 
-- `book.yaml` som canonical bokmetadata och kapitelordning,
-- `project-manifest.json` som auktoritativ projektstate och integritetsmanifest,
-- `revision-log.md` för revisionshistorik,
-- lokala scripts för validering, integritet och export,
-- reproducerbar EPUB/PDF-export.
+## Distributioner
 
-Chatthistorik är inte auktoritativ state för bokprojektet.
+Fem aktiva mål byggs och valideras från projektprofilen:
 
-## Aktiva runtimes
-
-Projektet bygger och validerar fem aktiva distributioner:
-
-- ChatGPT Chat
-- ChatGPT Custom
-- Claude Projects
+- Chat ZIP
+- ChatGPT Plugin
+- Claude Project
+- Claude Skills
 - OpenCode
-- OpenAI Plugin
 
-ChatGPT Chat, Claude Projects och OpenCode använder samma canonical instruktion, Knowledge, exempel och bokprojektmall. Custom GPT använder samma canonical instruktion och Knowledge.
-
-OpenAI Plugin använder Agent Plugins 1.0 med skills-first-struktur. `plugin.json` ligger direkt i ZIP-roten. Knowledge paketeras som references, bokprojektmallen som assets och projektets integritets-/validerings-/exportverktyg som deklarerade script resources. Full stateful funktion är `ready_runtime_dependent` och kräver host workspace read/write, code execution och persistent state. Ingen MCP-wrapper genereras.
+Dessutom skapas projekt-ZIP. Custom GPT är **inaktiverat** och ingår inte i leveransen. Runtimeberoende funktioner (exempelvis persistent workspace och kodexekvering) kan inte garanteras enbart av ett distributionspaket. Plugin använder skills-first utan MCP-wrapper.
 
 ## Kvalitet och release
 
-CI verifierar:
+GitHub Actions kontrollerar projektkontrakt, modellrobusthet, kanonisk lint, distributionsbygge, distributionsvalidering, sex leverans-ZIP (projekt + fem runtimepaket), checksumma och release-readiness.
 
-- GPT Builder 1.5-projektkontrakt,
-- project hygiene,
-- stateful model/runtime robustness,
-- distributionsbygge och struktur,
-- runtime parity över fem runtimes,
-- exakt release-assetuppsättning,
-- SHA-256-checksummor och delivery manifest.
+Release-taggen är versionskälla vid publicerad GitHub Release. CI-bygg på PR använder utvecklingsversion. Testrapporter finns i `ACCEPTANCE-REPORT.md` och `RELEASE-TEST-0.6.3.md`; återstående värdplattformstester beskrivs där. Maskinläsbar status: `project-status.yaml`.
 
-GitHub Release använder release-taggen som versionskälla och publicerar exakt de aktiva runtime-artifacts som deklareras i `gpt-project.yaml`.
+## Migrering
 
-Maskinläsbar status finns i `project-status.yaml`; utvecklingsplanen finns i `docs/development-plan.md`.
-
-
-## Migrering v1.6.22
-
-Gemensamt beteende i `canonical/core.md`; tre avgränsade Skills under `canonical/skills/`. Se `MIGRATION.md`.
+Se `MIGRATION.md` och `MIGRATION-VALIDATION.md` för detaljer.
