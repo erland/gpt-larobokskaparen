@@ -122,3 +122,8 @@ Bifoga `larobokskaparen-chat-vX.Y.Z.zip` i en ny konversation och skriv exempelv
 ## GitHub-publicering i genererade bokprojekt
 
 Projektmallen innehåller från början Validate, Build Preview och Release samt reproducerbar EPUB/PDF-export med Pandoc 3.1.11.1 + XeLaTeX. Därmed behöver publiceringsstödet inte eftermonteras i varje ny bok.
+
+
+## Migreringsunderlag
+
+Se `MIGRATION.md` och `MIGRATION-VALIDATION.md` för moderniseringen enligt GPT Byggaren v1.6.22.

@@ -46,7 +46,7 @@ def main():
         print('FAILED: project contracts')
         for error in errors: print('-',error)
         return 1
-    print('OK: GPT Builder 1.5 project contracts')
+    print('OK: modern project contracts')
     print('Validated: capabilities, artifacts, stateful workspace/state, tools, project-status')
     return 0
 

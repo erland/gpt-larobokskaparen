@@ -60,3 +60,8 @@ CI verifierar:
 GitHub Release använder release-taggen som versionskälla och publicerar exakt de aktiva runtime-artifacts som deklareras i `gpt-project.yaml`.
 
 Maskinläsbar status finns i `project-status.yaml`; utvecklingsplanen finns i `docs/development-plan.md`.
+
+
+## Migrering v1.6.22
+
+Gemensamt beteende i `canonical/core.md`; tre avgränsade Skills under `canonical/skills/`. Se `MIGRATION.md`.

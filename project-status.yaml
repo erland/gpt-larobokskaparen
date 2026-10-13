@@ -2,45 +2,40 @@ schema_version: 1
 project:
   id: larobokskaparen
   name: Lärobokskaparen
-
+workflow: zip
+migration:
+  target_builder_version: 1.6.22
+  status: release_candidate
+next_step:
+  recommended: host_acceptance
+  title: Kör värdplattformstester
+  reason: Lokala paket-, faktaboks- och exporttester är genomförda; värdplattformstester och GitHub CI återstår.
 plan:
   path: docs/development-plan.md
-  total_steps: 9
-
+  total_steps: 6
 progress:
-  current_phase: plugin_modernization_gpt_builder_1_5_1
-  current_step: 9
-  last_completed_step: 9
+  current_phase: technical_release_candidate
+  current_step: 6
+  last_completed_step: 6
   completed_steps:
-    - 1
-    - 2
-    - 3
-    - 4
-    - 5
-    - 6
-    - 7
-    - 8
-    - 9
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
   skipped_steps: []
   inserted_steps: []
-
 state:
-  overall: pass
+  overall: warning
   blocking_issues: []
   warnings:
-    - "OpenAI Plugin är ready_runtime_dependent: full stateful funktion kräver host workspace read/write, code execution och persistent state; chattminne är inte fallback."
-
-next_step:
-  recommended: validate_and_merge
-  title: Validera och mergea pluginmodernisering
-  reason: "OpenAI Plugin är moderniserad enligt GPT Byggaren 1.5.1 med korrekt ZIP-root, runtime contract, assets/references/script resources samt release checksums/delivery manifest."
-
+  - Tidigare legacy-hygiene kräver Git-index
+  - Beteendeparitet i alla hostmiljöer behöver manuella prov
 resume:
   supported: true
   required_files:
-    - gpt-project.yaml
-    - project-status.yaml
-    - docs/development-plan.md
-    - STATUS.md
-    - PROJECT.md
-  human_readable_status: "GPT Byggaren 1.5.1-pluginmoderniseringen är implementerad och ska mergas när aktuell PR-CI är grön."
+  - gpt-project.yaml
+  - project-status.yaml
+  - MIGRATION.md
+  human_readable_status: Teknisk releasekandidat 0.6.3; lokala exporttester godkända, hostparitet återstår.

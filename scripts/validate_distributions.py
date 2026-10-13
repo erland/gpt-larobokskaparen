@@ -2,334 +2,384 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
-import importlib.util
 import json
-import re
-import shutil
-import subprocess
 import sys
-import tempfile
 import zipfile
 from pathlib import Path
 
-import yaml
+try:
+    import yaml
+except Exception as exc:
+    raise SystemExit("PyYAML is required") from exc
 
-ROOT = Path(__file__).resolve().parents[1]
-CFG_PATH = ROOT / "gpt-project.yaml"
-EXPECTED = [
-    "01-purpose-and-workflow.md", "02-guided-interview.md", "03-difficulty-and-pedagogy-model.md",
-    "04-book-specification-template.md", "05-chapter-plan-template.md", "06-chapter-template.md",
-    "07-canon-and-continuity.md", "08-quality-checklist.md", "09-project-status-template.md",
-    "10-export-metadata-template.md", "11-book-type-patterns.md", "12-bilingual-style-guide.md",
-    "13-example-prompts.md", "14-suggested-project-structure.md", "15-export-and-rendering-rules.md",
-    "16-illustration-and-cover-workflow.md", "17-canonical-markdown-and-render-contract.md",
-    "18-local-export-pipeline.md", "19-project-template-bundle.md",
-]
-SEMVER = re.compile(r"^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$")
-STALE_TERMS = ("docs/pedagogisk-canon.md", "docs/export-metadata.yaml", "docs/book-specification.md", "docs/chapter-plan.md", "chapters/kapitelmall.md")
 
-def load_config() -> dict:
-    data=yaml.safe_load(CFG_PATH.read_text(encoding="utf-8"))
-    if not isinstance(data,dict):
-        raise SystemExit("Ogiltig gpt-project.yaml")
+FORBIDDEN_PARTS = {
+    ".git",
+    "__pycache__",
+    ".pytest_cache",
+    "research",
+    "evals",
+    "tests",
+}
+
+
+def load_cfg(root: Path) -> dict:
+    return yaml.safe_load((root / "gpt-project.yaml").read_text(encoding="utf-8"))
+
+
+def validate_custom(root: Path, cfg: dict) -> list[str]:
+    errors = []
+    build = root / "build" / "custom-gpt"
+    if not build.exists():
+        return ["Custom GPT build directory missing"]
+
+    instr = build / "builder" / "instructions.md"
+    if not instr.exists():
+        errors.append("Missing builder/instructions.md")
+    else:
+        actual = len(instr.read_text(encoding="utf-8"))
+        limit = int(cfg["runtime"]["custom_gpt"]["instruction"]["max_characters"])
+        if actual > limit:
+            errors.append(f"Instruction too long: {actual} > {limit}")
+
+    kp = build / "builder" / "knowledge-package"
+    files = [p for p in kp.rglob("*") if p.is_file()] if kp.exists() else []
+    limit = int(cfg["runtime"]["custom_gpt"]["knowledge"]["max_files"])
+    if len(files) > limit:
+        errors.append(f"Too many Knowledge files: {len(files)} > {limit}")
+
+    required = [
+        build / "builder" / "instructions.md",
+        build / "builder" / "conversation-starters.md",
+        build / "builder" / "capabilities.md",
+        build / cfg["runtime"]["custom_gpt"]["builder"].get("runtime_contract", "builder/runtime-contract.json"),
+        build / "README.md",
+        build / "COMPATIBILITY.md",
+        build / "VERSION",
+        build / "MANIFEST.json",
+    ]
+    for p in required:
+        if not p.exists():
+            errors.append(f"Missing required file: {p.relative_to(build)}")
+    return errors
+
+
+def validate_claude(root: Path, cfg: dict) -> list[str]:
+    errors = []
+    build = root / "build" / "claude"
+    if not build.exists():
+        return ["Claude build directory missing"]
+
+    runtime_cfg = cfg["runtime"]["claude"]
+    required = [
+        build / "README.md",
+        build / "VERSION",
+        build / "MANIFEST.json",
+        build / runtime_cfg["project"]["instructions"],
+        build / runtime_cfg["project"]["runtime_contract"],
+    ]
+    for p in required:
+        if not p.exists():
+            errors.append(f"Missing required file: {p.relative_to(build)}")
+    return errors
+
+
+
+def validate_claude_skills(root: Path, cfg: dict) -> list[str]:
+    errors = []
+    build = root / "build" / "claude-skills"
+    if not build.exists():
+        return ["Claude Skills build directory missing"]
+    for name in ("README.md", "VERSION", "MANIFEST.json", "runtime-contract.json"):
+        if not (build / name).is_file():
+            errors.append(f"Claude Skills missing {name}")
+    if (build / "project").exists():
+        errors.append("Claude Skills must not embed a Claude Project")
+    skills = cfg.get("skills", {}).get("definitions", [])
+    for skill in skills:
+        ident = skill["id"]
+        skill_dir = build / "skills" / ident
+        if not (skill_dir / "SKILL.md").is_file():
+            errors.append(f"Claude Skills missing {ident}/SKILL.md")
+        for category in ("references", "assets", "scripts"):
+            for source in skill.get(category, []) or []:
+                if not (skill_dir / category / Path(source).name).is_file():
+                    errors.append(f"Claude Skills missing {ident}/{category}/{Path(source).name}")
+    return errors
+
+
+def validate_opencode(root: Path, cfg: dict) -> list[str]:
+    errors = []
+    build = root / "build" / "opencode"
+    if not build.exists():
+        return ["OpenCode build directory missing"]
+
+    runtime_cfg = cfg["runtime"]["opencode"]
+    required = [
+        build / "README.md",
+        build / "VERSION",
+        build / "MANIFEST.json",
+        build / runtime_cfg["layout"]["instructions"],
+        build / runtime_cfg["layout"]["config"],
+        build / runtime_cfg["layout"]["runtime_contract"],
+    ]
+    for p in required:
+        if not p.exists():
+            errors.append(f"Missing required file: {p.relative_to(build)}")
+
+    if (build / "CLAUDE.md").exists():
+        errors.append("OpenCode base runtime must use AGENTS.md, not CLAUDE.md")
+
+    tool_contract = cfg.get("tools", {}).get("tools", [])
+    tools_dir = build / runtime_cfg["layout"]["tools"]
+    scripts_dir = build / runtime_cfg["layout"]["runtime_scripts"]
+    expected_tools = []
+    for item in tool_contract:
+        if item.get("type") != "script":
+            continue
+        tool_name = "gpt_" + item["id"].replace("-", "_")
+        expected_tools.append(tool_name)
+        wrapper = tools_dir / f"{tool_name}.ts"
+        script = scripts_dir / Path(item["script"]).name
+        if not wrapper.exists():
+            errors.append(f"Missing OpenCode custom tool: {wrapper.relative_to(build)}")
+        if not script.exists():
+            errors.append(f"Missing OpenCode runtime script: {script.relative_to(build)}")
+
+    config_path = build / runtime_cfg["layout"]["config"]
+    if config_path.exists():
+        try:
+            config = json.loads(config_path.read_text(encoding="utf-8"))
+            permissions = config.get("permission", {})
+            for item in tool_contract:
+                if item.get("type") != "script":
+                    continue
+                tool_name = "gpt_" + item["id"].replace("-", "_")
+                expected = "ask" if item.get("mutates_workspace") else "allow"
+                if permissions.get(tool_name) != expected:
+                    errors.append(f"OpenCode permission mismatch for {tool_name}")
+        except Exception as exc:
+            errors.append(f"Invalid OpenCode config: {exc}")
+
+    skills_cfg = runtime_cfg.get("skills", {})
+    if skills_cfg.get("enabled"):
+        root_path = build / skills_cfg.get("directory", ".opencode/skills")
+        canonical_skills = cfg.get("skills", {}).get("definitions") or skills_cfg.get("definitions", [])
+        for skill in canonical_skills:
+            skill_file = root_path / skill["id"] / "SKILL.md"
+            if not skill_file.exists():
+                errors.append(f"Missing OpenCode skill: {skill_file.relative_to(build)}")
+            else:
+                text = skill_file.read_text(encoding="utf-8")
+                if f"name: {skill['name']}" not in text:
+                    errors.append(f"OpenCode skill name mismatch: {skill['id']}")
+                if f"description: {skill['description']}" not in text:
+                    errors.append(f"OpenCode skill description mismatch: {skill['id']}")
+    return errors
+
+
+def _parse_skill_frontmatter(text: str) -> dict:
+    if not text.startswith("---\n"):
+        return {}
+    end = text.find("\n---\n", 4)
+    if end < 0:
+        return {}
+    block = text[4:end]
+    data = {}
+    for line in block.splitlines():
+        if not line.strip() or line.startswith(" ") or ":" not in line:
+            continue
+        key, value = line.split(":", 1)
+        data[key.strip()] = value.strip()
     return data
 
-def active_runtimes(cfg: dict) -> list[str]:
-    return [
-        runtime_id
-        for runtime_id,runtime_cfg in (cfg.get("runtime") or {}).items()
-        if isinstance(runtime_cfg,dict) and runtime_cfg.get("status")=="active"
-    ]
 
-def artifact_path(cfg: dict, runtime_id: str, version: str, dist: Path) -> Path:
-    pattern=cfg["runtime"][runtime_id].get("artifact_name")
-    if not pattern:
-        raise SystemExit(f"Runtime {runtime_id} saknar artifact_name")
-    return dist/pattern.format(version=version)
-
-
-def digest(data: bytes) -> str:
-    return hashlib.sha256(data).hexdigest()
-
-
-def read_zip(path: Path) -> dict[str, bytes]:
-    with zipfile.ZipFile(path) as archive:
-        bad = archive.testzip()
-        if bad:
-            raise SystemExit(f"Korrupt ZIP {path.name}: {bad}")
-        return {name: archive.read(name) for name in archive.namelist() if not name.endswith("/")}
-
-
-def load_module(path: Path, name: str):
-    spec = importlib.util.spec_from_file_location(name, path)
-    if spec is None or spec.loader is None:
-        raise SystemExit(f"Kan inte läsa Python-modul: {path}")
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
-
-
-def validate_export_order(template_root: Path) -> None:
-    with tempfile.TemporaryDirectory() as td:
-        work = Path(td) / "book"
-        shutil.copytree(template_root, work)
-        (work / "chapters/01-ett.md").write_text("# Ett\n", encoding="utf-8")
-        (work / "chapters/02-tva.md").write_text("# Två\n", encoding="utf-8")
-        yaml = (work / "book.yaml").read_text(encoding="utf-8")
-        yaml = yaml.replace(
-            "chapters:\n  - chapters/00-inledning.md",
-            "chapters:\n  - chapters/00-inledning.md\n  - chapters/02-tva.md\n  - chapters/01-ett.md",
-        )
-        (work / "book.yaml").write_text(yaml, encoding="utf-8")
-        module = load_module(work / "scripts/export-book.py", "test_export_book")
-        paths = module.resolve_chapters(module.read_book_yaml())
-        got = [path.name for path in paths]
-        expected = ["00-inledning.md", "02-tva.md", "01-ett.md"]
-        if got != expected:
-            raise SystemExit(f"Exportordningen följer inte book.yaml: {got}")
-
-
-def validate_duplicate_chapter_guard(template_root: Path) -> None:
-    module = load_module(template_root / "scripts/project_integrity.py", "test_project_integrity")
-    files = {
-        "chapters/01-ett.md": {"sha256": "a"},
-        "chapters/01-annat.md": {"sha256": "b"},
-    }
+def validate_plugin_zip_entries(zip_path: Path) -> list[str]:
+    """Check installable archive entries, not just staging paths."""
+    errors = []
     try:
-        module.summary(files)
-    except ValueError:
-        return
-    raise SystemExit("project_integrity.py stoppar inte dubbla kapitelnummer")
+        with zipfile.ZipFile(zip_path) as archive:
+            for entry in archive.namelist():
+                if entry.replace("\\", "/").rstrip("/").split("/")[-1].lower() == "mcp.json":
+                    errors.append(f"Forbidden plugin ZIP entry: {entry}")
+    except (OSError, zipfile.BadZipFile) as exc:
+        errors.append(f"Invalid plugin ZIP: {exc}")
+    return errors
+
+
+def validate_plugin(root: Path, cfg: dict) -> list[str]:
+    errors = []
+    build = root / "build" / "plugin"
+    if not build.exists():
+        return ["Plugin build directory missing"]
+
+    for path in build.rglob("*"):
+        if path.is_file() and path.name.lower() == "mcp.json":
+            errors.append(f"Forbidden plugin file: {path.relative_to(build)}")
+
+    for archive in (root / "dist").glob(f"{cfg['project']['id']}-plugin-*.zip"):
+        errors.extend(validate_plugin_zip_entries(archive))
+
+    runtime_cfg = cfg["runtime"]["plugin"]
+    required = [
+        build / "README.md",
+        build / "VERSION",
+        build / "MANIFEST.json",
+        build / "runtime-contract.json",
+        build / runtime_cfg["layout"]["manifest_file"],
+    ]
+    for p in required:
+        if not p.exists():
+            errors.append(f"Missing required file: {p.relative_to(build)}")
+
+    plugin_json = build / runtime_cfg["layout"]["manifest_file"]
+    if plugin_json.exists():
+        try:
+            manifest = json.loads(plugin_json.read_text(encoding="utf-8"))
+            for key in ("name", "version", "description"):
+                if not manifest.get(key):
+                    errors.append(f"Plugin manifest missing required field: {key}")
+        except Exception as exc:
+            errors.append(f"Invalid plugin.json: {exc}")
+
+    manifest_path = build / "MANIFEST.json"
+    if manifest_path.exists():
+        try:
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            if manifest.get("adapter_id") != "openai_plugin":
+                errors.append("Plugin MANIFEST adapter_id mismatch")
+            if manifest.get("plugin_manifest") != runtime_cfg["layout"]["manifest_file"]:
+                errors.append("Plugin MANIFEST plugin_manifest mismatch")
+            if manifest.get("contract_snapshot") != "runtime-contract.json":
+                errors.append("Plugin MANIFEST contract_snapshot mismatch")
+        except Exception as exc:
+            errors.append(f"Invalid plugin MANIFEST.json: {exc}")
+
+    skill_defs = cfg.get("skills", {}).get("definitions") or []
+    skills_root = build / runtime_cfg["layout"]["skills"]
+    if runtime_cfg.get("validation", {}).get("require_skill", True) and not skill_defs:
+        errors.append("Plugin runtime requires at least one canonical skill")
+
+    for skill in skill_defs:
+        skill_dir = skills_root / skill["id"]
+        skill_file = skill_dir / "SKILL.md"
+        if not skill_file.exists():
+            errors.append(f"Missing plugin skill: {skill_file.relative_to(build)}")
+            continue
+
+        text = skill_file.read_text(encoding="utf-8")
+        frontmatter = _parse_skill_frontmatter(text)
+        if runtime_cfg.get("validation", {}).get("require_skill_frontmatter", True):
+            if frontmatter.get("name") != skill["name"]:
+                errors.append(f"Plugin skill name mismatch: {skill['id']}")
+            if frontmatter.get("description") != skill["description"]:
+                errors.append(f"Plugin skill description mismatch: {skill['id']}")
+
+        for key in ("references", "assets", "scripts"):
+            for ref in skill.get(key, []) or []:
+                expected = skill_dir / key / Path(ref).name
+                if not expected.exists():
+                    errors.append(
+                        f"Missing plugin skill {key[:-1]}: {expected.relative_to(build)}"
+                    )
+
+        scripts_dir = skill_dir / "scripts"
+        packaged_scripts = [
+            p for p in scripts_dir.glob("*")
+            if p.is_file()
+        ] if scripts_dir.exists() else []
+        shared_lib = root / "scripts" / "lib"
+        if packaged_scripts and shared_lib.exists():
+            for source in shared_lib.rglob("*"):
+                if not source.is_file() or source.suffix in {".pyc", ".pyo"}:
+                    continue
+                expected = scripts_dir / "lib" / source.relative_to(shared_lib)
+                if not expected.exists():
+                    errors.append(
+                        f"Missing plugin shared script dependency: {expected.relative_to(build)}"
+                    )
+
+    forbidden_parts = {
+        ".git",
+        ".github",
+        "tests",
+        "evals",
+        "research",
+        "build",
+        "dist",
+        "__pycache__",
+        ".pytest_cache",
+        ".mypy_cache",
+        ".ruff_cache",
+    }
+    for p in build.rglob("*"):
+        rel = p.relative_to(build)
+        if any(part in forbidden_parts for part in rel.parts):
+            errors.append(f"Forbidden plugin runtime path: {rel}")
+
+    return errors
+
+
+def validate_chat(root: Path, cfg: dict) -> list[str]:
+    errors = []
+    build = root / "build" / "chat"
+    if not build.exists():
+        return ["Chat build directory missing"]
+
+    required = [
+        build / "START-HERE.md",
+        build / "VERSION",
+        build / "MANIFEST.json",
+        build / "assistant" / "instructions.md",
+    ]
+    for p in required:
+        if not p.exists():
+            errors.append(f"Missing required file: {p.relative_to(build)}")
+
+    for p in build.rglob("*"):
+        if not p.is_file():
+            continue
+        rel = p.relative_to(build)
+        if any(part in FORBIDDEN_PARTS for part in rel.parts):
+            errors.append(f"Forbidden runtime path: {rel}")
+    return errors
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dist-dir", default=str(ROOT / "dist"))
-    parser.add_argument("--version")
+    parser.add_argument("--project-root", default=".")
     args = parser.parse_args()
 
-    cfg=load_config()
-    build_module = load_module(ROOT / "scripts/build_distributions.py", "build_distributions_for_validation")
-    version = build_module.resolve_version(args.version)
-    runtimes=active_runtimes(cfg)
-    unsupported=sorted(set(runtimes)-{"custom_gpt","chatgpt_chat","claude_projects","opencode","openai_plugin"})
-    if unsupported:
-        raise SystemExit("Aktiv runtime saknar valideringsadapter: " + ", ".join(unsupported))
-
-
-    if (ROOT / "VERSION").exists():
-        raise SystemExit("Repositoryt får inte ha en incheckad VERSION-fil; release-taggen är versionskälla")
-    root_workflow=(ROOT / ".github/workflows/build-distributions.yml").read_text(encoding="utf-8")
-    if "github.event.release.tag_name" not in root_workflow or "< VERSION" in root_workflow:
-        raise SystemExit("Distributionsworkflowet använder inte release-taggen som versionskälla")
-
-    knowledge = sorted(path.name for path in (ROOT / "knowledge-upload").glob("*.md"))
-    if len(knowledge) > 20:
-        raise SystemExit(f"Custom GPT har {len(knowledge)} Knowledge-filer; max är 20")
-    if knowledge != EXPECTED:
-        raise SystemExit(f"Fel Knowledge-lista: {knowledge}")
-
-    instructions = (ROOT / "gpt-configuration/instructions.md").read_text(encoding="utf-8")
-    if len(instructions) > 8000:
-        raise SystemExit(f"Instructions är {len(instructions)} tecken; max 8000")
-    required_instruction_terms = ("book_kind", "textbook", "factbook", "docs/kallpolicy.md", "docs/faktakontroll.md", "book.yaml")
-    missing_terms = [term for term in required_instruction_terms if term not in instructions]
-    if missing_terms:
-        raise SystemExit(f"Instructions saknar centrala termer: {missing_terms}")
-    if re.search(r"GPT-instruktioner\s+v\d+", instructions):
-        raise SystemExit("Instructions innehåller en separat intern versionsetikett; release-taggen ska vara enda distributionsversionskälla")
-
-    guidance_files = [ROOT / "gpt-configuration/instructions.md", ROOT / "examples/sample-book-project-structure.md"]
-    guidance_files += [path for path in (ROOT / "knowledge-upload").glob("*.md") if path.name != "19-project-template-bundle.md"]
-    stale = []
-    for path in guidance_files:
-        text = path.read_text(encoding="utf-8")
-        for term in STALE_TERMS:
-            if term in text:
-                stale.append(f"{path.relative_to(ROOT)}: {term}")
-    if stale:
-        raise SystemExit("Utfasade strukturreferenser finns kvar: " + "; ".join(stale))
-
-    template_root = ROOT / "templates/bokprojekt"
-    for rel in (
-        "chapters/kapitelmall-larobok.md", "chapters/kapitelmall-faktabok.md",
-        "docs/kallpolicy.md", "docs/faktakontroll.md", "docs/innehalls-canon.md",
-        "scripts/export-book.py", "scripts/project_integrity.py", "scripts/validate_project.py", "scripts/build_book.py",
-        "publishing/epub.css", "publishing/fix-epub-after-pandoc.py", "publishing/pdf-template.tex", "publishing/pdf-filter.lua",
-        ".github/workflows/01-validate.yml", ".github/workflows/02-build-preview.yml", ".github/workflows/03-release.yml",
+    root = Path(args.project_root).resolve()
+    cfg = load_cfg(root)
+    if isinstance(cfg.get("reconstruction"), dict) and (
+        cfg["reconstruction"].get("release_ready") is not True
+        or cfg["reconstruction"].get("status") != "runtime_parity_verified"
     ):
-        if not (template_root / rel).is_file():
-            raise SystemExit(f"Saknad templatefil: {rel}")
+        raise SystemExit(
+            "Reconstructed project is not release-ready: complete and verify "
+            "runtime parity before distribution build or validation"
+        )
 
-    yaml = (template_root / "book.yaml").read_text(encoding="utf-8")
-    if not re.search(r'(?m)^book_kind:\s*"textbook"', yaml):
-        raise SystemExit("book.yaml saknar default book_kind=textbook")
-    if "chapters:\n  - chapters/00-inledning.md" not in yaml:
-        raise SystemExit("book.yaml saknar kanonisk inledning som första kapitelpost")
+    errors = []
+    errors.extend(validate_chat(root, cfg))
+    if cfg["runtime"]["custom_gpt"]["enabled"]:
+        errors.extend(validate_custom(root, cfg))
+    if cfg.get("runtime", {}).get("claude", {}).get("enabled"):
+        errors.extend(validate_claude(root, cfg))
+        errors.extend(validate_claude_skills(root, cfg))
+    if cfg.get("runtime", {}).get("opencode", {}).get("enabled"):
+        errors.extend(validate_opencode(root, cfg))
+    if cfg.get("runtime", {}).get("plugin", {}).get("enabled"):
+        errors.extend(validate_plugin(root, cfg))
 
-    preview=(template_root / ".github/workflows/02-build-preview.yml").read_text(encoding="utf-8")
-    release=(template_root / ".github/workflows/03-release.yml").read_text(encoding="utf-8")
-    if "workflow_dispatch" not in preview or "actions/upload-artifact@v4" not in preview or "*.epub" not in preview or "*.pdf" not in preview:
-        raise SystemExit("Preview-workflowet saknar gemensamt EPUB/PDF-artifact")
-    if 'tags: ["v*"]' not in release or "gh release" not in release or "*.epub" not in release or "*.pdf" not in release:
-        raise SystemExit("Release-workflowet saknar v*-tagg eller separata EPUB/PDF-assets")
+    if errors:
+        print("VALIDATION: FAIL")
+        for e in errors:
+            print(f"- {e}")
+        return 1
 
-    validate_export_order(template_root)
-    validate_duplicate_chapter_guard(template_root)
-
-    # Build-scriptet validerar samtidigt exakt templatefiluppsättning och bundle-synk.
-    subprocess.run(
-        [sys.executable, str(ROOT / "scripts/build_distributions.py"), "--output-dir", str(Path(args.dist_dir) / ".validator-build"), "--version", version],
-        check=True,
-        stdout=subprocess.DEVNULL,
-    )
-    shutil.rmtree(Path(args.dist_dir) / ".validator-build", ignore_errors=True)
-
-    dist = Path(args.dist_dir)
-    expected_paths={runtime_id: artifact_path(cfg,runtime_id,version,dist) for runtime_id in runtimes}
-    expected_names={p.name for p in expected_paths.values()}
-    actual_names={p.name for p in dist.glob("*.zip")}
-    if actual_names != expected_names:
-        raise SystemExit(f"Fel distributionsmängd: actual={sorted(actual_names)} expected={sorted(expected_names)}")
-    custom_path=expected_paths["custom_gpt"]
-    portable_path=expected_paths["chatgpt_chat"]
-    claude_path=expected_paths["claude_projects"]
-    opencode_path=expected_paths["opencode"]
-    plugin_path=expected_paths["openai_plugin"]
-    custom = read_zip(custom_path)
-    portable = read_zip(portable_path)
-    claude = read_zip(claude_path)
-    opencode = read_zip(opencode_path)
-    plugin = read_zip(plugin_path)
-    if custom.get("VERSION") != (version + "\n").encode() or portable.get("VERSION") != (version + "\n").encode() or claude.get("VERSION") != (version + "\n").encode() or opencode.get("VERSION") != (version + "\n").encode():
-        raise SystemExit("VERSION mismatch")
-
-    custom_cfg=cfg["runtime"]["custom_gpt"]
-    chat_cfg=cfg["runtime"]["chatgpt_chat"]
-    src_instructions = (ROOT / custom_cfg["instruction"]["source"]).read_bytes()
-    starters = (ROOT / custom_cfg["conversation_starters"]).read_bytes()
-    claude_cfg=cfg["runtime"]["claude_projects"]
-    opencode_cfg=cfg["runtime"]["opencode"]
-    if custom.get(custom_cfg["instruction"]["source"]) != src_instructions or portable.get("assistant/instructions.md") != (ROOT/chat_cfg["source"]["instructions"]).read_bytes() or claude.get("assistant/instructions.md") != (ROOT/claude_cfg["source"]["instructions"]).read_bytes() or opencode.get("assistant/instructions.md") != (ROOT/opencode_cfg["source"]["instructions"]).read_bytes():
-        raise SystemExit("Instructions mismatch")
-    if custom.get(custom_cfg["conversation_starters"]) != starters:
-        raise SystemExit("Conversation starters mismatch")
-
-    for name in EXPECTED:
-        src = (ROOT / "knowledge-upload" / name).read_bytes()
-        if custom.get("knowledge-upload/" + name) != src:
-            raise SystemExit(f"Custom Knowledge mismatch: {name}")
-        if portable.get("knowledge/" + name) != src:
-            raise SystemExit(f"Portable Knowledge mismatch: {name}")
-        if claude.get("knowledge/" + name) != src:
-            raise SystemExit(f"Claude Knowledge mismatch: {name}")
-        if opencode.get("knowledge/" + name) != src:
-            raise SystemExit(f"OpenCode Knowledge mismatch: {name}")
-
-    for path in sorted(p for p in template_root.rglob("*") if p.is_file() and "__pycache__" not in p.parts and p.suffix != ".pyc"):
-        rel = path.relative_to(template_root).as_posix()
-        if portable.get("templates/bokprojekt/" + rel) != path.read_bytes():
-            raise SystemExit(f"Portable template mismatch: {rel}")
-        if claude.get("templates/bokprojekt/" + rel) != path.read_bytes():
-            raise SystemExit(f"Claude template mismatch: {rel}")
-        if opencode.get("templates/bokprojekt/" + rel) != path.read_bytes():
-            raise SystemExit(f"OpenCode template mismatch: {rel}")
-
-    manifest = json.loads(portable["MANIFEST.json"].decode())
-    claude_manifest = json.loads(claude["MANIFEST.json"].decode())
-    opencode_manifest = json.loads(opencode["MANIFEST.json"].decode())
-    plugin_cfg=cfg["runtime"]["openai_plugin"]
-    plugin_root=""
-    plugin_manifest=json.loads(plugin["plugin.json"].decode())
-    skill_path="skills/"+plugin_cfg["skill"]["id"]+"/SKILL.md"
-    if plugin_manifest.get("$schema")!="https://agent-plugins.org/schemas/1.0.0/plugin.schema.json":
-        raise SystemExit("Plugin schema mismatch")
-    if plugin_manifest.get("version")!=version or plugin_manifest.get("name")!=plugin_cfg["manifest"]["name"]:
-        raise SystemExit("Plugin manifest metadata mismatch")
-    if skill_path not in plugin:
-        raise SystemExit("Plugin SKILL.md saknas")
-    skill_text=plugin[skill_path].decode("utf-8")
-    if "## Kanoniskt beteendekontrakt" not in skill_text or "Påstå aldrig att ett ZIP-projekt" not in skill_text:
-        raise SystemExit("Plugin skill saknar canonical/runtime-gap-kontrakt")
-    required_root={"plugin.json","README.md","VERSION","MANIFEST.json","runtime-contract.json"}
-    if not required_root.issubset(set(plugin)):
-        raise SystemExit("Plugin ZIP saknar obligatoriska rotfiler: "+", ".join(sorted(required_root-set(plugin))))
-    if any(name.startswith(plugin_cfg["manifest"]["name"]+"/") for name in plugin):
-        raise SystemExit("Plugin ZIP får inte ha en wrapper-/toppkatalog")
-    runtime_contract=json.loads(plugin["runtime-contract.json"].decode())
-    adapter=runtime_contract.get("adapter",{})
-    if runtime_contract.get("runtime_id")!="openai_plugin":
-        raise SystemExit("Plugin runtime-contract runtime_id mismatch")
-    if adapter.get("mode")!="skills_first" or adapter.get("compatibility")!="ready_runtime_dependent":
-        raise SystemExit("Plugin runtime adapter mismatch")
-    for key in ("workspace","filesystem_read","filesystem_write","code_execution","persistent_state"):
-        if adapter.get(key)!="required_host_runtime":
-            raise SystemExit(f"Plugin host dependency mismatch: {key}")
-    if adapter.get("state_authority")!="workspace_file" or adapter.get("conversation_fallback") is not False:
-        raise SystemExit("Plugin state authority/fallback mismatch")
-    if adapter.get("mcp_generated") is not False:
-        raise SystemExit("Plugin får inte generera MCP-wrapper")
-    runtime_tool_ids={item.get("id") for item in runtime_contract.get("tools",{}).get("tools",[])}
-    if runtime_tool_ids!={"project-integrity","project-validation","book-export","book-build"}:
-        raise SystemExit("Plugin runtime-contract innehåller fel tool-scope")
-    declared_scripts={item.get("path") for item in adapter.get("script_resources",[])}
-    expected_scripts={
-        "skills/larobokskaparen/scripts/project_integrity.py",
-        "skills/larobokskaparen/scripts/validate_project.py",
-        "skills/larobokskaparen/scripts/export-book.py",
-        "skills/larobokskaparen/scripts/build_book.py",
-        "skills/larobokskaparen/scripts/publishing/fix-epub-after-pandoc.py",
-    }
-    if declared_scripts!=expected_scripts:
-        raise SystemExit("Plugin script_resources mismatch")
-    for path in expected_scripts:
-        if path not in plugin:
-            raise SystemExit(f"Plugin saknar deklarerad script resource: {path}")
-    unexpected_python=[name for name in plugin if name.endswith(".py") and name not in expected_scripts]
-    if unexpected_python:
-        raise SystemExit("Plugin-distributionen innehåller odeklarerad Python: "+", ".join(sorted(unexpected_python)))
-    if "mcp.json" in plugin:
-        raise SystemExit("Plugin-distributionen får inte påstå en MCP-integration som inte finns")
-    if manifest.get("version") != version or manifest.get("template_root") != "templates/bokprojekt":
-        raise SystemExit("MANIFEST metadata mismatch")
-    if claude_manifest.get("version") != version or claude_manifest.get("format") != "claude-projects" or claude_manifest.get("template_root") != "templates/bokprojekt":
-        raise SystemExit("Claude MANIFEST metadata mismatch")
-    if opencode_manifest.get("version") != version or opencode_manifest.get("format") != "opencode" or opencode_manifest.get("template_root") != "templates/bokprojekt":
-        raise SystemExit("OpenCode MANIFEST metadata mismatch")
-    if manifest.get("knowledge") != ["knowledge/" + name for name in EXPECTED]:
-        raise SystemExit("MANIFEST Knowledge mismatch")
-    for entry in manifest.get("files", []):
-        if entry["path"] not in portable or digest(portable[entry["path"]]) != entry["sha256"]:
-            raise SystemExit(f"MANIFEST SHA mismatch: {entry['path']}")
-
-    # Pluginen ska bära samma Knowledge och exempel som references.
-    skill_ref="skills/"+plugin_cfg["skill"]["id"]+"/references/"
-    for name in EXPECTED:
-        src=(ROOT/"knowledge-upload"/name).read_bytes()
-        if plugin.get(skill_ref+"knowledge/"+name)!=src:
-            raise SystemExit(f"Plugin Knowledge mismatch: {name}")
-    script_map={
-        "scripts/project_integrity.py":"skills/larobokskaparen/scripts/project_integrity.py",
-        "scripts/validate_project.py":"skills/larobokskaparen/scripts/validate_project.py",
-        "scripts/export-book.py":"skills/larobokskaparen/scripts/export-book.py",
-        "scripts/build_book.py":"skills/larobokskaparen/scripts/build_book.py",
-        "publishing/fix-epub-after-pandoc.py":"skills/larobokskaparen/scripts/publishing/fix-epub-after-pandoc.py",
-    }
-    asset_prefix="skills/"+plugin_cfg["skill"]["id"]+"/assets/bokprojekt/"
-    for path in sorted(p for p in template_root.rglob("*") if p.is_file() and "__pycache__" not in p.parts and p.suffix != ".pyc"):
-        rel=path.relative_to(template_root).as_posix()
-        target=script_map.get(rel,asset_prefix+rel)
-        if plugin.get(target)!=path.read_bytes():
-            raise SystemExit(f"Plugin asset/script mismatch: {rel}")
-    canonical=(ROOT/plugin_cfg["skill"]["source_instruction"]).read_text(encoding="utf-8").strip()
-    if canonical not in skill_text:
-        raise SystemExit("Plugin skill bäddar inte in canonical instruktion")
-
-    print(f"OK: distributionerna för {version} är validerade.")
-    print(f"OK: Instructions är {len(instructions)} tecken (max 8000); {len(knowledge)} Knowledge-filer (max 20).")
-    print("OK: Custom/portable-filer och portabel template är byte-identiska med källorna.")
-    print("OK: book.yaml styr exportordningen; dubbla kapitelnummer stoppas; utfasade strukturreferenser saknas.")
+    print("VALIDATION: PASS")
     return 0
 
 

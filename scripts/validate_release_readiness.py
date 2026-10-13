@@ -1,42 +1,23 @@
 #!/usr/bin/env python3
+"""Validate release candidate metadata for the current architecture."""
 from pathlib import Path
-import yaml
-
-ROOT=Path(__file__).resolve().parents[1]
-
+import sys,json,zipfile,yaml
+R=Path(__file__).resolve().parents[1]
 def main():
-    errors=[]
-    cfg=yaml.safe_load((ROOT/'gpt-project.yaml').read_text(encoding='utf-8'))
-    status=yaml.safe_load((ROOT/'project-status.yaml').read_text(encoding='utf-8'))
-    if status.get('progress',{}).get('last_completed_step')!=9:
-        errors.append('project-status.yaml markerar inte steg 9 som klart')
-    if status.get('state',{}).get('overall')!='pass':
-        errors.append('project-status.yaml har inte overall: pass')
-    active=[rid for rid,rcfg in cfg.get('runtime',{}).items() if isinstance(rcfg,dict) and rcfg.get('status')=='active']
-    if len(active)!=5:
-        errors.append(f'Förväntade 5 aktiva runtimes, fick {len(active)}: {active}')
-    for doc in ['README.md','PROJECT.md','STATUS.md']:
-        text=(ROOT/doc).read_text(encoding='utf-8')
-        for marker in ['ChatGPT','Claude Projects','OpenCode','OpenAI Plugin']:
-            if marker not in text:
-                errors.append(f'{doc} saknar runtime-markör: {marker}')
-    if cfg['workspace_state']['state'].get('authority')!='workspace_file':
-        errors.append('State authority är inte workspace_file')
-    if cfg['workspace_state']['state'].get('conversation_fallback') is not False:
-        errors.append('Conversation fallback måste vara false')
-    plugin=cfg['runtime']['openai_plugin']['compatibility']
-    if plugin.get('compatibility')!='ready_runtime_dependent':
-        errors.append('OpenAI Plugin är inte ready_runtime_dependent')
-    if plugin.get('state_authority')!='workspace_file' or plugin.get('conversation_fallback') is not False:
-        errors.append('OpenAI Plugin state contract avviker')
-    for rel in ['dist/SHA256SUMS.txt','dist/DELIVERY-MANIFEST.json']:
-        if not (ROOT/rel).is_file():
-            errors.append(f'Release metadata saknas: {rel}')
-    if errors:
-        print('FAILED: release readiness')
-        for e in errors: print('-',e)
-        return 1
-    print('OK: release readiness metadata and stateful contract')
-    return 0
-
-if __name__=='__main__': raise SystemExit(main())
+    cfg=yaml.safe_load((R/'gpt-project.yaml').read_text())
+    expected=['chat','plugin','claude-project','claude-skills','opencode']
+    issues=[]
+    if cfg['workspace_state']['state']['conversation_fallback'] is not False: issues.append('conversation fallback')
+    if cfg['runtime']['custom_gpt']['enabled'] is not False: issues.append('custom GPT still active')
+    dist=R/'dist'
+    zips=[p for p in dist.glob('*.zip') if not p.name.startswith('larobokskaparen-project-')]
+    for label in expected:
+        found=[p for p in zips if p.name.startswith('larobokskaparen-'+label+'-')]
+        if len(found)!=1: issues.append(f'{label}: expected 1 zip, got {len(found)}')
+        elif zipfile.ZipFile(found[0]).testzip() is not None:issues.append(f'{label}: broken ZIP')
+    if not (dist/'SHA256SUMS.txt').exists():issues.append('checksums absent')
+    if not (dist/'DELIVERY-MANIFEST.json').exists():issues.append('manifest absent')
+    for issue in issues:print('FAIL:',issue)
+    if issues:return 1
+    print('PASS: release candidate structural readiness (not host-runtime approval)');return 0
+if __name__=='__main__':raise SystemExit(main())
