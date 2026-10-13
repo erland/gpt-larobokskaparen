@@ -1,6 +1,6 @@
 # Lärobokskaparen GPT
 
-Lärobokskaparen är en Custom GPT-konfiguration för att planera, skriva, underhålla och exportera **läroböcker** och **faktaböcker**. Samma projektformat används för båda profilerna, medan planering, kapitelstruktur och kvalitetskontroll anpassas efter bokens syfte.
+Lärobokskaparen är en portabel GPT-assistent för att planera, skriva, underhålla och exportera **läroböcker** och **faktaböcker**. Samma projektformat används för båda profilerna, medan planering, kapitelstruktur och kvalitetskontroll anpassas efter bokens syfte.
 
 Repositoryt har ingen incheckad versionsfil. En publicerad GitHub Release-tagg `v<SemVer>` är auktoritativ versionskälla; lokala/testbyggen använder explicit `--version`.
 
@@ -11,14 +11,13 @@ Repositoryt har ingen incheckad versionsfil. En publicerad GitHub Release-tagg `
 
 `book_kind` väljer huvudprofil och `book_type` väljer underform inom profilen.
 
-## Installation som Custom GPT
+## Installation och användning
 
-1. Kopiera `gpt-configuration/instructions.md` till GPT:ns Instructions.
-2. Lägg in `gpt-configuration/conversation-starters.md` som conversation starters.
-3. Ladda upp alla Markdown-filer i `knowledge-upload/` som Knowledge.
-4. Aktivera vid behov Web Browsing, Code Interpreter/Data Analysis och Image Generation.
+Aktiva distributioner är Chat ZIP, ChatGPT Plugin, Claude Project, Claude Skills och OpenCode. Custom GPT är inte längre ett aktivt distributionsmål.
 
-Byggvalideringen stoppar om Instructions överstiger 8 000 tecken eller om Knowledge-filerna överstiger Custom GPT-gränsen på 20.
+För Chat ZIP: bifoga distributionens ZIP-fil i en ny ChatGPT-konversation och läs `START-HERE.md`. För övriga plattformar används respektive distributions README och runtimekontrakt.
+
+**Kanoniska instruktioner:** `canonical/core.md` tillsammans med `canonical/skills/**/behavior.md`. Den äldre `gpt-configuration/instructions.md` behålls som källreferens för migreringsjämförelser.
 
 ## Kanonisk projektmodell
 
@@ -74,44 +73,32 @@ Pandoc används som standard när det finns. Exportscriptet läser kapitel **i e
 
 ## Distributioner
 
-Repositoryt bygger aktiva runtime-paket deklarativt från `gpt-project.yaml`. För närvarande är fem runtimes aktiva:
+Bygg och validering styrs av `gpt-project.yaml`. Projektet levererar sex ZIP-filer: projektpaketet samt dessa fem aktiva runtimepaket:
 
-- `larobokskaparen-custom-gpt-vX.Y.Z.zip` – för installation/uppdatering av Custom GPT.
-- `larobokskaparen-chat-vX.Y.Z.zip` – portabel version för en vanlig ChatGPT-konversation.
-- `larobokskaparen-claude-projects-vX.Y.Z.zip` – portabel Claude Projects-distribution med samma canonical instruktion, Knowledge och bokprojektmall.
-- `larobokskaparen-opencode-vX.Y.Z.zip` – OpenCode-distribution för workspace-/script-orienterat bokprojektarbete.
-- `larobokskaparen-openai-plugin-vX.Y.Z.zip` – skills-first OpenAI Plugin med bokmetodik, Knowledge, bokprojekt-assets och deklarerade runtime-scripts.
+- `larobokskaparen-chat-<version>.zip`
+- `larobokskaparen-plugin-<version>.zip`
+- `larobokskaparen-claude-project-<version>.zip`
+- `larobokskaparen-claude-skills-<version>.zip`
+- `larobokskaparen-opencode-<version>.zip`
 
-OpenAI Plugin följer GPT Byggaren 1.5.1: `plugin.json` ligger direkt i ZIP-roten, Knowledge ligger som references, bokprojektmallen som assets och project-integrity/validation/export-scripts som deklarerade script resources. Full stateful projektfunktion kräver workspace read/write, code execution och persistent state från hosten. `project-manifest.json`/workspace är fortsatt auktoritativ state och chattminne är inte fallback.
+## Byggarverktyg respektive bokprojektverktyg
 
-Den portabla distributionen innehåller:
+Repositoryts `scripts/build_distributions.py`, `scripts/validate_distributions.py` och `scripts/lint_gpt_project.py` körs **i GPT-projektets rot** för att bygga och kontrollera distributionspaket.
 
-```text
-START-HERE.md
-VERSION
-MANIFEST.json
-assistant/instructions.md
-knowledge/
-templates/bokprojekt/
-examples/
-```
+Den kanoniska bokprojektmallen finns däremot i `templates/bokprojekt/`. Dess egna `scripts/project_integrity.py`, `scripts/validate_project.py`, `scripts/export-book.py` och `scripts/build_book.py` följer med nya bokprojekt och körs **i respektive bokprojekts rot**. Repositoryts generiska `scripts/` får inte förväxlas med mallens bokprojektsverktyg.
 
-Instructions, Knowledge-filer och den portabla projektmallen verifieras byte-identiskt mot repositoryts källfiler.
-
-### Lokal build
-
-Eftersom repositoryt saknar incheckad version anges version explicit om committen inte är exakt taggad:
+### Lokalt distributionsbygge
 
 ```bash
-python3 scripts/build_distributions.py --version 1.4.0
-python3 scripts/validate_distributions.py --version 1.4.0
+PYTHONDONTWRITEBYTECODE=1 python3 scripts/lint_gpt_project.py --project-root . --json
+PYTHONDONTWRITEBYTECODE=1 python3 scripts/build_distributions.py --version 0.6.3
+PYTHONDONTWRITEBYTECODE=1 python3 scripts/validate_distributions.py
+PYTHONDONTWRITEBYTECODE=1 python3 scripts/validate_release_assets.py --version 0.6.3
 ```
-
-På en exakt `v<SemVer>`-tagg kan buildscriptet även läsa versionen från Git. Distributionernas `VERSION`-fil genereras vid build och är inte källan till versionen.
 
 ### GitHub Release
 
-Release-taggen är versionskälla och ska följa `v<SemVer>`, till exempel `v1.4.0`. Workflowet bygger och validerar samtliga aktiva runtime-distributioner med taggens version. Den exakta ZIP-uppsättningen härleds deklarativt från `gpt-project.yaml`; dessutom genereras och valideras `SHA256SUMS.txt` och `DELIVERY-MANIFEST.json`.
+En publicerad tagg `v<SemVer>` utlöser distributionsbygge, verifiering av checksumma och uppladdning av aktiva assets. PR-körningar använder automatiskt en utvecklingsversion.
 
 ## Portabel användning
 
@@ -122,3 +109,8 @@ Bifoga `larobokskaparen-chat-vX.Y.Z.zip` i en ny konversation och skriv exempelv
 ## GitHub-publicering i genererade bokprojekt
 
 Projektmallen innehåller från början Validate, Build Preview och Release samt reproducerbar EPUB/PDF-export med Pandoc 3.1.11.1 + XeLaTeX. Därmed behöver publiceringsstödet inte eftermonteras i varje ny bok.
+
+
+## Migreringsunderlag
+
+Se `MIGRATION.md` och `MIGRATION-VALIDATION.md` för moderniseringen enligt GPT Byggaren v1.6.22.

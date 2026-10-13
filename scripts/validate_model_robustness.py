@@ -1,55 +1,40 @@
 #!/usr/bin/env python3
+"""Verify modern modular, stateful model contracts (GPT Byggaren 1.6.22)."""
 from pathlib import Path
+import json
 import yaml
-
 ROOT=Path(__file__).resolve().parents[1]
-
-CRITICAL=[
-  '## Bokplan före projekt',
-  '`book.yaml` är kanonisk metadata',
-  '`project-manifest.json`, `revision-log.md` och `scripts/project_integrity.py` skyddar projektversioner och filer.',
-  'Vid filändringar: välj exakt en indata-zip',
-  'Vid nytt/reviderat kapitel får andra kapitelfiler inte ändras.',
-  'Kapitelordningen i `book.yaml` är bindande för export.',
-]
-
 def main():
-    errors=[]
-    cfg=yaml.safe_load((ROOT/'gpt-project.yaml').read_text(encoding='utf-8'))
-    canonical=(ROOT/cfg['instructions']['canonical']).read_text(encoding='utf-8')
-    for marker in CRITICAL:
-        if marker not in canonical: errors.append(f'Canonical instruktion saknar: {marker}')
-    ws=cfg['workspace_state']
-    if ws['state']['authority']!='workspace_file': errors.append('State authority måste vara workspace_file')
-    if ws['state'].get('conversation_fallback') is not False: errors.append('Conversation fallback måste vara false')
-    if ws['workspace'].get('portable') is not True: errors.append('Workspace måste vara portable')
-    if ws['workspace'].get('artifact')!='book_project_zip': errors.append('Workspace måste peka på book_project_zip')
-    for rid in ('chatgpt_chat','claude_projects','opencode'):
-        src=cfg['runtime'][rid]['source']
-        if src['instructions']!=cfg['instructions']['canonical']: errors.append(f'{rid} använder inte canonical instruction')
-        if src['template_root']!='templates/bokprojekt': errors.append(f'{rid} använder fel template root')
-    if cfg['runtime']['custom_gpt']['instruction']['source']!=cfg['instructions']['canonical']:
-        errors.append('Custom GPT använder inte canonical instruction')
-    plugin=cfg['runtime']['openai_plugin']['compatibility']
-    if plugin.get('compatibility')!='ready_runtime_dependent': errors.append('Plugin compatibility saknas/fel')
-    for key in ('workspace','filesystem_read','filesystem_write','code_execution','persistent_state'):
-        if plugin.get(key)!='required_host_runtime': errors.append(f'Plugin host dependency saknas: {key}')
-    if plugin.get('state_authority')!='workspace_file' or plugin.get('conversation_fallback') is not False:
-        errors.append('Plugin state authority/fallback fel')
-    if plugin.get('mcp_generated') is not False: errors.append('Plugin får inte generera MCP')
-    resources=plugin.get('script_resources') or []
-    required={x.get('path') for x in resources if x.get('requirement')=='required'}
-    if required != {
-        'skills/larobokskaparen/scripts/project_integrity.py',
-        'skills/larobokskaparen/scripts/validate_project.py',
-    }:
-        errors.append('Plugin required script_resources mismatch')
-    if not plugin.get('behavior_gap'): errors.append('Plugin behavior_gap saknas')
-    if errors:
-        print('FAILED: model/runtime robustness')
-        for e in errors: print('-',e)
+    cfg=yaml.safe_load((ROOT/'gpt-project.yaml').read_text())
+    problems=[]
+    def check(condition,message):
+        if not condition: problems.append(message)
+    instructions=cfg.get('instructions',{})
+    check(instructions.get('mode')=='modular_skills','modular_skills required')
+    core=ROOT/instructions.get('core','__missing__')
+    check(core.is_file(),'modular core missing')
+    skills=cfg.get('skills',{}).get('definitions',[])
+    check(len(skills)>=3,'at least three domain skills required')
+    for s in skills:
+        check((ROOT/s.get('source','__missing__')).is_file(),f"missing skill source: {s.get('id')}")
+    ws=cfg.get('workspace_state',{})
+    check(ws.get('state',{}).get('authority')=='workspace_file','workspace_file must be authoritative')
+    check(ws.get('state',{}).get('conversation_fallback') is False,'conversation fallback prohibited')
+    runtime=cfg.get('runtime',{})
+    build=cfg.get('build',{})
+    for key,flag in [('chat_zip','build_chat_zip'),('claude','build_claude_project_zip'),('opencode','build_opencode_zip'),('plugin','build_plugin_zip')]:
+        check(runtime.get(key,{}).get('enabled') is True,f'{key} must be enabled')
+        check(build.get(flag) is True,f'{flag} must be enabled')
+    check(build.get('build_claude_skills_zip') is True,'Claude Skills must be built')
+    check(runtime.get('custom_gpt',{}).get('enabled') is False,'Custom GPT must be inactive')
+    check(build.get('build_custom_gpt_zip') is False,'Custom GPT build must be inactive')
+    check(build.get('deterministic') is True,'deterministic build required')
+    check(build.get('create_checksums') is True,'checksums required')
+    check((ROOT/'templates/bokprojekt/scripts/project_integrity.py').is_file(),'integrity tool missing')
+    check((ROOT/'templates/bokprojekt/scripts/validate_project.py').is_file(),'validation tool missing')
+    if problems:
+        for x in problems: print('FAIL:',x)
         return 1
-    print('OK: stateful model/runtime robustness')
+    print('PASS: modern model robustness contract')
     return 0
-
 if __name__=='__main__': raise SystemExit(main())
