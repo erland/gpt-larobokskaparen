@@ -1,6 +1,8 @@
-# {{GPT_NAME}} – Custom GPT-distribution
+# {{GPT_NAME}} – äldre Custom GPT-mall (inaktiv)
 
-Detta paket innehåller Builder-underlaget för **{{GPT_NAME}}**.
+**Äldre kompatibilitetsmall, inte en aktiv distribution.** Projektets aktiva mål är Chat ZIP, ChatGPT Plugin, Claude Project, Claude Skills och OpenCode. Följ inte dessa installationssteg om du använder den aktuella femdistributionsmodellen.
+
+Denna mall finns kvar enbart för bakåtkompatibilitet.
 
 ## Installera
 
