@@ -12,6 +12,9 @@ on:
   release:
     types: [published]
 
+env:
+  PYTHONDONTWRITEBYTECODE: "1"
+
 permissions:
   contents: read
 
