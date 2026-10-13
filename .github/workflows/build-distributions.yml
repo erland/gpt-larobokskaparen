@@ -52,6 +52,8 @@ jobs:
         run: python3 scripts/lint_gpt_project.py --project-root . --json
       - name: Build distributions
         run: python3 scripts/build_distributions.py --version "${{ steps.version.outputs.version }}"
+      - name: Validate five-runtime modular Skills parity
+        run: python3 tests/test_modular_skills_parity.py "${{ steps.version.outputs.version }}"
       - name: Validate distributions
         run: python3 scripts/validate_distributions.py
       - name: Validate release asset set
