@@ -103,7 +103,8 @@ def validate_claude_skills(root: Path, cfg: dict) -> list[str]:
             errors.append(f"Claude Skills missing {ident}/SKILL.md")
         for category in ("references", "assets", "scripts"):
             for source in skill.get(category, []) or []:
-                if not (skill_dir / category / Path(source).name).is_file():
+                expected = skill_dir / category / Path(source).name
+                if not (expected.is_dir() if category == "assets" and (root / source).is_dir() else expected.is_file()):
                     errors.append(f"Claude Skills missing {ident}/{category}/{Path(source).name}")
     return errors
 
@@ -314,7 +315,12 @@ def validate_plugin(root: Path, cfg: dict) -> list[str]:
     }
     for p in build.rglob("*"):
         rel = p.relative_to(build)
-        if any(part in forbidden_parts for part in rel.parts):
+        # A bundled book-project template may legitimately contain its own
+        # GitHub Actions workflows. These are inert files inside Skill assets.
+        parts = rel.parts
+        is_template_asset = len(parts) >= 5 and parts[0] == "skills" and parts[2] == "assets" and parts[3] == "bokprojekt"
+        blocked = forbidden_parts - ({".github"} if is_template_asset else set())
+        if any(part in blocked for part in parts):
             errors.append(f"Forbidden plugin runtime path: {rel}")
 
     return errors
