@@ -161,7 +161,7 @@ tools:
     type: script
     requirement: required
     purpose: Initiera, verifiera och versionssäkra genererade bokprojekt.
-    script: scripts/project_integrity.py
+    script: templates/bokprojekt/scripts/project_integrity.py
     deterministic: true
     mutates_workspace: true
     working_directory: workspace
@@ -170,7 +170,7 @@ tools:
     type: script
     requirement: required
     purpose: Validera bokprojektets metadata, kapitel, bilder och integritet.
-    script: scripts/validate_project.py
+    script: templates/bokprojekt/scripts/validate_project.py
     deterministic: true
     mutates_workspace: false
     working_directory: workspace
@@ -180,7 +180,7 @@ tools:
     requirement: recommended
     purpose: Exportera bokprojekt till EPUB och PDF när nödvändiga lokala verktyg
       finns.
-    script: scripts/export-book.py
+    script: templates/bokprojekt/scripts/export-book.py
     deterministic: true
     mutates_workspace: true
     working_directory: workspace
@@ -189,7 +189,7 @@ tools:
     type: script
     requirement: recommended
     purpose: Köra validering och bygga EPUB/PDF samt checksummor.
-    script: scripts/build_book.py
+    script: templates/bokprojekt/scripts/build_book.py
     deterministic: true
     mutates_workspace: true
     working_directory: workspace
@@ -463,11 +463,14 @@ skills:
     source: canonical/skills/bokprojekt-publicering/behavior.md
     references:
     - knowledge-upload/18-local-export-pipeline.md
+    assets:
+    - knowledge-upload/19-project-template-bundle.md
+    - templates/bokprojekt
     scripts:
-    - scripts/project_integrity.py
-    - scripts/validate_project.py
-    - scripts/export-book.py
-    - scripts/build_book.py
+    - templates/bokprojekt/scripts/project_integrity.py
+    - templates/bokprojekt/scripts/validate_project.py
+    - templates/bokprojekt/scripts/export-book.py
+    - templates/bokprojekt/scripts/build_book.py
 build:
   deterministic: true
   create_manifest: true
