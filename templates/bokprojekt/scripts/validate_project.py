@@ -11,8 +11,8 @@ EDITORIAL_PATTERNS=(
     r'återstår att (?:faktagranska|verifiera|kontrollera)',
     r'(?:behöver|måste|ska) (?:kontrolleras|verifieras|uppdateras) (?:före|inför) (?:publicering|utgivning)',
 )
-SOURCE_REF=re.compile(r'(?<!\\w)\\[(K\\d{3})\\](?!\\()')
-SOURCE_ENTRY=re.compile(r'(?m)^\\s*[-*]\\s*\\*\\*\\[(K\\d{3})\\]\\*\\*')
+SOURCE_REF=re.compile(r'(?<!\w)\[(K\d{3})\](?!\()')
+SOURCE_ENTRY=re.compile(r'(?m)^\s*[-*]\s*\*\*\[(K\d{3})\]\*\*')
 
 def source_register_errors(chapters):
     """Check global reference IDs if the optional source register exists."""
@@ -56,7 +56,7 @@ def main()->int:
             if not mh1 or int(mh1.group(1))!=int(mfile.group(1)): errors.append(f'{path.relative_to(ROOT)} ska börja med H1 som matchar kapitelnumret')
         for pattern in EDITORIAL_PATTERNS:
             for match in re.finditer(pattern,text,re.IGNORECASE):
-                line=text.count('\\n',0,match.start())+1
+                line=text.count('\n',0,match.start())+1
                 errors.append(f'{path.relative_to(ROOT)}:{line} innehåller intern arbetsnotering: {match.group(0)}')
         for marker in MARKERS:
             if marker.lower() in text.lower(): errors.append(f'{path.relative_to(ROOT)} innehåller arbetsmarkören {marker}')
