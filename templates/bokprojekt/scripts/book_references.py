@@ -6,7 +6,7 @@ from pathlib import Path
 
 ENTRY = re.compile(r'(?m)^(\s*[-*]\s*)\*\*\[(K\d{3})\]\*\*')
 REF = re.compile(r'(?<![\w\[])\[(K\d{3})\](?!\(|\])')
-URL = re.compile(r'https?://[^\s<>)]+')
+URL = re.compile(r'(?<!\]\()https?://[^\s<>)]+')
 
 
 def prepare(chapters: list[Path]) -> str:
