@@ -74,7 +74,8 @@ def main()->int:
     text=read_book_yaml(); meta=metadata(text); chapters=resolve_chapters(text); validate_markdown(chapters)
     out=Path(args.output_dir).resolve(); out.mkdir(parents=True,exist_ok=True); slug=meta['project_slug']
     with tempfile.TemporaryDirectory() as td:
-        td=Path(td); body='\n\n'.join(p.read_text(encoding='utf-8').strip() for p in chapters)+'\n'; merged=td/'book.md'; merged.write_text(body,encoding='utf-8')
+        td=Path(td); from book_references import prepare
+        body=prepare(chapters); merged=td/'book.md'; merged.write_text(body,encoding='utf-8')
         common=['pandoc',str(merged),'--from=markdown+pipe_tables+fenced_code_blocks+fenced_divs','--standalone','--metadata-file',str(ROOT/'book.yaml')]
         if args.format in ('epub','all'):
             epub=out/f'{slug}.epub'
