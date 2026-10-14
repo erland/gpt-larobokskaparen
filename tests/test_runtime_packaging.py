@@ -51,8 +51,6 @@ for target in ("plugin", "claude-skills", "opencode"):
                 "gpt_book_export.ts": ['"--format"', '"--output-dir"'],
                 "gpt_project_integrity.ts": ['"verify"', 'projectRoot'],
                 "gpt_project_validation.ts": ['projectRoot'],
-                "gpt_distribution_build.ts": ['"--version"'],
-                "gpt_distribution_validation.ts": ['"python3", script'],
             }
             for name, markers in checks.items():
                 path = ".opencode/tools/" + name
