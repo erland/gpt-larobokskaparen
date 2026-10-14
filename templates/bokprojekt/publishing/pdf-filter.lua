@@ -3,6 +3,7 @@ function Header(el)
   if el.level ~= 1 then return nil end
   local text = pandoc.utils.stringify(el.content)
   local number, title = text:match("^%s*(%d+)%.%s+(.+)%s*$")
+  if not number then number, title = text:match("^%s*[Kk]apitel%s+(%d+):%s*(.+)%s*$") end
   if number then
     local blocks = pandoc.read(title, "markdown").blocks
     local inlines = (#blocks > 0 and blocks[1].content) or {pandoc.Str(title)}
