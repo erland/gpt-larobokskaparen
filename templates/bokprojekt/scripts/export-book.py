@@ -80,10 +80,15 @@ def export_metadata(text, tag):
     if not tag: return text
     if not re.fullmatch('v[0-9]+[.][0-9]+[.][0-9]+', tag):
         raise SystemExit('Ogiltig releasetagg')
-    version = tag[1:]
-    if re.search('(?m)^version:', text):
-        return re.sub('(?m)^version:[^\\n]*', 'version: "' + version + '"', text, count=1)
-    return 'version: "' + version + '"\\n' + text
+    line = 'version: "' + tag[1:] + '"'
+    rows = text.splitlines()
+    for i, value in enumerate(rows):
+        if value.startswith('version:'):
+            rows[i] = line
+            break
+    else:
+        rows.insert(0, line)
+    return chr(10).join(rows) + chr(10)
 
 def main()->int:
     ap=argparse.ArgumentParser(); ap.add_argument('--format',choices=['epub','pdf','all'],default='all'); ap.add_argument('--output-dir',default=str(ROOT/'exports')); args=ap.parse_args()
