@@ -14,7 +14,7 @@ def read_book_yaml():
     if not p.is_file(): raise SystemExit('Saknar book.yaml')
     return p.read_text(encoding='utf-8')
 def metadata(text):
-    keys=('title','subtitle','author','language','identifier','date','version','book_kind','book_type','cover_image','project_slug','subject','description')
+    keys=('title','subtitle','author','language','identifier','date','version','book_kind','book_type','cover_image','project_slug','subject','description','pdf_size')
     v={k:scalar(text,k) for k in keys}; missing=[k for k in ('title','author','language','book_kind','book_type','project_slug') if not v[k]]
     if missing: raise SystemExit('Saknad metadata i book.yaml: '+', '.join(missing))
     if v['book_kind'] not in ('textbook','factbook'): raise SystemExit('Ogiltig book_kind: '+v['book_kind'])
@@ -68,6 +68,14 @@ def find_font_dir():
                 names=['texgyrepagella-regular.otf','texgyrepagella-bold.otf','texgyrepagella-italic.otf','texgyrepagella-bolditalic.otf']
                 if all((p.parent/n).is_file() for n in names): return p.parent
     return None
+PDF_SIZES = {'170x240': ('170mm', '240mm'), 'a5': ('148mm', '210mm')}
+
+def pdf_size(meta):
+    requested=meta.get('pdf_size', '').lower() or '170x240'
+    if requested not in PDF_SIZES:
+        raise SystemExit('pdf_size ska vara a5 eller 170x240')
+    return PDF_SIZES[requested]
+
 def main()->int:
     ap=argparse.ArgumentParser(); ap.add_argument('--format',choices=['epub','pdf','all'],default='all'); ap.add_argument('--output-dir',default=str(ROOT/'exports')); args=ap.parse_args()
     if not shutil.which('pandoc'): raise SystemExit('Pandoc saknas')
@@ -88,7 +96,8 @@ def main()->int:
             run(cmd+['--output',str(epub)]); run([sys.executable,str(ROOT/'publishing/fix-epub-after-pandoc.py'),str(epub)])
         if args.format in ('pdf','all'):
             if not shutil.which('xelatex'): raise SystemExit('XeLaTeX saknas för PDF-export')
-            pdf=out/f'{slug}.pdf'; cmd=common+['--top-level-division=chapter','--pdf-engine=xelatex','--template',str(ROOT/'publishing/pdf-template.tex'),'--lua-filter',str(ROOT/'publishing/pdf-filter.lua')]
+            width,height=pdf_size(meta)
+            pdf=out/f'{slug}.pdf'; cmd=common+['--metadata',f'pdf-paper-width={width}','--metadata',f'pdf-paper-height={height}','--top-level-division=chapter','--pdf-engine=xelatex','--template',str(ROOT/'publishing/pdf-template.tex'),'--lua-filter',str(ROOT/'publishing/pdf-filter.lua')]
             fontdir=find_font_dir()
             if fontdir: cmd += ['--metadata',f'pdf-font-dir={fontdir.as_posix()}/']
             cover=meta['cover_image']
