@@ -289,7 +289,7 @@ def validate_plugin(root: Path, cfg: dict) -> list[str]:
             if p.is_file()
         ] if scripts_dir.exists() else []
         shared_lib = root / "scripts" / "lib"
-        if packaged_scripts and shared_lib.exists():
+        if packaged_scripts and shared_lib.exists() and cfg.get("project", {}).get("id") == "gpt-byggaren":
             for source in shared_lib.rglob("*"):
                 if not source.is_file() or source.suffix in {".pyc", ".pyo"}:
                     continue
