@@ -11,7 +11,7 @@ spec=importlib.util.spec_from_file_location('book_validation',path)
 mod=importlib.util.module_from_spec(spec)
 spec.loader.exec_module(mod)
 
-for bad in ('under det fortsatta bokarbetet', 'kontrolleras inför publicering',
+for bad in ('under det fortsatta bokarbetet', 'måste kontrolleras inför publicering',
             'redaktionell anmärkning'):
     assert any(re.search(pattern,bad,re.I) for pattern in mod.EDITORIAL_PATTERNS),bad
 
