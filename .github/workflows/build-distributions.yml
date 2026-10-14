@@ -44,6 +44,8 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
       - name: Install validation dependencies
         run: python3 -m pip install --disable-pip-version-check PyYAML jsonschema
+      - name: Test release tag version metadata
+        run: python3 tests/test_book_release_version.py
       - name: Test legacy chapters and appendices
         run: python3 tests/test_book_legacy_chapters.py
       - name: Test book export references and validation
