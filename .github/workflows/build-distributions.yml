@@ -52,6 +52,12 @@ jobs:
         run: python3 scripts/lint_gpt_project.py --project-root . --json
       - name: Build distributions
         run: python3 scripts/build_distributions.py --version "${{ steps.version.outputs.version }}"
+      - name: Install TypeScript parser for generated OpenCode tools
+        run: npm install --prefix /tmp/opencode-ts-parser --no-save typescript@5.9.3
+      - name: Parse generated OpenCode TypeScript tools
+        env:
+          NODE_PATH: /tmp/opencode-ts-parser/node_modules
+        run: node scripts/check_opencode_typescript.cjs build/opencode/.opencode/tools
       - name: Validate five-runtime modular Skills parity
         run: python3 tests/test_modular_skills_parity.py "${{ steps.version.outputs.version }}"
       - name: Validate packaged book tools and OpenCode commands
