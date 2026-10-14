@@ -33,7 +33,7 @@ def editorial_quality_findings(text):
     heading_re=re.compile(r'^[ \t]{0,3}#{1,6}[ \t]+([^\r\n]+)',re.MULTILINE)
     heading_lines=set()
     for heading in heading_re.finditer(text):
-        line=text.count('\\n',0,heading.start())+1
+        line=text.count('\n',0,heading.start())+1
         heading_lines.add(line)
         title=re.sub(r'[*_`]', '', heading.group(1))
         for pattern in EDITORIAL_HEADING_PATTERNS:
@@ -41,10 +41,10 @@ def editorial_quality_findings(text):
                 errors.append((line,title.strip()));break
     for pattern in EDITORIAL_PATTERNS:
         for match in re.finditer(pattern,text,re.IGNORECASE):
-            errors.append((text.count('\\n',0,match.start())+1,match.group(0)))
+            errors.append((text.count('\n',0,match.start())+1,match.group(0)))
     for pattern in EDITORIAL_PROSE_WARNINGS:
         for match in re.finditer(pattern,text,re.IGNORECASE):
-            line=text.count('\\n',0,match.start())+1
+            line=text.count('\n',0,match.start())+1
             if line not in heading_lines and not any(x[0]==line for x in errors):
                 warnings.append((line,match.group(0)))
     return list(dict.fromkeys(errors)),list(dict.fromkeys(warnings))
