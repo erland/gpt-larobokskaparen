@@ -25,4 +25,22 @@ with TemporaryDirectory() as td:
     assert not mod.source_register_errors([chapter,sources])
     sources.write_text(sources.read_text(encoding='utf-8')+'- **[K001]** Dubblett\n',encoding='utf-8')
     assert any('Dubbelt' in e for e in mod.source_register_errors([chapter,sources]))
+
+# Headings that describe editorial process must be blocking, including variants.
+for heading in ('## Redaktionell granskning', '### Kapitelnoteringar',
+                '## Redaktionell källanmärkning', '### Granskningsanteckningar',
+                '## Arbetsanteckningar', '## Kvarstående faktakontroll',
+                '## Att kontrollera inför publicering'):
+    errs,warns=mod.editorial_quality_findings('# Kapitel 1\n'+heading+'\n')
+    assert errs, heading
+
+# Ordinary prose is not necessarily a defect: warn without failing.
+errs,warns=mod.editorial_quality_findings(
+    '# Kapitel 1\\nRapporten genomgick redaktionell granskning under 2026.\\n')
+assert not errs and warns
+# Actual subject-matter recommendations must not trigger a false positive.
+errs,warns=mod.editorial_quality_findings(
+    '# Kapitel 1\\nMyndigheten behöver kontrollera behörighet och följa rättsläget.\\n')
+assert not errs and not warns
+
 print('PASS: editorial and global source reference regressions')
