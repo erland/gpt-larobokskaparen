@@ -39,7 +39,7 @@ def chapter_entries(text):
 def resolve_chapters(text):
     entries=chapter_entries(text)
     if len(entries)!=len(set(entries)): raise SystemExit('Dubbellistade kapitel i book.yaml')
-    if entries[0]!='chapters/00-inledning.md': raise SystemExit('Första chapters-posten ska vara chapters/00-inledning.md')
+    if not re.search(r'inledning|introduktion|preface|foreword',Path(entries[0]).stem,re.I): raise SystemExit('Första posten bör vara en inledning (filnamn med inledning/introduktion)')
     paths=[]
     for e in entries:
         pure=PurePosixPath(e)
@@ -50,8 +50,8 @@ def resolve_chapters(text):
         paths.append(p)
     listed={p.relative_to(ROOT).as_posix() for p in paths}; unlisted=[]
     for p in sorted((ROOT/'chapters').glob('*.md')):
-        if NUMBERED_CHAPTER_RE.fullmatch(p.name) and p.relative_to(ROOT).as_posix() not in listed: unlisted.append(p.relative_to(ROOT).as_posix())
-    if unlisted: raise SystemExit('Numrerade kapitelfiler saknas i book.yaml: '+', '.join(unlisted))
+        if not p.name.startswith('kapitelmall-') and p.relative_to(ROOT).as_posix() not in listed: unlisted.append(p.relative_to(ROOT).as_posix())
+    if unlisted: raise SystemExit('Markdownfiler saknas i book.yaml: '+', '.join(unlisted))
     return paths
 def validate_markdown(paths):
     errors=[]
