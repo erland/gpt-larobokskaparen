@@ -20,7 +20,7 @@ jobs:
       - name: Install XeLaTeX and PDF tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends texlive-xetex texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended lmodern fonts-texgyre
+          sudo apt-get install -y --no-install-recommends texlive-xetex texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended lmodern fonts-texgyre poppler-utils
           fc-cache -f
           find /usr/share/fonts -iname 'texgyrepagella-regular.otf' -print -quit | grep .
       - name: Validate release tag
