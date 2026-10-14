@@ -12,16 +12,16 @@ EDITORIAL_PATTERNS=(
     r'(?:behöver|måste|ska) (?:kontrolleras|verifieras|uppdateras) (?:före|inför) (?:publicering|utgivning)',
 )
 EDITORIAL_HEADING_PATTERNS=(
-    r'redaktionell(?:a|t)?\\s+(?:granskning|noteringar?|anmärkningar?|kommentarer?)',
-    r'redaktionell(?:a|t)?\\s+källanmärkning',
+    r'redaktionell(?:a|t)?\s+(?:granskning|noteringar?|anmärkningar?|kommentarer?)',
+    r'redaktionell(?:a|t)?\s+källanmärkning',
     r'kapitel(?:noteringar?|anmärkningar?)',
     r'granskningsanteckningar?',
     r'arbetsanteckningar?',
-    r'kvarstående\\s+faktakontroll',
-    r'att\\s+kontrollera\\s+inför\\s+publicering',
+    r'kvarstående\s+faktakontroll',
+    r'att\s+kontrollera\s+inför\s+publicering',
 )
 EDITORIAL_PROSE_WARNINGS=(
-    r'redaktionell(?:a|t)?\\s+granskning',
+    r'redaktionell(?:a|t)?\s+granskning',
     r'kapitelnoteringar?',
     r'granskningsanteckningar?',
     r'arbetsanteckningar?',
@@ -30,7 +30,7 @@ EDITORIAL_PROSE_WARNINGS=(
 def editorial_quality_findings(text):
     """Return (blocking errors, nonblocking warnings) as (line, phrase) pairs."""
     errors=[]; warnings=[]
-    heading_re=re.compile(r'^\\s{0,3}#{1,6}\\s+(.+?)\\s*#*\\s*$',re.MULTILINE)
+    heading_re=re.compile(r'^\s{0,3}#{1,6}\s+(.+?)\s*#*\s*$',re.MULTILINE)
     heading_lines=set()
     for heading in heading_re.finditer(text):
         line=text.count('\\n',0,heading.start())+1
