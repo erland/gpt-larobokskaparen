@@ -87,11 +87,16 @@ def main()->int:
         text=path.read_text(encoding='utf-8')
         if not text.strip(): errors.append(f'{path.relative_to(ROOT)} är tom')
         if sum(1 for line in text.splitlines() if re.match(r'^#\s+',line))!=1: errors.append(f'{path.relative_to(ROOT)} ska ha exakt en H1')
-        mfile=re.match(r'^(\d{2})-', path.name)
+        # Accept NN-title.md and title-NN.md, with "1. Titel" or "Kapitel 1: Titel".
+        # Intro, appendices and source registers intentionally have unnumbered H1.
         first=next((line.strip() for line in text.splitlines() if line.strip()), '')
-        if mfile and mfile.group(1)!='00':
-            mh1=re.fullmatch(r'#\s+(\d+)\.\s+.+', first)
-            if not mh1 or int(mh1.group(1))!=int(mfile.group(1)): errors.append(f'{path.relative_to(ROOT)} ska börja med H1 som matchar kapitelnumret')
+        name=path.stem.lower()
+        special=bool(re.search(r'inledning|introduktion|appendix|bilaga|kall|käll|register',name,re.I))
+        filename_num=re.match(r'^(\d{2})-',path.name) or re.search(r'-(\d{2})\.md$',path.name)
+        title_num=re.fullmatch(r'#\s*(?:Kapitel\s+)?(\d+)\s*[.:]\s+.+',first,re.I)
+        if not special and filename_num and title_num:
+            if int(filename_num.group(1))!=int(title_num.group(1)):
+                errors.append(f'{path.relative_to(ROOT)} har olika kapitelnummer i filnamn och H1')
         editorial_errors, editorial_warnings=editorial_quality_findings(text)
         for line,phrase in editorial_errors:
             errors.append(f'{path.relative_to(ROOT)}:{line} innehåller redaktionell arbetsmarkör: {phrase}')

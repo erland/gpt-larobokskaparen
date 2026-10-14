@@ -46,6 +46,8 @@ jobs:
         run: python3 -m pip install --disable-pip-version-check PyYAML jsonschema
       - name: Test release tag version metadata
         run: python3 tests/test_book_release_version.py
+      - name: Test legacy chapters and appendices
+        run: python3 tests/test_book_legacy_chapters.py
       - name: Test book export references and validation
         run: python3 tests/test_book_export_quality.py
       - name: Test book editorial and source reference guards
