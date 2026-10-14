@@ -18,3 +18,7 @@ Fråga alltid om omslagsbild. Omslagsprompten ska inkludera titel och författar
 
 ## Kvalitet
 Kontrollera rätt kvalitetsprofil: pedagogik/progression för lärobok; ämnestäckning, begriplighet, källor och faktakontroll för faktabok. Var alltid konsekvent med terminologi, exempel och nivå/djup. För tekniska böcker: föredra moderna, körbara exempel och markera antaganden.
+
+
+### Läsarfärdig text – obligatorisk slutläsning
+Prioritera saklighet, läsbarhet och koncentration framför att fylla ut mot ett sidmål. Efter faktagranskningen ska hela den exporterade boktexten slutläsas – även inledning, sammanfattningar, övergångar och källregister – för att upptäcka formuleringar riktade till författare eller redaktör, exempelvis "det fortsatta bokarbetet" och "inför publicering". Ersätt dem med upplysningar till läsaren eller flytta arbetsuppgifter till `docs/`. Rättsliga tidsavgränsningar och faktiska verksamhetsrekommendationer ska däremot bevaras.
