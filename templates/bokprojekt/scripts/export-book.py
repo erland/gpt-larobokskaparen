@@ -76,22 +76,21 @@ def pdf_size(meta):
         raise SystemExit('pdf_size ska vara a5 eller 170x240')
     return PDF_SIZES[requested]
 
-def export_metadata(text: str, release_tag: str | None) -> tuple[str, str]:
-    """Use a release tag for artifact metadata, keeping book.yaml unchanged."""
-    if not release_tag:
-        return text, scalar(text, 'version')
+def export_metadata(text: str, release_tag: str | None) -> str:
+    """Override published version from tag without mutating book.yaml."""
+    if not release_tag: return text
     if not re.fullmatch(r'v[0-9]+\.[0-9]+\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?', release_tag):
         raise SystemExit('Ogiltig releasetagg: förväntade v<SemVer>')
     version = release_tag[1:]
     if re.search(r'(?m)^version:', text):
-        result = re.sub(r'(?m)^version:.*
+        return re.sub(r'(?m)^version:.*
     ap=argparse.ArgumentParser(); ap.add_argument('--format',choices=['epub','pdf','all'],default='all'); ap.add_argument('--output-dir',default=str(ROOT/'exports')); args=ap.parse_args()
     if not shutil.which('pandoc'): raise SystemExit('Pandoc saknas')
     text=read_book_yaml(); meta=metadata(text); chapters=resolve_chapters(text); validate_markdown(chapters)
-    effective_yaml, effective_version=export_metadata(text,os.environ.get('BOOK_RELEASE_TAG'))
+    effective_yaml=export_metadata(text,os.environ.get('BOOK_RELEASE_TAG'))
     out=Path(args.output_dir).resolve(); out.mkdir(parents=True,exist_ok=True); slug=meta['project_slug']
     with tempfile.TemporaryDirectory() as td:
-        td=Path(td); from book_references import prepare
+        td=Path(td); metadata_path=td/'book-metadata.yaml'; metadata_path.write_text(effective_yaml,encoding='utf-8'); from book_references import prepare
         body=prepare(chapters); merged=td/'book.md'; merged.write_text(body,encoding='utf-8')
         common=['pandoc',str(merged),'--from=markdown+pipe_tables+fenced_code_blocks+fenced_divs','--standalone','--metadata-file',str(metadata_path)]
         if args.format in ('epub','all'):
@@ -119,10 +118,8 @@ def export_metadata(text: str, release_tag: str | None) -> tuple[str, str]:
 if __name__=='__main__':
     import sys
     raise SystemExit(main())
-, 'version: "' + version + '"', text, count=1)
-    else:
-        result = 'version: "' + version + '"\n' + text
-    return result, version
+, lambda _: 'version: "' + version + '"', text, count=1)
+    return 'version: "' + version + '"\n' + text
 
 def main()->int:
     ap=argparse.ArgumentParser(); ap.add_argument('--format',choices=['epub','pdf','all'],default='all'); ap.add_argument('--output-dir',default=str(ROOT/'exports')); args=ap.parse_args()
@@ -132,10 +129,10 @@ def main()->int:
     with tempfile.TemporaryDirectory() as td:
         td=Path(td); from book_references import prepare
         body=prepare(chapters); merged=td/'book.md'; merged.write_text(body,encoding='utf-8')
-        common=['pandoc',str(merged),'--from=markdown+pipe_tables+fenced_code_blocks+fenced_divs','--standalone','--metadata-file',str(ROOT/'book.yaml')]
+        common=['pandoc',str(merged),'--from=markdown+pipe_tables+fenced_code_blocks+fenced_divs','--standalone','--metadata-file',str(metadata_path)]
         if args.format in ('epub','all'):
             epub=out/f'{slug}.epub'
-            cmd=['pandoc',str(merged),'--from=markdown+pipe_tables+fenced_code_blocks+fenced_divs','--to=epub3','--standalone','--toc','--toc-depth=1','--metadata-file',str(ROOT/'book.yaml'),'--css',str(ROOT/'publishing/epub.css')]
+            cmd=['pandoc',str(merged),'--from=markdown+pipe_tables+fenced_code_blocks+fenced_divs','--to=epub3','--standalone','--toc','--toc-depth=1','--metadata-file',str(metadata_path),'--css',str(ROOT/'publishing/epub.css')]
             cover=meta['cover_image'];
             if cover:
                 cp=ROOT/cover
