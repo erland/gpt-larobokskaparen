@@ -1,29 +1,27 @@
-# {{GPT_NAME}} – OpenCode-distribution
+# {{GPT_NAME}} – OpenCode
 
-Detta paket är en basruntime för OpenCode.
+OpenCode-paketet gör det möjligt att planera, skriva, revidera och publicera läroböcker och faktaböcker med Lärobokskaparens kanoniska Skills.
 
-## Användning
+## Installera
 
-1. Packa upp ZIP-filen som ett OpenCode-workspace för GPT Byggaren.
-2. Öppna workspace-roten i OpenCode.
-3. OpenCode läser root `AGENTS.md` som projektinstruktion.
-4. Lägg det GPT-projekt som ska analyseras eller ändras som en underkatalog i workspace, exempelvis `project/`, eller använd en annan relativ sökväg från workspace-roten.
-5. När ett genererat GPT Byggaren-tool körs mot ett målprojekt, ange `projectRoot` för målprojektet, exempelvis `project`. Om `projectRoot` utelämnas används workspace-roten.
-6. `.opencode/runtime-contract.json` dokumenterar hur adaptern realiserar canonical kontrakt.
-7. `knowledge/` innehåller portabelt referensmaterial som agenten kan läsa vid behov.
+1. Packa upp denna distribution till en egen katalog och öppna den i OpenCode.
+2. Läs `AGENTS.md` för arbetsprinciper. De tre arbetsflödena ligger under `.opencode/skills/`.
+3. Använd `knowledge/` som referensmaterial för bokplanering, skrivande och export.
+4. För ett nytt bokprojekt: kopiera den kompletta mallen från `.opencode/skills/bokprojekt-publicering/assets/bokprojekt/` till en **separat bokprojektkatalog** och fyll i `book.yaml`.
+5. När du använder anpassade OpenCode-verktyg under `.opencode/tools/`, ange `projectRoot` som sökvägen till bokprojektet. Om parametern utelämnas används aktuell OpenCode-katalog.
 
-## Viktigt om målprojektet
+## Projektverktyg
 
-OpenCode-ZIP:en är GPT Byggarens runtime, inte det GPT-projekt som ska bearbetas. Runtimepaketet innehåller därför inte automatiskt målprojektets `gpt-project.yaml`, `project-status.yaml` eller övriga canonical projektfiler.
+Verktyg för projektintegritet, validering, bokbygge och EPUB/PDF-export använder bokprojektets egna `scripts/` och förutsätter att relevanta Python-/Pandoc-/XeLaTeX-verktyg finns installerade.
 
-Tools som `gpt_lint_project`, `gpt_recommend_next_step`, `gpt_project_hygiene`, `gpt_build_distributions` och `gpt_validate_distributions` arbetar mot den katalog som anges med `projectRoot`.
+Verktyg märkta `distribution-build` och `distribution-validation` hör till GPT-distributionsprojektet, **inte** den vanliga bokredigeringen. Använd dem bara när du verkligen arbetar med GPT-distributionskällan.
 
-## Avgränsning i denna version
+## Begränsningar
 
-- Återanvändbara Skills finns under `.opencode/skills/` och laddas av OpenCode vid behov.
-- Canonical runtime-tools finns som projektlokala custom tools under `.opencode/tools/`.
-- `opencode.json` styr godkännande för muterande respektive icke-muternade tools.
-- `CLAUDE.md` används inte; OpenCode V2 använder `AGENTS.md` för projektinstruktioner.
+- Skill-filerna är tillgängliga, men automatisk aktivering måste verifieras i en riktig OpenCode-session.
+- `AGENTS.md` är instruktionen för OpenCode, medan `.opencode/runtime-contract.json` beskriver adapterkontraktet.
+- Paketet innehåller projektmallen som filer; ett **nytt** bokprojekt behöver fortfarande initieras och verifieras innan revisioner och export används.
+- `opencode.json` innehåller verktygsbehörigheter; granska kommandon som modifierar filer.
 
 ## Version
 
