@@ -13,6 +13,7 @@ EDITORIAL_PATTERNS=(
 )
 EDITORIAL_HEADING_PATTERNS=(
     r'redaktionell(?:a|t)?\\s+(?:granskning|noteringar?|anmärkningar?|kommentarer?)',
+    r'redaktionell(?:a|t)?\\s+källanmärkning',
     r'kapitel(?:noteringar?|anmärkningar?)',
     r'granskningsanteckningar?',
     r'arbetsanteckningar?',
