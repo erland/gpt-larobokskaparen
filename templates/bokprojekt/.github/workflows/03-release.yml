@@ -27,6 +27,19 @@ jobs:
         shell: bash
         run: |
           [[ "${GITHUB_REF_NAME}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([+-][0-9A-Za-z.-]+)?$ ]] || { echo "Taggen måste vara v<SemVer>" >&2; exit 1; }
+      - name: Verify release version matches book.yaml
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import os, re
+          from pathlib import Path
+          text=Path('book.yaml').read_text(encoding='utf-8')
+          match=re.search(r'(?m)^version:\\s*["\\']?([^"\\'\\s#]+)',text)
+          assert match, 'book.yaml saknar version'
+          expected='v'+match.group(1)
+          actual=os.environ['GITHUB_REF_NAME']
+          assert actual==expected, f'Tagg {actual} matchar inte bokversion {expected}'
+          PY
       - name: Build EPUB and PDF
         run: python3 scripts/build_book.py --output-dir "${RUNNER_TEMP}/book-dist"
       - name: Create or update GitHub Release
