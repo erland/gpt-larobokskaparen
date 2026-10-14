@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from __future__ import annotations
-import argparse, re, shutil, subprocess, tempfile
+import argparse, os, re, shutil, subprocess, tempfile
 from pathlib import Path, PurePosixPath
 ROOT=Path(__file__).resolve().parents[1]
 NUMBERED_CHAPTER_RE=re.compile(r'^\d{2}-[a-z0-9][a-z0-9-]*\.md$',re.I)
@@ -76,18 +76,33 @@ def pdf_size(meta):
         raise SystemExit('pdf_size ska vara a5 eller 170x240')
     return PDF_SIZES[requested]
 
+def export_metadata(text, tag):
+    if not tag: return text
+    if not re.fullmatch('v[0-9]+[.][0-9]+[.][0-9]+', tag):
+        raise SystemExit('Ogiltig releasetagg')
+    line = 'version: "' + tag[1:] + '"'
+    rows = text.splitlines()
+    for i, value in enumerate(rows):
+        if value.startswith('version:'):
+            rows[i] = line
+            break
+    else:
+        rows.insert(0, line)
+    return chr(10).join(rows) + chr(10)
+
 def main()->int:
     ap=argparse.ArgumentParser(); ap.add_argument('--format',choices=['epub','pdf','all'],default='all'); ap.add_argument('--output-dir',default=str(ROOT/'exports')); args=ap.parse_args()
     if not shutil.which('pandoc'): raise SystemExit('Pandoc saknas')
     text=read_book_yaml(); meta=metadata(text); chapters=resolve_chapters(text); validate_markdown(chapters)
+    effective_yaml=export_metadata(text,os.environ.get('BOOK_RELEASE_TAG'))
     out=Path(args.output_dir).resolve(); out.mkdir(parents=True,exist_ok=True); slug=meta['project_slug']
     with tempfile.TemporaryDirectory() as td:
-        td=Path(td); from book_references import prepare
+        td=Path(td); metadata_path=td/'book-metadata.yaml'; metadata_path.write_text(effective_yaml,encoding='utf-8'); from book_references import prepare
         body=prepare(chapters); merged=td/'book.md'; merged.write_text(body,encoding='utf-8')
-        common=['pandoc',str(merged),'--from=markdown+pipe_tables+fenced_code_blocks+fenced_divs','--standalone','--metadata-file',str(ROOT/'book.yaml')]
+        common=['pandoc',str(merged),'--from=markdown+pipe_tables+fenced_code_blocks+fenced_divs','--standalone','--metadata-file',str(metadata_path)]
         if args.format in ('epub','all'):
             epub=out/f'{slug}.epub'
-            cmd=['pandoc',str(merged),'--from=markdown+pipe_tables+fenced_code_blocks+fenced_divs','--to=epub3','--standalone','--toc','--toc-depth=1','--metadata-file',str(ROOT/'book.yaml'),'--css',str(ROOT/'publishing/epub.css')]
+            cmd=['pandoc',str(merged),'--from=markdown+pipe_tables+fenced_code_blocks+fenced_divs','--to=epub3','--standalone','--toc','--toc-depth=1','--metadata-file',str(metadata_path),'--css',str(ROOT/'publishing/epub.css')]
             cover=meta['cover_image'];
             if cover:
                 cp=ROOT/cover
