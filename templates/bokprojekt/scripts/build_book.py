@@ -15,6 +15,7 @@ def main()->int:
     subprocess.run([sys.executable,'scripts/export-book.py','--format','all','--output-dir',str(out)],cwd=ROOT,check=True)
     files=sorted(list(out.glob('*.epub'))+list(out.glob('*.pdf')))
     if len([p for p in files if p.suffix=='.epub'])!=1 or len([p for p in files if p.suffix=='.pdf'])!=1: raise SystemExit('Bygget ska ge exakt en EPUB och en PDF')
+    subprocess.run([sys.executable,'scripts/validate_exports.py',str(next(p for p in files if p.suffix=='.epub')),str(next(p for p in files if p.suffix=='.pdf'))],cwd=ROOT,check=True)
     (out/'SHA256SUMS.txt').write_text('\n'.join(f'{sha(p)}  {p.name}' for p in files)+'\n',encoding='utf-8')
     print('Bygge klart:',', '.join(p.name for p in files)); return 0
 if __name__=='__main__': raise SystemExit(main())
