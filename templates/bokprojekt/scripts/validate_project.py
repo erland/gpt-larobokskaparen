@@ -30,7 +30,7 @@ EDITORIAL_PROSE_WARNINGS=(
 def editorial_quality_findings(text):
     """Return (blocking errors, nonblocking warnings) as (line, phrase) pairs."""
     errors=[]; warnings=[]
-    heading_re=re.compile(r'^[ \t]{0,3}#{1,6}[ \t]+([^\r\n]+?)[ \t]*#*[ \t]*
+    heading_re=re.compile(r'^[ \t]{0,3}#{1,6}[ \t]+([^\r\n]+)',re.MULTILINE)
     heading_lines=set()
     for heading in heading_re.finditer(text):
         line=text.count('\\n',0,heading.start())+1
