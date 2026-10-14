@@ -36,11 +36,11 @@ for heading in ('## Redaktionell granskning', '### Kapitelnoteringar',
 
 # Ordinary prose is not necessarily a defect: warn without failing.
 errs,warns=mod.editorial_quality_findings(
-    '# Kapitel 1\\nRapporten genomgick redaktionell granskning under 2026.\\n')
+    '# Kapitel 1\nRapporten genomgick redaktionell granskning under 2026.\n')
 assert not errs and warns
 # Actual subject-matter recommendations must not trigger a false positive.
 errs,warns=mod.editorial_quality_findings(
-    '# Kapitel 1\\nMyndigheten behöver kontrollera behörighet och följa rättsläget.\\n')
+    '# Kapitel 1\nMyndigheten behöver kontrollera behörighet och följa rättsläget.\n')
 assert not errs and not warns
 
 print('PASS: editorial and global source reference regressions')
