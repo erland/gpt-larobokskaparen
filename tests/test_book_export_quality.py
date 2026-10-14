@@ -39,6 +39,9 @@ with TemporaryDirectory() as dirname:
     assert '[K001](#k001)' in converted
     assert '[]{#k001}' in converted
     assert '[Öppna källan](https://example.org/source)' in converted
+    register.write_text('# Källor\n\n- **[K001]** [Original](https://example.org/source)\n', encoding='utf-8')
+    assert '[Original](https://example.org/source)' in references.prepare([chapter, register])
+    assert '[Öppna källan]([Original]' not in references.prepare([chapter, register])
     chapter.write_text('# 1. Test\n\n[K999]\n', encoding='utf-8')
     try:
         references.prepare([chapter, register])
