@@ -5,6 +5,32 @@ sys.dont_write_bytecode=True
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 MARKERS=('TODO','TBD','[SKRIV','[FYLL I','Lorem ipsum')
+EDITORIAL_PATTERNS=(
+    r'fortsatta bokarbetet', r'inför (?:färdigställandet|publicering|utgivning)',
+    r'innan publicering', r'redaktionell (?:anmärkning|notering|kommentar)',
+    r'återstår att (?:faktagranska|verifiera|kontrollera)',
+    r'(?:behöver|måste|ska) (?:kontrolleras|verifieras|uppdateras) (?:före|inför) (?:publicering|utgivning)',
+)
+SOURCE_REF=re.compile(r'(?<!\\w)\\[(K\\d{3})\\](?!\\()')
+SOURCE_ENTRY=re.compile(r'(?m)^\\s*[-*]\\s*\\*\\*\\[(K\\d{3})\\]\\*\\*')
+
+def source_register_errors(chapters):
+    """Check global reference IDs if the optional source register exists."""
+    errors=[]; entries={}; used=set()
+    for path in chapters:
+        body=path.read_text(encoding='utf-8')
+        if 'kall' in path.name.lower() or 'käll' in path.name.lower():
+            for match in SOURCE_ENTRY.finditer(body):
+                code=match.group(1)
+                if code in entries: errors.append(f'Dubbelt käll-ID {code} i {path.name}')
+                entries[code]=path.name
+        else:
+            used.update(SOURCE_REF.findall(body))
+    if used and not entries: errors.append('Källhänvisningar finns men globalt källregister saknas')
+    for code in sorted(used-set(entries)):
+        errors.append(f'Källhänvisning {code} saknas i källregistret')
+    return errors
+
 
 def main()->int:
     errors=[]
@@ -18,6 +44,7 @@ def main()->int:
     except SystemExit as exc: errors.append(str(exc)); chapters=[]; meta={}
     if meta and not meta.get('project_slug'): errors.append('book.yaml saknar project_slug')
     if meta and not re.fullmatch(r'[a-z0-9]+(?:-[a-z0-9]+)*',meta.get('project_slug','')): errors.append('project_slug måste vara en gemen kebab-case slug')
+    errors.extend(source_register_errors(chapters))
     for path in chapters:
         text=path.read_text(encoding='utf-8')
         if not text.strip(): errors.append(f'{path.relative_to(ROOT)} är tom')
@@ -27,6 +54,10 @@ def main()->int:
         if mfile and mfile.group(1)!='00':
             mh1=re.fullmatch(r'#\s+(\d+)\.\s+.+', first)
             if not mh1 or int(mh1.group(1))!=int(mfile.group(1)): errors.append(f'{path.relative_to(ROOT)} ska börja med H1 som matchar kapitelnumret')
+        for pattern in EDITORIAL_PATTERNS:
+            for match in re.finditer(pattern,text,re.IGNORECASE):
+                line=text.count('\\n',0,match.start())+1
+                errors.append(f'{path.relative_to(ROOT)}:{line} innehåller intern arbetsnotering: {match.group(0)}')
         for marker in MARKERS:
             if marker.lower() in text.lower(): errors.append(f'{path.relative_to(ROOT)} innehåller arbetsmarkören {marker}')
         for m in re.finditer(r'!\[[^\]]*\]\(([^)]+)\)',text):
