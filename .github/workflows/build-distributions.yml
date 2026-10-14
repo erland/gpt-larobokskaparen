@@ -44,6 +44,8 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
       - name: Install validation dependencies
         run: python3 -m pip install --disable-pip-version-check PyYAML jsonschema
+      - name: Test book editorial and source reference guards
+        run: python3 tests/test_book_editorial_guard.py
       - name: Validate project contracts
         run: python3 scripts/validate_project_contracts.py
       - name: Validate model/runtime robustness
