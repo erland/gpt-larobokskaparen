@@ -12,7 +12,7 @@ Pandoc 3.1.11.1 rekommenderas. PDF kräver XeLaTeX och TeX Gyre Pagella.
 ## GitHub
 - Validate körs på pull request och push till `main`.
 - Build Preview startas manuellt och ger ett gemensamt artifact med EPUB, PDF och SHA256SUMS.
-- Release triggas av `v<SemVer>` och publicerar EPUB/PDF som separata release-assets.
+- Release triggas av `v<SemVer>` och publicerar EPUB/PDF som separata release-assets. Release-taggen bestämmer den publicerade bokversionen (exempelvis `v0.5.2` → `0.5.2`) genom temporära exportmetadata. `book.yaml` ändras inte och får ha ett annat versionsnummer. Förhandsbyggen utan release-tagg använder `book.yaml`-versionen.
 
 Arbetsfiler i `docs/` exporteras aldrig som boktext.
 
