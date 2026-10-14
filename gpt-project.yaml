@@ -139,24 +139,6 @@ tools:
   contract_version: 1
   schema: schemas/tool-contract.schema.json
   tools:
-  - id: distribution-build
-    type: script
-    requirement: required
-    purpose: Bygga runtime-distributioner.
-    script: scripts/build_distributions.py
-    deterministic: true
-    mutates_workspace: true
-    working_directory: repository
-    runtime_fallback: block
-  - id: distribution-validation
-    type: script
-    requirement: required
-    purpose: Validera runtime-distributioner, Knowledge, templatebundle och bokprojektkontrakt.
-    script: scripts/validate_distributions.py
-    deterministic: true
-    mutates_workspace: false
-    working_directory: repository
-    runtime_fallback: block
   - id: project-integrity
     type: script
     requirement: required
