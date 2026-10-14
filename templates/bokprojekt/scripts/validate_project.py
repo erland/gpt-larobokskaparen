@@ -11,6 +11,43 @@ EDITORIAL_PATTERNS=(
     r'återstår att (?:faktagranska|verifiera|kontrollera)',
     r'(?:behöver|måste|ska) (?:kontrolleras|verifieras|uppdateras) (?:före|inför) (?:publicering|utgivning)',
 )
+EDITORIAL_HEADING_PATTERNS=(
+    r'redaktionell(?:a|t)?\\s+(?:granskning|noteringar?|anmärkningar?|kommentarer?)',
+    r'kapitel(?:noteringar?|anmärkningar?)',
+    r'granskningsanteckningar?',
+    r'arbetsanteckningar?',
+    r'kvarstående\\s+faktakontroll',
+    r'att\\s+kontrollera\\s+inför\\s+publicering',
+)
+EDITORIAL_PROSE_WARNINGS=(
+    r'redaktionell(?:a|t)?\\s+granskning',
+    r'kapitelnoteringar?',
+    r'granskningsanteckningar?',
+    r'arbetsanteckningar?',
+)
+
+def editorial_quality_findings(text):
+    """Return (blocking errors, nonblocking warnings) as (line, phrase) pairs."""
+    errors=[]; warnings=[]
+    heading_re=re.compile(r'^\\s{0,3}#{1,6}\\s+(.+?)\\s*#*\\s*$',re.MULTILINE)
+    heading_lines=set()
+    for heading in heading_re.finditer(text):
+        line=text.count('\\n',0,heading.start())+1
+        heading_lines.add(line)
+        title=re.sub(r'[*_`]', '', heading.group(1))
+        for pattern in EDITORIAL_HEADING_PATTERNS:
+            if re.search(pattern,title,re.IGNORECASE):
+                errors.append((line,title.strip()));break
+    for pattern in EDITORIAL_PATTERNS:
+        for match in re.finditer(pattern,text,re.IGNORECASE):
+            errors.append((text.count('\\n',0,match.start())+1,match.group(0)))
+    for pattern in EDITORIAL_PROSE_WARNINGS:
+        for match in re.finditer(pattern,text,re.IGNORECASE):
+            line=text.count('\\n',0,match.start())+1
+            if line not in heading_lines and not any(x[0]==line for x in errors):
+                warnings.append((line,match.group(0)))
+    return list(dict.fromkeys(errors)),list(dict.fromkeys(warnings))
+
 SOURCE_REF=re.compile(r'(?<!\w)\[(K\d{3})\](?!\()')
 SOURCE_ENTRY=re.compile(r'(?m)^\s*[-*]\s*\*\*\[(K\d{3})\]\*\*')
 
@@ -33,7 +70,7 @@ def source_register_errors(chapters):
 
 
 def main()->int:
-    errors=[]
+    errors=[]; warnings=[]
     integrity=subprocess.run([sys.executable,'scripts/project_integrity.py','verify','.'],cwd=ROOT,text=True,capture_output=True)
     if integrity.returncode!=0: errors.append('Projektets integritetsverifiering misslyckades: '+(integrity.stderr or integrity.stdout).strip())
     sys.path.insert(0,str(ROOT/'scripts'))
@@ -54,10 +91,11 @@ def main()->int:
         if mfile and mfile.group(1)!='00':
             mh1=re.fullmatch(r'#\s+(\d+)\.\s+.+', first)
             if not mh1 or int(mh1.group(1))!=int(mfile.group(1)): errors.append(f'{path.relative_to(ROOT)} ska börja med H1 som matchar kapitelnumret')
-        for pattern in EDITORIAL_PATTERNS:
-            for match in re.finditer(pattern,text,re.IGNORECASE):
-                line=text.count('\n',0,match.start())+1
-                errors.append(f'{path.relative_to(ROOT)}:{line} innehåller intern arbetsnotering: {match.group(0)}')
+        editorial_errors, editorial_warnings=editorial_quality_findings(text)
+        for line,phrase in editorial_errors:
+            errors.append(f'{path.relative_to(ROOT)}:{line} innehåller redaktionell arbetsmarkör: {phrase}')
+        for line,phrase in editorial_warnings:
+            warnings.append(f'{path.relative_to(ROOT)}:{line} möjlig redaktionell notering: {phrase}')
         for marker in MARKERS:
             if marker.lower() in text.lower(): errors.append(f'{path.relative_to(ROOT)} innehåller arbetsmarkören {marker}')
         for m in re.finditer(r'!\[[^\]]*\]\(([^)]+)\)',text):
@@ -67,6 +105,8 @@ def main()->int:
             try: target.relative_to(ROOT.resolve())
             except ValueError: errors.append(f'{path.relative_to(ROOT)} har bildreferens utanför projektet: {ref}'); continue
             if not target.exists(): errors.append(f'{path.relative_to(ROOT)} saknar bildfil: {ref}')
+    if warnings:
+        print('Editorial warnings:\n- '+'\n- '.join(warnings),file=sys.stderr)
     if errors:
         print('Validation failed:\n- '+'\n- '.join(errors),file=sys.stderr); return 1
     print(f"OK: projektvalidering godkänd. {len(chapters)} boktextfiler, profil={meta.get('book_kind')}."); return 0
