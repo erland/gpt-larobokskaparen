@@ -20,3 +20,8 @@ EPUB ska sakna synlig innehållsförteckning i dokumentflödet men ha navigerbar
 
 PDF ska ha innehållsförteckning före inledningen/första kapitlet, tydliga marginaler och korrekt renderade rubriker, listor och tabeller. Metadata ska omfatta titel, undertitel vid behov, författare, språk, identifierare och datum/version. Kapitelordningen i `book.yaml` är bindande för export.
 
+## Exekveringskontroll i Plugin
+
+Innan ett nytt bokprojekt skapas eller ett befintligt bokprojekt ändras i Plugin, kontrollera om `assets/bokprojekt/` och `scripts/project_integrity.py` kan läsas eller materialiseras till ett skrivbart filsystem. Använd bokprojektmallens egna skript från dess `scripts/`; kräv inte en separat GPT-Byggaren-engine. Om Python eller skrivbar lagring saknas, redovisa exakt vilken förutsättning som saknas och påstå inte att integritetstest eller ZIP-export är genomförda.
+
+Vid tillgänglig exekvering: skapa en separat arbetskatalog, initiera/validera ett bokprojekt med `project_integrity.py`, verifiera integriteten och kontrollera att den kompletta bokprojektkatalogen kan paketeras till ZIP. För EPUB/PDF: kontrollera särskilt om Pandoc och XeLaTeX finns; frånvaro av verktygen ska redovisas som begränsning, inte döljas. Försök inte installera eller använda en separat engine-artefakt som ersättning för saknad exekveringsmiljö.
