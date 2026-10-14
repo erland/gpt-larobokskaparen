@@ -26,6 +26,15 @@ for target in ("plugin", "claude-skills", "opencode"):
         publication = f"{skill_prefix}/bokprojekt-publicering/"
         if publication + "assets/19-project-template-bundle.md" not in names:
             errors.append(f"{target}: canonical full project template asset missing")
+        template_root = ROOT / "templates" / "bokprojekt"
+        for source in template_root.rglob("*"):
+            if not source.is_file() or "__pycache__" in source.parts or source.suffix in {".pyc", ".pyo"}:
+                continue
+            packaged = publication + "assets/bokprojekt/" + source.relative_to(template_root).as_posix()
+            if packaged not in names:
+                errors.append(f"{target}: missing actual project template file {packaged}")
+            elif z.read(packaged) != source.read_bytes():
+                errors.append(f"{target}: template file differs from source {packaged}")
         for name in script_names:
             found = publication + "scripts/" + name
             if found not in names:
