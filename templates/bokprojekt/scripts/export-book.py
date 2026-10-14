@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from __future__ import annotations
-import argparse, re, shutil, subprocess, tempfile
+import argparse, os, re, shutil, subprocess, tempfile
 from pathlib import Path, PurePosixPath
 ROOT=Path(__file__).resolve().parents[1]
 NUMBERED_CHAPTER_RE=re.compile(r'^\d{2}-[a-z0-9][a-z0-9-]*\.md$',re.I)
@@ -75,6 +75,54 @@ def pdf_size(meta):
     if requested not in PDF_SIZES:
         raise SystemExit('pdf_size ska vara a5 eller 170x240')
     return PDF_SIZES[requested]
+
+def export_metadata(text: str, release_tag: str | None) -> tuple[str, str]:
+    """Use a release tag for artifact metadata, keeping book.yaml unchanged."""
+    if not release_tag:
+        return text, scalar(text, 'version')
+    if not re.fullmatch(r'v[0-9]+\.[0-9]+\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?', release_tag):
+        raise SystemExit('Ogiltig releasetagg: förväntade v<SemVer>')
+    version = release_tag[1:]
+    if re.search(r'(?m)^version:', text):
+        result = re.sub(r'(?m)^version:.*
+    ap=argparse.ArgumentParser(); ap.add_argument('--format',choices=['epub','pdf','all'],default='all'); ap.add_argument('--output-dir',default=str(ROOT/'exports')); args=ap.parse_args()
+    if not shutil.which('pandoc'): raise SystemExit('Pandoc saknas')
+    text=read_book_yaml(); meta=metadata(text); chapters=resolve_chapters(text); validate_markdown(chapters)
+    effective_yaml, effective_version=export_metadata(text,os.environ.get('BOOK_RELEASE_TAG'))
+    out=Path(args.output_dir).resolve(); out.mkdir(parents=True,exist_ok=True); slug=meta['project_slug']
+    with tempfile.TemporaryDirectory() as td:
+        td=Path(td); from book_references import prepare
+        body=prepare(chapters); merged=td/'book.md'; merged.write_text(body,encoding='utf-8')
+        common=['pandoc',str(merged),'--from=markdown+pipe_tables+fenced_code_blocks+fenced_divs','--standalone','--metadata-file',str(metadata_path)]
+        if args.format in ('epub','all'):
+            epub=out/f'{slug}.epub'
+            cmd=['pandoc',str(merged),'--from=markdown+pipe_tables+fenced_code_blocks+fenced_divs','--to=epub3','--standalone','--toc','--toc-depth=1','--metadata-file',str(metadata_path),'--css',str(ROOT/'publishing/epub.css')]
+            cover=meta['cover_image'];
+            if cover:
+                cp=ROOT/cover
+                if not cp.is_file(): raise SystemExit('Angiven omslagsbild saknas: '+cover)
+                cmd += ['--epub-cover-image',str(cp)]
+            run(cmd+['--output',str(epub)]); run([sys.executable,str(ROOT/'publishing/fix-epub-after-pandoc.py'),str(epub)])
+        if args.format in ('pdf','all'):
+            if not shutil.which('xelatex'): raise SystemExit('XeLaTeX saknas för PDF-export')
+            width,height=pdf_size(meta)
+            pdf=out/f'{slug}.pdf'; cmd=common+['--metadata',f'pdf-paper-width={width}','--metadata',f'pdf-paper-height={height}','--top-level-division=chapter','--pdf-engine=xelatex','--template',str(ROOT/'publishing/pdf-template.tex'),'--lua-filter',str(ROOT/'publishing/pdf-filter.lua')]
+            fontdir=find_font_dir()
+            if fontdir: cmd += ['--metadata',f'pdf-font-dir={fontdir.as_posix()}/']
+            cover=meta['cover_image']
+            if cover:
+                cp=ROOT/cover
+                if not cp.is_file(): raise SystemExit('Angiven omslagsbild saknas: '+cover)
+                cmd += ['--metadata',f'cover-image={cp.as_posix()}']
+            run(cmd+['--output',str(pdf)])
+    return 0
+if __name__=='__main__':
+    import sys
+    raise SystemExit(main())
+, 'version: "' + version + '"', text, count=1)
+    else:
+        result = 'version: "' + version + '"\n' + text
+    return result, version
 
 def main()->int:
     ap=argparse.ArgumentParser(); ap.add_argument('--format',choices=['epub','pdf','all'],default='all'); ap.add_argument('--output-dir',default=str(ROOT/'exports')); args=ap.parse_args()
