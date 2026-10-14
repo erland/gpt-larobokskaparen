@@ -5,9 +5,73 @@ sys.dont_write_bytecode=True
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 MARKERS=('TODO','TBD','[SKRIV','[FYLL I','Lorem ipsum')
+EDITORIAL_PATTERNS=(
+    r'fortsatta bokarbetet', r'inför (?:färdigställandet|publicering|utgivning)',
+    r'innan publicering', r'redaktionell (?:anmärkning|notering|kommentar)',
+    r'återstår att (?:faktagranska|verifiera|kontrollera)',
+    r'(?:behöver|måste|ska) (?:kontrolleras|verifieras|uppdateras) (?:före|inför) (?:publicering|utgivning)',
+)
+EDITORIAL_HEADING_PATTERNS=(
+    r'redaktionell(?:a|t)?\s+(?:granskning|noteringar?|anmärkningar?|kommentarer?)',
+    r'redaktionell(?:a|t)?\s+källanmärkning',
+    r'kapitel(?:noteringar?|anmärkningar?)',
+    r'granskningsanteckningar?',
+    r'arbetsanteckningar?',
+    r'kvarstående\s+faktakontroll',
+    r'att\s+kontrollera\s+inför\s+publicering',
+)
+EDITORIAL_PROSE_WARNINGS=(
+    r'redaktionell(?:a|t)?\s+granskning',
+    r'kapitelnoteringar?',
+    r'granskningsanteckningar?',
+    r'arbetsanteckningar?',
+)
+
+def editorial_quality_findings(text):
+    """Return (blocking errors, nonblocking warnings) as (line, phrase) pairs."""
+    errors=[]; warnings=[]
+    heading_re=re.compile(r'^[ \t]{0,3}#{1,6}[ \t]+([^\r\n]+)',re.MULTILINE)
+    heading_lines=set()
+    for heading in heading_re.finditer(text):
+        line=text.count('\n',0,heading.start())+1
+        heading_lines.add(line)
+        title=re.sub(r'[*_`]', '', heading.group(1))
+        for pattern in EDITORIAL_HEADING_PATTERNS:
+            if re.search(pattern,title,re.IGNORECASE):
+                errors.append((line,title.strip()));break
+    for pattern in EDITORIAL_PATTERNS:
+        for match in re.finditer(pattern,text,re.IGNORECASE):
+            errors.append((text.count('\n',0,match.start())+1,match.group(0)))
+    for pattern in EDITORIAL_PROSE_WARNINGS:
+        for match in re.finditer(pattern,text,re.IGNORECASE):
+            line=text.count('\n',0,match.start())+1
+            if line not in heading_lines and not any(x[0]==line for x in errors):
+                warnings.append((line,match.group(0)))
+    return list(dict.fromkeys(errors)),list(dict.fromkeys(warnings))
+
+SOURCE_REF=re.compile(r'(?<!\w)\[(K\d{3})\](?!\()')
+SOURCE_ENTRY=re.compile(r'(?m)^\s*[-*]\s*\*\*\[(K\d{3})\]\*\*')
+
+def source_register_errors(chapters):
+    """Check global reference IDs if the optional source register exists."""
+    errors=[]; entries={}; used=set()
+    for path in chapters:
+        body=path.read_text(encoding='utf-8')
+        if 'kall' in path.name.lower() or 'käll' in path.name.lower():
+            for match in SOURCE_ENTRY.finditer(body):
+                code=match.group(1)
+                if code in entries: errors.append(f'Dubbelt käll-ID {code} i {path.name}')
+                entries[code]=path.name
+        else:
+            used.update(SOURCE_REF.findall(body))
+    if used and not entries: errors.append('Källhänvisningar finns men globalt källregister saknas')
+    for code in sorted(used-set(entries)):
+        errors.append(f'Källhänvisning {code} saknas i källregistret')
+    return errors
+
 
 def main()->int:
-    errors=[]
+    errors=[]; warnings=[]
     integrity=subprocess.run([sys.executable,'scripts/project_integrity.py','verify','.'],cwd=ROOT,text=True,capture_output=True)
     if integrity.returncode!=0: errors.append('Projektets integritetsverifiering misslyckades: '+(integrity.stderr or integrity.stdout).strip())
     sys.path.insert(0,str(ROOT/'scripts'))
@@ -18,6 +82,7 @@ def main()->int:
     except SystemExit as exc: errors.append(str(exc)); chapters=[]; meta={}
     if meta and not meta.get('project_slug'): errors.append('book.yaml saknar project_slug')
     if meta and not re.fullmatch(r'[a-z0-9]+(?:-[a-z0-9]+)*',meta.get('project_slug','')): errors.append('project_slug måste vara en gemen kebab-case slug')
+    errors.extend(source_register_errors(chapters))
     for path in chapters:
         text=path.read_text(encoding='utf-8')
         if not text.strip(): errors.append(f'{path.relative_to(ROOT)} är tom')
@@ -27,6 +92,11 @@ def main()->int:
         if mfile and mfile.group(1)!='00':
             mh1=re.fullmatch(r'#\s+(\d+)\.\s+.+', first)
             if not mh1 or int(mh1.group(1))!=int(mfile.group(1)): errors.append(f'{path.relative_to(ROOT)} ska börja med H1 som matchar kapitelnumret')
+        editorial_errors, editorial_warnings=editorial_quality_findings(text)
+        for line,phrase in editorial_errors:
+            errors.append(f'{path.relative_to(ROOT)}:{line} innehåller redaktionell arbetsmarkör: {phrase}')
+        for line,phrase in editorial_warnings:
+            warnings.append(f'{path.relative_to(ROOT)}:{line} möjlig redaktionell notering: {phrase}')
         for marker in MARKERS:
             if marker.lower() in text.lower(): errors.append(f'{path.relative_to(ROOT)} innehåller arbetsmarkören {marker}')
         for m in re.finditer(r'!\[[^\]]*\]\(([^)]+)\)',text):
@@ -36,6 +106,8 @@ def main()->int:
             try: target.relative_to(ROOT.resolve())
             except ValueError: errors.append(f'{path.relative_to(ROOT)} har bildreferens utanför projektet: {ref}'); continue
             if not target.exists(): errors.append(f'{path.relative_to(ROOT)} saknar bildfil: {ref}')
+    if warnings:
+        print('Editorial warnings:\n- '+'\n- '.join(warnings),file=sys.stderr)
     if errors:
         print('Validation failed:\n- '+'\n- '.join(errors),file=sys.stderr); return 1
     print(f"OK: projektvalidering godkänd. {len(chapters)} boktextfiler, profil={meta.get('book_kind')}."); return 0

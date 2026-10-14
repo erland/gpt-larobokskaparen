@@ -21,3 +21,10 @@ Beskriv vilken källnivå boken behöver. Policyn används särskilt för faktab
 
 ## Anteckning
 Källarbetsmaterial hör normalt hemma i `docs/faktakontroll.md` och ska inte exporteras som boktext av misstag.
+
+## Gemensamt referensregister
+- Använd bokövergripande käll-ID som `K001`, `K002` osv. Ett ID ska betyda samma källa i hela boken.
+- Placera ett gemensamt register sist i boken och lista det i `book.yaml`; exempelvis `chapters/99-kallregister.md`.
+- Formatera poster som `- **[K001]** Organisation, titel, datum. https://...` och hänvisa med `[K001]` i kapiteltext.
+- Projektvalideringen flaggar saknade och dubblerade käll-ID. Kort, klickbar länktext föredras framför utskrivna långa adresser.
+- Källreservationen ska vända sig till läsaren: ange tidsavgränsning och att analysen är författarens tolkning. Låt redaktionella instruktioner ligga kvar i `docs/`.
