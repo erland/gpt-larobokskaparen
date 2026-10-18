@@ -263,6 +263,9 @@ runtime:
       - id: bokskrivande
         name: bokskrivande
         description: Skriv och granska bokkapitel, källor och illustrationer.
+      - id: diagram-illustrationer
+        name: diagram-illustrationer
+        description: Skapa och underhåll Graphviz-, PlantUML- och SVG-illustrationer.
       - id: bokprojekt-publicering
         name: bokprojekt-publicering
         description: Hantera projektmanifest, revision, ZIP och export till EPUB/PDF.
@@ -439,6 +442,14 @@ skills:
     references:
     - knowledge-upload/01-purpose-and-workflow.md
     scripts: []
+  - id: diagram-illustrationer
+    name: Diagram och tekniska illustrationer
+    description: Välj verktyg, förvalta diagramkällor och rendera SVG för bokprojekt.
+    source: canonical/skills/diagram-illustrationer/behavior.md
+    references:
+    - knowledge-upload/20-code-generated-diagrams.md
+    scripts: []
+    assets: []
   - id: bokprojekt-publicering
     name: Bokprojekt, revision och publicering
     description: Hantera projektmanifest, revision, ZIP och export till EPUB/PDF.
