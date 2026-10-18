@@ -17,7 +17,7 @@ class FigureNumberingTest(unittest.TestCase):
             a = root / "01-webben.md"
             b = root / "02-natverk.md"
             intro.write_text("# Inledning\n\nIntroduktion.\n", encoding="utf-8")
-            a.write_text("# 1. Webben\n\nSe [@fig:IMG-01-02].\n\n"
+            a.write_text("# 1. Webben\n\nSom Figur [@fig:IMG-01-02].\n\n"
                          "![DNS-flöde](../assets/generated/IMG-01-01.svg)\n\n"
                          "![Figur 9.9 – HTTP-svar](../assets/generated/IMG-01-02.svg)\n", encoding="utf-8")
             b.write_text("# 2. Nätverk\n\n"
@@ -29,7 +29,8 @@ class FigureNumberingTest(unittest.TestCase):
                 self.assertIn("![Figur 1.1 – DNS-flöde]", output)
                 self.assertIn("![Figur 1.2 – HTTP-svar]", output)
                 self.assertIn("![Figur 2.1 – Router och klient]", output)
-                self.assertIn("[Figur 1.2](#fig-img-01-02)", output)
+                self.assertIn("Som [Figur 1.2](#fig-img-01-02)", output)
+                self.assertNotIn("Figur Figur", output)
                 self.assertEqual(output.count("Figur 1.2 – HTTP-svar"), 1)
                 self.assertNotIn("Figur 9.9", output)
             a.write_text("# 1. Webben\n\n"
