@@ -6,7 +6,7 @@ $if(pdf-font-dir)$
 $else$
 \setmainfont{TeXGyrePagella}
 $endif$
-\usepackage[paperwidth=$if(bookpaperwidth)$bookpaperwidth$else$170mm$endif$,paperheight=$if(bookpaperheight)$bookpaperheight$else$240mm$endif$,inner=20mm,outer=18mm,top=20mm,bottom=22mm,headsep=5mm,footskip=9mm]{geometry}
+\usepackage[paperwidth=$bookpaperwidth$,paperheight=$bookpaperheight$,inner=20mm,outer=18mm,top=20mm,bottom=22mm,headsep=5mm,footskip=9mm]{geometry}
 \usepackage{graphicx}\usepackage{microtype}\usepackage{setspace}\usepackage{parskip}\usepackage{fancyhdr}\usepackage[hidelinks]{hyperref}\usepackage{bookmark}\usepackage{tocloft}\usepackage{ragged2e}\usepackage{xcolor}\usepackage{longtable}\usepackage{booktabs}\usepackage{array}\usepackage{calc}\usepackage{etoolbox}
 \hypersetup{pdfkeywords={Version $version$}}
 \setstretch{1.24}\setlength{\parindent}{0pt}\setlength{\parskip}{0.5em plus 0.08em minus 0.04em}\setlength{\emergencystretch}{1.5em}\widowpenalty=10000\clubpenalty=10000\displaywidowpenalty=10000\raggedbottom
