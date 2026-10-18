@@ -68,8 +68,26 @@ jobs:
         run: python3 scripts/validate_model_robustness.py
       - name: Check canonical lint
         run: python3 scripts/lint_gpt_project.py --project-root . --json
+      - name: Fetch pinned PlantUML for Engine
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .engine-deps
+          curl --fail --location --retry 3 --silent --show-error \
+            https://github.com/plantuml/plantuml/releases/download/v1.2026.9/plantuml-1.2026.9.jar \
+            --output .engine-deps/plantuml.jar
+          echo 'aa4a1d06f8911c4b842beff4828dd955be431692b631a312d04c0e9fab9581de  .engine-deps/plantuml.jar' | sha256sum -c -
+      - name: Test Engine configuration
+        run: python3 tests/test_engine_config.py
       - name: Build distributions
         run: python3 scripts/build_distributions.py --version "${{ steps.version.outputs.version }}"
+      - name: Verify packaged Engine
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/larobok-engine
+          unzip -q "dist/larobokskaparen-engine-${{ steps.version.outputs.version }}.zip" -d /tmp/larobok-engine
+          python3 /tmp/larobok-engine/scripts/engine_selftest.py --render
       - name: Install TypeScript parser for generated OpenCode tools
         run: npm install --prefix /tmp/opencode-ts-parser --no-save typescript@5.9.3
       - name: Parse generated OpenCode TypeScript tools
