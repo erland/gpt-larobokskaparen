@@ -52,6 +52,8 @@ jobs:
         run: python3 tests/test_epub_reader_regressions.py
       - name: Test book export references and validation
         run: python3 tests/test_book_export_quality.py
+      - name: Test automatic figure numbering
+        run: python3 tests/test_figure_numbering.py
       - name: Test chapter quality review workflow
         run: python3 tests/test_chapter_review.py
       - name: Test chapter review end-to-end and revisions
