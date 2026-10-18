@@ -6,9 +6,4 @@ img { max-width: 100%; height: auto; }
 table { border-collapse: collapse; width: 100%; }
 th, td { border: 1px solid #999; padding: 0.35em 0.5em; vertical-align: top; }
 pre { white-space: pre-wrap; padding: 0.7em; }
-
-/* Diagram-SVG har transparent canvas. Detta är en progressiv förstärkning:
-   inte alla EPUB-läsare tillåter prefers-color-scheme eller CSS-filter. */
-@media (prefers-color-scheme: dark) {
-  img[src$=".svg"] { filter: invert(1) hue-rotate(180deg); }
 }
