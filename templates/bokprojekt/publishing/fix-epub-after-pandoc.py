@@ -40,61 +40,17 @@ def nav_non_linear(base: Path, opf_rel: Path)->bool:
     return changed
 
 def normalize_reader_css(base:Path)->int:
-    """Avoid forced light-mode foreground/background and heading page breaks."""
+    """Respect reader theme colours and avoid forced heading page breaks."""
     changed=0
     for path in base.rglob('*.css'):
         css=path.read_text(encoding='utf-8')
         original=css
-        # Pandoc's generated EPUB stylesheet forces dark text on a pale page and
-        # sometimes black text in readers that replace only the page background.
-        css=re.sub(r'(?m)^\\s*(?:color|background-color):\\s*#[0-9a-fA-F]{3,8}\\s*;\\s*
-    if out.exists(): out.unlink()
-    with zipfile.ZipFile(out,'w') as z:
-        mime=base/'mimetype'; z.write(mime,'mimetype',compress_type=zipfile.ZIP_STORED)
-        for p in sorted(base.rglob('*')):
-            if p.is_file() and p!=mime: z.write(p,p.relative_to(base).as_posix(),compress_type=zipfile.ZIP_DEFLATED)
-
-def validate(path:Path)->None:
-    with zipfile.ZipFile(path) as z:
-        if not z.namelist() or z.namelist()[0]!='mimetype' or z.getinfo('mimetype').compress_type!=zipfile.ZIP_STORED:
-            raise RuntimeError('EPUB-fel: mimetype måste ligga först och vara okomprimerad')
-        if 'META-INF/container.xml' not in z.namelist(): raise RuntimeError('EPUB-fel: container.xml saknas')
-
-def main()->int:
-    if len(sys.argv)!=2: print('Användning: fix-epub-after-pandoc.py <fil.epub>',file=sys.stderr); return 2
-    epub=Path(sys.argv[1]).resolve()
-    with tempfile.TemporaryDirectory(prefix='fix-epub-') as td:
-        base=Path(td)
-        with zipfile.ZipFile(epub) as z: z.extractall(base)
-        opf=rootfile(base); headings=split_headings(base); nav=nav_non_linear(base,opf); css=normalize_reader_css(base); repack(base,epub)
-    validate(epub); print(f'Efterbearbetad EPUB: kapitelfiler={headings}, nav linear=no={nav}, anpassade stilmallar={css}'); return 0
-if __name__=='__main__': raise SystemExit(main())
-, '', css)
-        css=re.sub(r'(?m)^\\s*page-break-before:\\s*always\\s*;\\s*
-    if out.exists(): out.unlink()
-    with zipfile.ZipFile(out,'w') as z:
-        mime=base/'mimetype'; z.write(mime,'mimetype',compress_type=zipfile.ZIP_STORED)
-        for p in sorted(base.rglob('*')):
-            if p.is_file() and p!=mime: z.write(p,p.relative_to(base).as_posix(),compress_type=zipfile.ZIP_DEFLATED)
-
-def validate(path:Path)->None:
-    with zipfile.ZipFile(path) as z:
-        if not z.namelist() or z.namelist()[0]!='mimetype' or z.getinfo('mimetype').compress_type!=zipfile.ZIP_STORED:
-            raise RuntimeError('EPUB-fel: mimetype måste ligga först och vara okomprimerad')
-        if 'META-INF/container.xml' not in z.namelist(): raise RuntimeError('EPUB-fel: container.xml saknas')
-
-def main()->int:
-    if len(sys.argv)!=2: print('Användning: fix-epub-after-pandoc.py <fil.epub>',file=sys.stderr); return 2
-    epub=Path(sys.argv[1]).resolve()
-    with tempfile.TemporaryDirectory(prefix='fix-epub-') as td:
-        base=Path(td)
-        with zipfile.ZipFile(epub) as z: z.extractall(base)
-        opf=rootfile(base); headings=split_headings(base); nav=nav_non_linear(base,opf); repack(base,epub)
-    validate(epub); print(f'Efterbearbetad EPUB: kapitelfiler={headings}, nav linear=no={nav}'); return 0
-if __name__=='__main__': raise SystemExit(main())
-, '', css)
+        # Only Pandoc's generated stylesheet; keep project-authored rules.
+        if 'stylesheet' not in path.name: continue
+        css=re.sub(r'(?<![\\w-])(?:color|background-color):\\s*#[0-9a-fA-F]{3,8}\\s*;', '', css)
+        css=re.sub(r'page-break-before:\\s*always\\s*;', '', css)
         if css!=original:
-            path.write_text(css,encoding='utf-8'); changed+=1
+            path.write_text(css,encoding='utf-8');changed+=1
     return changed
 
 def repack(base:Path,out:Path)->None:
@@ -116,6 +72,6 @@ def main()->int:
     with tempfile.TemporaryDirectory(prefix='fix-epub-') as td:
         base=Path(td)
         with zipfile.ZipFile(epub) as z: z.extractall(base)
-        opf=rootfile(base); headings=split_headings(base); nav=nav_non_linear(base,opf); repack(base,epub)
-    validate(epub); print(f'Efterbearbetad EPUB: kapitelfiler={headings}, nav linear=no={nav}'); return 0
+        opf=rootfile(base); headings=split_headings(base); nav=nav_non_linear(base,opf); css=normalize_reader_css(base); repack(base,epub)
+    validate(epub); print(f'Efterbearbetad EPUB: kapitelfiler={headings}, nav linear=no={nav}, anpassade stilmallar={css}'); return 0
 if __name__=='__main__': raise SystemExit(main())
