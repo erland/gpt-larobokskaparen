@@ -33,3 +33,7 @@ Innan en bok anges som publiceringsklar ska både PDF och EPUB granskas som fakt
 
 ## Diagramkällor och publicering
 Om bokprojektet innehåller diagramkällor: samarbeta med `diagram-illustrationer` och kräv verifierad SVG-rendering innan PDF/EPUB markeras klara. Bevara `.dot`, `.puml` och handgjord `.svg` i revisions- och ZIP-flödet. PDF ska använda verifierad vektorbaserad konvertering/inbäddning där det är möjligt; EPUB ska använda fungerande SVG eller dokumenterad kompatibilitetsfallback. Genererade SVG är återskapbara men måste finnas när kapitelreferenser valideras. Om renderare saknas: rapportera `pending_render` och blockera publicering av böcker med olösta figurreferenser. Den faktiska exportintegrationen tillkommer i separat implementeringssteg.
+
+
+## Kapitelgranskning och revisionsspår
+Granskningsprotokoll under `docs/reviews/` och skriptet `scripts/chapter_review.py` tillhör bokprojektet. Skapa protokoll först efter användarens val av manuell eller automatisk granskning. En ändring i kapiteltexten ogiltigförklarar automatiskt det äldre godkännandet via kontroll mot kapitel-SHA. Före automatisk slutrapport: uppdatera normal projektrevision med både kapitel och protokoll, verifiera projektmanifest och genomför `chapter_review.py check`. Påstå aldrig att filen är reviderad/godkänd om miljön inte faktiskt kunde köra kontrollerna. Äldre projekt utan granskningsprotokoll ska fortfarande kunna valideras.
