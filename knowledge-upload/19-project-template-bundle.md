@@ -1531,8 +1531,7 @@ def prepare(chapters: list[Path], image_transform=None) -> str:
 # Figure captions belong to the publishing representation, never to chapter sources.
 # Only standalone Markdown images become numbered figures. The stable IMG ID is
 # extracted from the asset name (including diagram SVG/PDF conversions).
-FIGURE = re.compile(r'(?m)^(?P<indent>[ \t]*)!\[(?P<alt>[^\]\n]*)\]\((?P<target>[^)\n]+)\)[ \t]*
-)
+FIGURE = re.compile(r'(?m)^(?P<indent>[ \t]*)!\[(?P<alt>[^\]\n]*)\]\((?P<target>[^)\n]+)\)[ \t]*$')
 FIGURE_ID = re.compile(r'(?i)(IMG-\d{2}-\d{2})(?=\.[A-Za-z0-9]+(?:\s|$))')
 FIGURE_REFERENCE = re.compile(r'\[@fig:(IMG-\d{2}-\d{2})\]', re.I)
 OLD_CAPTION = re.compile(r'(?i)^\s*Figur\s+\d+(?:\.\d+)?\s*[-–—:.]\s*')
