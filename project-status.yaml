@@ -32,7 +32,8 @@ state:
   warnings:
   - Tidigare legacy-hygiene kräver Git-index
   - Beteendeparitet i alla hostmiljöer behöver manuella prov
-  - Diagramrendering och SVG-integrering är ännu inte funktionellt acceptanstestade; ej releaseklar på arbetsgrenen
+  - Deltest: Python-syntax och handgjord SVG-rendering godkända i Agent Workspace; Graphviz-prov blockerat eftersom dot saknas där
+  - PlantUML och fullständig SVG-integrering i EPUB/PDF är ännu inte funktionellt acceptanstestade; ej releaseklar på arbetsgrenen
 resume:
   supported: true
   required_files:
