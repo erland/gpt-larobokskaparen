@@ -7,8 +7,8 @@ migration:
   target_builder_version: 1.6.22
   status: release_candidate
 next_step:
-  recommended: full_book_project_acceptance
-  title: Kör komplett bokprojektstest och revisionsflöde
+  recommended: runtime_parity_and_dark_mode_acceptance
+  title: Verifiera mörkt läsläge och distributioner
   reason: Diagramkällor och renderingsskript finns på arbetsgrenen, men faktisk körning, integritetsflöde och exporter återstår att verifiera.
 plan:
   path: docs/development-plan.md
@@ -33,8 +33,9 @@ state:
   - Tidigare legacy-hygiene kräver Git-index
   - Beteendeparitet i alla hostmiljöer behöver manuella prov
   - Deltest: Python-syntax och handgjord SVG-rendering godkända i Agent Workspace; Graphviz-prov blockerat eftersom dot saknas där
-  - Separat lokalt prov: Graphviz/PlantUML SVG till EPUB och vektor-PDF PASS; faktiska bokprojektmallens end-to-end export och manifest/revision återstår
-  - Kod och en SVG-rendering validerade i Agent Workspace; full release- och hostparitet återstår
+  - Fullständigt lokalt bokprojektstest PASS: Graphviz, PlantUML, egen SVG, revisionsmanifest och PDF/EPUB; EPUB SVG utan vit sidbakgrund, PDF utan rasterbilder
+  - Mörkläge i faktiska EPUB-läsare är ej verifierat; CSS prefers-color-scheme och filter kan sakna stöd
+  - Full release- och hostparitet samt kanonisk distributionsbyggning återstår
 resume:
   supported: true
   required_files:
