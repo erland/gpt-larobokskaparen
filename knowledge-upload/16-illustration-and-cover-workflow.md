@@ -91,3 +91,7 @@ Vid EPUB/PDF-export:
 - skala bilder så de passar sidan/läsaren
 - rendera bildtexter som riktig kursiv text, inte rå markdown
 - behåll luftig EPUB-layout
+
+
+## Kodgenererade illustrationer
+Utöver AI-genererade PNG-bilder stöds planering av Graphviz DOT, PlantUML och handgjord SVG via Skillen `diagram-illustrationer`. Använd samma IMG-ID:n och register. För sådana figurer ligger källan under `assets/diagrams/`, renderad SVG under `assets/generated/`; behåll PNG-bilder, prompts och omslagsflöde som tidigare. Källorna ska följa med bokprojektets revisions- och ZIP-flöde. Exporten får inte markeras som klar om refererade SVG-filer saknas. Se `20-code-generated-diagrams.md`. Genomförandet av exporter/renderingsskript planeras separat.

@@ -18,3 +18,6 @@ Arbetsnoteringar i `docs/` är inte boktext och ska inte exporteras om de inte u
 - `02-build-preview.yml` bygger EPUB/PDF manuellt och laddar upp ett gemensamt preview-artifact.
 - `03-release.yml` bygger på `v*`-tagg och publicerar EPUB/PDF som separata GitHub Release-assets.
 - `scripts/build_book.py` är CI-wrapper; `scripts/export-book.py` är kanonisk exportmotor.
+
+## Kodgenererade diagram
+För Graphviz, PlantUML och handgjord SVG: spara källan under `assets/diagrams/IMG-NN-MM.dot|puml|svg` och kör `python scripts/render_diagrams.py` för att generera SVG i `assets/generated/`. Validera med `python scripts/render_diagrams.py --check`. För PlantUML kan `--plantuml-jar /sökväg/plantuml.jar` eller `PLANTUML_JAR` användas. Om PlantUML saknas: https://github.com/plantuml/plantuml/releases . Uppdatera projektets integritetsmanifest enligt revisionsflödet efter diagramändringar.

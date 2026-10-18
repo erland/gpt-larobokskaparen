@@ -39,3 +39,13 @@ Generalisera GitHub Actions så samtliga aktiva distributioner byggs, valideras 
 
 ### 9. Slutlig release-readiness
 Synkronisera dokumentation/status och verifiera att migreringen är komplett, beteendebevarande och redo för merge/release.
+
+
+## Ny utvecklingsetapp: kodgenererade illustrationer (2026-10-18)
+
+1. **Skill och kontrakt (i denna gren):** `diagram-illustrationer`, verktygsval och instruktioner för källformat, SVG och PlantUML-fallback. Utöka befintliga Skills utan att störa bildflödet.
+2. **Bokprojektmall och rendering (återstår):** versionshanterade källfiler under `assets/diagrams`, genererade SVG, säkra exekveringskontroller, manifest och validering. Regenerera `knowledge-upload/19-project-template-bundle.md` endast från mallen.
+3. **PDF och EPUB (återstår):** vektorbaserad PDF-väg via XeLaTeX, SVG/kompatibilitetsfallback i EPUB, format- och layoutgranskning.
+4. **Acceptanstest och distribution (återstår):** diagramtyper, regressionsfall, canonical builder för fem distributioner och värdplattformstester.
+
+Status: steg 1 är ett källkontraktsförslag på arbetsgren; full kanonisk distributionsbyggning och funktionell rendering är ännu inte verifierade.

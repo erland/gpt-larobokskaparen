@@ -6,6 +6,7 @@ This does not prove execution inside the ChatGPT Plugin host.
 from __future__ import annotations
 import argparse
 import json
+import re
 from pathlib import Path
 import shutil
 import subprocess
@@ -25,18 +26,26 @@ def main():
                 if z.testzip():
                     raise ValueError("Plugin ZIP is corrupt")
                 prefix = "skills/bokprojekt-publicering/"
-                template = prefix + "assets/bokprojekt/"
-                members = [n for n in z.namelist() if n.startswith(template) and not n.endswith("/")]
-                if not members:
-                    raise ValueError("Packaged project template is missing")
+                bundle_path = prefix + "assets/19-project-template-bundle.md"
+                if bundle_path not in z.namelist():
+                    raise ValueError("Packaged project template bundle is missing")
+                bundle = z.read(bundle_path).decode("utf-8")
+                # Materialize every canonical text file from the packed bundle.
+                # No repository template directory is needed at runtime.
+                sections = re.findall(
+                    r"^## `([^`]+)`\s*\n````[^\n]*\n(.*?)\n````",
+                    bundle, flags=re.MULTILINE | re.DOTALL,
+                )
+                if not sections:
+                    raise ValueError("Packaged project template bundle has no files")
                 target = base / "bokprojekt"
-                for name in members:
-                    relative = Path(name[len(template):])
+                for name, content in sections:
+                    relative = Path(name)
                     if relative.is_absolute() or ".." in relative.parts:
                         raise ValueError("Unsafe template path")
                     dest = target / relative
                     dest.parent.mkdir(parents=True, exist_ok=True)
-                    dest.write_bytes(z.read(name))
+                    dest.write_text(content + "\n", encoding="utf-8")
                 report["checks"]["materialize_book_template"] = "pass"
                 for script in ("project_integrity.py", "validate_project.py", "export-book.py", "build_book.py"):
                     embedded = prefix + "scripts/" + script

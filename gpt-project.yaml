@@ -157,6 +157,15 @@ tools:
     mutates_workspace: false
     working_directory: workspace
     runtime_fallback: block
+  - id: diagram-render
+    type: script
+    requirement: optional
+    purpose: Rendera Graphviz/PlantUML/egen SVG till kontrollerad SVG när användaren vill ha diagram.
+    script: templates/bokprojekt/scripts/render_diagrams.py
+    deterministic: true
+    mutates_workspace: true
+    working_directory: workspace
+    runtime_fallback: manual
   - id: book-export
     type: script
     requirement: recommended
@@ -263,6 +272,9 @@ runtime:
       - id: bokskrivande
         name: bokskrivande
         description: Skriv och granska bokkapitel, källor och illustrationer.
+      - id: diagram-illustrationer
+        name: diagram-illustrationer
+        description: Skapa och underhåll Graphviz-, PlantUML- och SVG-illustrationer.
       - id: bokprojekt-publicering
         name: bokprojekt-publicering
         description: Hantera projektmanifest, revision, ZIP och export till EPUB/PDF.
@@ -439,6 +451,15 @@ skills:
     references:
     - knowledge-upload/01-purpose-and-workflow.md
     scripts: []
+  - id: diagram-illustrationer
+    name: Diagram och tekniska illustrationer
+    description: Välj verktyg, förvalta diagramkällor och rendera SVG för bokprojekt.
+    source: canonical/skills/diagram-illustrationer/behavior.md
+    references:
+    - knowledge-upload/20-code-generated-diagrams.md
+    scripts:
+    - templates/bokprojekt/scripts/render_diagrams.py
+    assets: []
   - id: bokprojekt-publicering
     name: Bokprojekt, revision och publicering
     description: Hantera projektmanifest, revision, ZIP och export till EPUB/PDF.
@@ -447,7 +468,6 @@ skills:
     - knowledge-upload/18-local-export-pipeline.md
     assets:
     - knowledge-upload/19-project-template-bundle.md
-    - templates/bokprojekt
     scripts:
     - templates/bokprojekt/scripts/project_integrity.py
     - templates/bokprojekt/scripts/validate_project.py

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from __future__ import annotations
-import argparse, os, re, shutil, subprocess, tempfile
+import argparse, os, re, shutil, subprocess, tempfile, sys
 from pathlib import Path, PurePosixPath
 ROOT=Path(__file__).resolve().parents[1]
 NUMBERED_CHAPTER_RE=re.compile(r'^\d{2}-[a-z0-9][a-z0-9-]*\.md$',re.I)
@@ -60,6 +60,31 @@ def validate_markdown(paths):
         if re.search(r'(?m)^#{4,}\s',t): errors.append(p.name+': H4 eller djupare rubrik')
         if t.count('```')%2: errors.append(p.name+': obalanserade kodblock')
     if errors: raise SystemExit('Markdown-validering misslyckades:\n- '+'\n- '.join(errors))
+def image_transform_for(fmt, workdir):
+    """Resolve image references per source chapter. Convert SVG to PDF only for XeLaTeX."""
+    def transform(text, chapter):
+        def replace(match):
+            alt, raw=match.group(1), match.group(2)
+            ref=raw.strip().split()[0].strip('<>')
+            if ref.startswith(('http://','https://','#')): return match.group(0)
+            src=(chapter.parent/ref).resolve()
+            try: src.relative_to(ROOT.resolve())
+            except ValueError: raise SystemExit('Bildreferens utanför projektet: '+ref)
+            if not src.is_file(): raise SystemExit('Bildfil saknas: '+str(src))
+            if src.suffix.lower()=='.svg' and fmt=='pdf':
+                target=workdir/(src.stem+'-'+str(len(list(workdir.glob('*.pdf'))))+'.pdf')
+                if shutil.which('inkscape'):
+                    subprocess.run(['inkscape',str(src),'--export-type=pdf','--export-filename='+str(target)],check=True,timeout=90,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+                else:
+                    try: import cairosvg
+                    except ImportError: raise SystemExit('SVG till vektor-PDF kräver Inkscape eller CairoSVG')
+                    cairosvg.svg2pdf(url=str(src),write_to=str(target))
+                resolved=target
+            else: resolved=src
+            return '!['+alt+']('+resolved.as_posix()+')'
+        return re.sub(r'!\[([^\]]*)\]\(([^)]+)\)',replace,text)
+    return transform
+
 def run(cmd): print('+',' '.join(map(str,cmd))); subprocess.run(cmd,cwd=ROOT,check=True)
 def find_font_dir():
     for base in (Path('/usr/share/fonts'),Path('/usr/local/share/fonts')):
@@ -98,9 +123,10 @@ def main()->int:
     out=Path(args.output_dir).resolve(); out.mkdir(parents=True,exist_ok=True); slug=meta['project_slug']
     with tempfile.TemporaryDirectory() as td:
         td=Path(td); metadata_path=td/'book-metadata.yaml'; metadata_path.write_text(effective_yaml,encoding='utf-8'); from book_references import prepare
-        body=prepare(chapters); merged=td/'book.md'; merged.write_text(body,encoding='utf-8')
+        merged=td/'book.md'
         common=['pandoc',str(merged),'--from=markdown+pipe_tables+fenced_code_blocks+fenced_divs','--standalone','--metadata-file',str(metadata_path)]
         if args.format in ('epub','all'):
+            merged.write_text(prepare(chapters,image_transform=image_transform_for('epub',td)),encoding='utf-8')
             epub=out/f'{slug}.epub'
             cmd=['pandoc',str(merged),'--from=markdown+pipe_tables+fenced_code_blocks+fenced_divs','--to=epub3','--standalone','--toc','--toc-depth=1','--metadata-file',str(metadata_path),'--css',str(ROOT/'publishing/epub.css')]
             cover=meta['cover_image'];
@@ -110,9 +136,10 @@ def main()->int:
                 cmd += ['--epub-cover-image',str(cp)]
             run(cmd+['--output',str(epub)]); run([sys.executable,str(ROOT/'publishing/fix-epub-after-pandoc.py'),str(epub)])
         if args.format in ('pdf','all'):
+            merged.write_text(prepare(chapters,image_transform=image_transform_for('pdf',td)),encoding='utf-8')
             if not shutil.which('xelatex'): raise SystemExit('XeLaTeX saknas för PDF-export')
             width,height=pdf_size(meta)
-            pdf=out/f'{slug}.pdf'; cmd=common+['--metadata',f'pdf-paper-width={width}','--metadata',f'pdf-paper-height={height}','--top-level-division=chapter','--pdf-engine=xelatex','--template',str(ROOT/'publishing/pdf-template.tex'),'--lua-filter',str(ROOT/'publishing/pdf-filter.lua')]
+            pdf=out/f'{slug}.pdf'; cmd=common+['--variable',f'bookpaperwidth={width}','--variable',f'bookpaperheight={height}','--top-level-division=chapter','--pdf-engine=xelatex','--template',str(ROOT/'publishing/pdf-template.tex'),'--lua-filter',str(ROOT/'publishing/pdf-filter.lua')]
             fontdir=find_font_dir()
             if fontdir: cmd += ['--metadata',f'pdf-font-dir={fontdir.as_posix()}/']
             cover=meta['cover_image']

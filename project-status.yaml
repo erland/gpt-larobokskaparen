@@ -7,9 +7,9 @@ migration:
   target_builder_version: 1.6.22
   status: release_candidate
 next_step:
-  recommended: host_acceptance
-  title: Kör värdplattformstester
-  reason: Lokala paket-, faktaboks- och exporttester är genomförda; värdplattformstester och GitHub CI återstår.
+  recommended: engine_and_host_acceptance
+  title: Verifiera kanonisk Engine och värdplattformar
+  reason: Diagramkällor och renderingsskript finns på arbetsgrenen, men faktisk körning, integritetsflöde och exporter återstår att verifiera.
 plan:
   path: docs/development-plan.md
   total_steps: 6
@@ -30,12 +30,22 @@ state:
   overall: warning
   blocking_issues: []
   warnings:
-  - Tidigare legacy-hygiene kräver Git-index
-  - Beteendeparitet i alla hostmiljöer behöver manuella prov
+  - "Engine 1.6.22 självtest PASS (61 filer, SHA-256, installer, sex paket); Lärobokskaparens kanoniska build PASS efter korrigerad katalogresurs men validate_distributions BLOCKERAD av OpenCode script path i gpt-byggaren/issues/89. Manuell korrigering av genererad OpenCode-output gav PASS men är inte releaseverifiering."
+  - "Verifiering 2026-10-18: lokalt projektlint PASS, 5 distributionsbyggen PASS, validate_distributions PASS; Graphviz/PlantUML/egen SVG-rendering och check PASS med vit bakgrund"
+  - "Kontroll utförd på lokal gren-snapshot med senaste renderer/PDF-korrigeringar; fullständigt kanoniskt Engine-selftest ej utfört"
+  - "Tidigare legacy-hygiene kräver Git-index"
+  - "Beteendeparitet i alla hostmiljöer behöver manuella prov"
+  - "Deltest: Python-syntax och handgjord SVG-rendering godkända i Agent Workspace; Graphviz-prov blockerat eftersom dot saknas där"
+  - "Regression med standardbakgrunder PASS: Graphviz, PlantUML, egen SVG, validering, PDF, EPUB och revision 1 till 2. PDF: 4 sidor, 0 rasterbilder; EPUB: 3 SVG."
+  - "Diagram har standardbakgrunder utan mörklägesfilter; samma visuella resultat i alla EPUB-läsare är inte värdverifierat"
+  - "Lokalt bygge av projekt-ZIP och fem distributioner PASS; distributionsvalidering PASS; projektlint PASS (0 fel, 0 varningar) efter rensning av build/dist/cache"
+  - "Full kanonisk motor-selftest och värdplattformstester återstår före release"
+  - "Vit bakgrund: lokal Graphviz/PlantUML/SVG render och check PASS; ny kod behöver full regressionskörning i samtliga runtimes"
+  - "Kanoniskt Engine-selftest och funktionella värdplattformstester återstår före release"
 resume:
   supported: true
   required_files:
-  - gpt-project.yaml
-  - project-status.yaml
-  - MIGRATION.md
+  - "gpt-project.yaml"
+  - "project-status.yaml"
+  - "MIGRATION.md"
   human_readable_status: Teknisk releasekandidat 0.6.3; lokala exporttester godkända, hostparitet återstår.
