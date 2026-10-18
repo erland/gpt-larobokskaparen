@@ -544,7 +544,14 @@ img { max-width: 100%; height: auto; }
 table { border-collapse: collapse; width: 100%; }
 th, td { border: 1px solid #999; padding: 0.35em 0.5em; vertical-align: top; }
 pre { white-space: pre-wrap; padding: 0.7em; }
+
+/* Diagram-SVG har transparent canvas. Detta är en progressiv förstärkning:
+   inte alla EPUB-läsare tillåter prefers-color-scheme eller CSS-filter. */
+@media (prefers-color-scheme: dark) {
+  img[src$=".svg"] { filter: invert(1) hue-rotate(180deg); }
+}
 ````
+
 
 ## `publishing/fix-epub-after-pandoc.py`
 
@@ -564,11 +571,12 @@ def rootfile(base: Path) -> Path:
     return Path(node.attrib['full-path'])
 
 def split_headings(base: Path)->int:
-    count=0; pat=re.compile(r'^\s*(\d+)\.\s+(.+?)\s*$')
+    count=0; pat=re.compile(r'^\\s*(\\d+)\\.\\s+(.+?)\\s*$')
     for path in base.rglob('*.xhtml'):
         tree=ET.parse(path); changed=False
         for h1 in tree.getroot().findall('.//x:h1',NS):
-            text=''.join(h1.itertext()).strip(); m=pat.match(text)
+            text=''.join(h1.itertext()).strip()
+            m=pat.match(text) or re.match(r'^\\s*Kapitel\\s+(\\d+):\\s*(.+?)\\s*$',text,re.I)
             if not m: continue
             ident=h1.attrib.get('id'); h1.clear()
             if ident: h1.set('id',ident)
@@ -577,6 +585,7 @@ def split_headings(base: Path)->int:
             changed=True
         if changed: tree.write(path,encoding='utf-8',xml_declaration=True); count+=1
     return count
+
 
 def nav_non_linear(base: Path, opf_rel: Path)->bool:
     path=base/opf_rel; tree=ET.parse(path); manifest=tree.getroot().find('opf:manifest',NS); spine=tree.getroot().find('opf:spine',NS)
@@ -612,9 +621,10 @@ def main()->int:
 if __name__=='__main__': raise SystemExit(main())
 ````
 
+
 ## `publishing/pdf-template.tex`
 
-````text
+````latex
 \documentclass[11pt,openany]{book}
 \usepackage{fontspec}
 \defaultfontfeatures{Ligatures=TeX}
@@ -623,8 +633,9 @@ $if(pdf-font-dir)$
 $else$
 \setmainfont{TeXGyrePagella}
 $endif$
-\usepackage[paperwidth=170mm,paperheight=240mm,inner=20mm,outer=18mm,top=20mm,bottom=22mm,headsep=5mm,footskip=9mm]{geometry}
+\usepackage[paperwidth=$if(bookpaperwidth)$bookpaperwidth$else$170mm$endif$,paperheight=$if(bookpaperheight)$bookpaperheight$else$240mm$endif$,inner=20mm,outer=18mm,top=20mm,bottom=22mm,headsep=5mm,footskip=9mm]{geometry}
 \usepackage{graphicx}\usepackage{microtype}\usepackage{setspace}\usepackage{parskip}\usepackage{fancyhdr}\usepackage[hidelinks]{hyperref}\usepackage{bookmark}\usepackage{tocloft}\usepackage{ragged2e}\usepackage{xcolor}\usepackage{longtable}\usepackage{booktabs}\usepackage{array}\usepackage{calc}\usepackage{etoolbox}
+\hypersetup{pdfkeywords={Version $version$}}
 \setstretch{1.24}\setlength{\parindent}{0pt}\setlength{\parskip}{0.5em plus 0.08em minus 0.04em}\setlength{\emergencystretch}{1.5em}\widowpenalty=10000\clubpenalty=10000\displaywidowpenalty=10000\raggedbottom
 \providecommand{\tightlist}{\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
 \pagestyle{fancy}\fancyhf{}\fancyfoot[C]{\small\thepage}\renewcommand{\headrulewidth}{0pt}
@@ -641,6 +652,7 @@ $endif$
 $body$
 \end{document}
 ````
+
 
 ## `publishing/pdf-filter.lua`
 
@@ -974,7 +986,7 @@ def main()->int:
             merged.write_text(prepare(chapters,image_transform=image_transform_for('pdf',td)),encoding='utf-8')
             if not shutil.which('xelatex'): raise SystemExit('XeLaTeX saknas för PDF-export')
             width,height=pdf_size(meta)
-            pdf=out/f'{slug}.pdf'; cmd=common+['--metadata',f'pdf-paper-width={width}','--metadata',f'pdf-paper-height={height}','--top-level-division=chapter','--pdf-engine=xelatex','--template',str(ROOT/'publishing/pdf-template.tex'),'--lua-filter',str(ROOT/'publishing/pdf-filter.lua')]
+            pdf=out/f'{slug}.pdf'; cmd=common+['--variable',f'bookpaperwidth={width}','--variable',f'bookpaperheight={height}','--top-level-division=chapter','--pdf-engine=xelatex','--template',str(ROOT/'publishing/pdf-template.tex'),'--lua-filter',str(ROOT/'publishing/pdf-filter.lua')]
             fontdir=find_font_dir()
             if fontdir: cmd += ['--metadata',f'pdf-font-dir={fontdir.as_posix()}/']
             cover=meta['cover_image']
@@ -1211,7 +1223,7 @@ def render_one(source:Path, jar:Path|None)->Path:
         dot=shutil.which("dot")
         if not dot: raise RuntimeError("Graphviz saknas: dot hittades inte")
         with target.open("wb") as f:
-            subprocess.run([dot,"-Tsvg",str(source)],stdout=f,check=True,timeout=60)
+            subprocess.run([dot,"-Tsvg","-Gbgcolor=transparent",str(source)],stdout=f,check=True,timeout=60)
     else:
         exe=shutil.which("plantuml")
         if jar:
@@ -1222,14 +1234,23 @@ def render_one(source:Path, jar:Path|None)->Path:
         elif exe: cmd=[exe,"-tsvg","-pipe"]
         else:
             raise RuntimeError("PlantUML saknas. Hämta officiell JAR från https://github.com/plantuml/plantuml/releases och bifoga filen.")
-        with source.open("rb") as f, target.open("wb") as out:
-            subprocess.run(cmd,stdin=f,stdout=out,check=True,timeout=90)
+        with target.open("wb") as out:
+            raw=source.read_text(encoding="utf-8")
+            # Transparent page; keep source immutable.
+            if not re.search(r"(?im)^\s*skinparam\s+backgroundColor\b",raw):
+                raw=raw.replace("@startuml","@startuml\nskinparam backgroundColor transparent",1)
+            subprocess.run(cmd,input=raw.encode("utf-8"),stdout=out,check=True,timeout=90)
     # Graphviz/PlantUML kan skriva en SVG 1.1-DOCTYPE. Ta bort den lokalt,
     # så att slutartefakten blir fristående och passerar säkerhetsvalideringen.
     if source.suffix in (".dot",".puml"):
         data=target.read_text(encoding="utf-8")
-        data=re.sub(r'<!DOCTYPE\\s+svg\\s+PUBLIC\\s+"-//W3C//DTD SVG 1\\.1//EN"\\s+"http://www\\.w3\\.org/Graphics/SVG/1\\.1/DTD/svg11\\.dtd"\\s*>', "", data)
+        data=re.sub(r'<!DOCTYPE[\s\S]*?>', '', data, count=1)
         target.write_text(data,encoding="utf-8")
+    # PlantUML may include a hard-coded white SVG canvas as inline CSS.
+    if source.suffix==".puml":
+        rendered=target.read_text(encoding="utf-8")
+        rendered=re.sub(r"background:\s*#(?:FFFFFF|ffffff|FFF|fff)\s*;","background:transparent;",rendered)
+        target.write_text(rendered,encoding="utf-8")
     check_svg(target)
     return target
 
