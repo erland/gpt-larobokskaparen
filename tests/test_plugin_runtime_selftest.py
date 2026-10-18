@@ -33,7 +33,7 @@ def main():
                 # Materialize every canonical text file from the packed bundle.
                 # No repository template directory is needed at runtime.
                 sections = re.findall(
-                    r"^## `([^`]+)`\\s*\\n````[^\\n]*\\n(.*?)\\n````",
+                    r"^## `([^`]+)`\s*\n````[^\n]*\n(.*?)\n````",
                     bundle, flags=re.MULTILINE | re.DOTALL,
                 )
                 if not sections:
@@ -45,7 +45,7 @@ def main():
                         raise ValueError("Unsafe template path")
                     dest = target / relative
                     dest.parent.mkdir(parents=True, exist_ok=True)
-                    dest.write_text(content + "\\n", encoding="utf-8")
+                    dest.write_text(content + "\n", encoding="utf-8")
                 report["checks"]["materialize_book_template"] = "pass"
                 for script in ("project_integrity.py", "validate_project.py", "export-book.py", "build_book.py"):
                     embedded = prefix + "scripts/" + script
