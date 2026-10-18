@@ -835,7 +835,7 @@ if __name__=='__main__': raise SystemExit(main())
 ````python
 #!/usr/bin/env python3
 from __future__ import annotations
-import argparse, re, shutil, subprocess, tempfile
+import argparse, os, re, shutil, subprocess, tempfile, sys
 from pathlib import Path, PurePosixPath
 ROOT=Path(__file__).resolve().parents[1]
 NUMBERED_CHAPTER_RE=re.compile(r'^\d{2}-[a-z0-9][a-z0-9-]*\.md$',re.I)
@@ -849,7 +849,7 @@ def read_book_yaml():
     if not p.is_file(): raise SystemExit('Saknar book.yaml')
     return p.read_text(encoding='utf-8')
 def metadata(text):
-    keys=('title','subtitle','author','language','identifier','date','version','book_kind','book_type','cover_image','project_slug','subject','description')
+    keys=('title','subtitle','author','language','identifier','date','version','book_kind','book_type','cover_image','project_slug','subject','description','pdf_size')
     v={k:scalar(text,k) for k in keys}; missing=[k for k in ('title','author','language','book_kind','book_type','project_slug') if not v[k]]
     if missing: raise SystemExit('Saknad metadata i book.yaml: '+', '.join(missing))
     if v['book_kind'] not in ('textbook','factbook'): raise SystemExit('Ogiltig book_kind: '+v['book_kind'])
@@ -874,7 +874,7 @@ def chapter_entries(text):
 def resolve_chapters(text):
     entries=chapter_entries(text)
     if len(entries)!=len(set(entries)): raise SystemExit('Dubbellistade kapitel i book.yaml')
-    if entries[0]!='chapters/00-inledning.md': raise SystemExit('Första chapters-posten ska vara chapters/00-inledning.md')
+    if not re.search(r'inledning|introduktion|preface|foreword',Path(entries[0]).stem,re.I): raise SystemExit('Första posten bör vara en inledning (filnamn med inledning/introduktion)')
     paths=[]
     for e in entries:
         pure=PurePosixPath(e)
@@ -885,8 +885,8 @@ def resolve_chapters(text):
         paths.append(p)
     listed={p.relative_to(ROOT).as_posix() for p in paths}; unlisted=[]
     for p in sorted((ROOT/'chapters').glob('*.md')):
-        if NUMBERED_CHAPTER_RE.fullmatch(p.name) and p.relative_to(ROOT).as_posix() not in listed: unlisted.append(p.relative_to(ROOT).as_posix())
-    if unlisted: raise SystemExit('Numrerade kapitelfiler saknas i book.yaml: '+', '.join(unlisted))
+        if not p.name.startswith('kapitelmall-') and p.relative_to(ROOT).as_posix() not in listed: unlisted.append(p.relative_to(ROOT).as_posix())
+    if unlisted: raise SystemExit('Markdownfiler saknas i book.yaml: '+', '.join(unlisted))
     return paths
 def validate_markdown(paths):
     errors=[]
@@ -895,6 +895,31 @@ def validate_markdown(paths):
         if re.search(r'(?m)^#{4,}\s',t): errors.append(p.name+': H4 eller djupare rubrik')
         if t.count('```')%2: errors.append(p.name+': obalanserade kodblock')
     if errors: raise SystemExit('Markdown-validering misslyckades:\n- '+'\n- '.join(errors))
+def image_transform_for(fmt, workdir):
+    """Resolve image references per source chapter. Convert SVG to PDF only for XeLaTeX."""
+    def transform(text, chapter):
+        def replace(match):
+            alt, raw=match.group(1), match.group(2)
+            ref=raw.strip().split()[0].strip('<>')
+            if ref.startswith(('http://','https://','#')): return match.group(0)
+            src=(chapter.parent/ref).resolve()
+            try: src.relative_to(ROOT.resolve())
+            except ValueError: raise SystemExit('Bildreferens utanför projektet: '+ref)
+            if not src.is_file(): raise SystemExit('Bildfil saknas: '+str(src))
+            if src.suffix.lower()=='.svg' and fmt=='pdf':
+                target=workdir/(src.stem+'-'+str(len(list(workdir.glob('*.pdf'))))+'.pdf')
+                if shutil.which('inkscape'):
+                    subprocess.run(['inkscape',str(src),'--export-type=pdf','--export-filename='+str(target)],check=True,timeout=90,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+                else:
+                    try: import cairosvg
+                    except ImportError: raise SystemExit('SVG till vektor-PDF kräver Inkscape eller CairoSVG')
+                    cairosvg.svg2pdf(url=str(src),write_to=str(target))
+                resolved=target
+            else: resolved=src
+            return '!['+alt+']('+resolved.as_posix()+')'
+        return re.sub(r'!\[([^\]]*)\]\(([^)]+)\)',replace,text)
+    return transform
+
 def run(cmd): print('+',' '.join(map(str,cmd))); subprocess.run(cmd,cwd=ROOT,check=True)
 def find_font_dir():
     for base in (Path('/usr/share/fonts'),Path('/usr/local/share/fonts')):
@@ -903,17 +928,42 @@ def find_font_dir():
                 names=['texgyrepagella-regular.otf','texgyrepagella-bold.otf','texgyrepagella-italic.otf','texgyrepagella-bolditalic.otf']
                 if all((p.parent/n).is_file() for n in names): return p.parent
     return None
+PDF_SIZES = {'170x240': ('170mm', '240mm'), 'a5': ('148mm', '210mm')}
+
+def pdf_size(meta):
+    requested=meta.get('pdf_size', '').lower() or '170x240'
+    if requested not in PDF_SIZES:
+        raise SystemExit('pdf_size ska vara a5 eller 170x240')
+    return PDF_SIZES[requested]
+
+def export_metadata(text, tag):
+    if not tag: return text
+    if not re.fullmatch('v[0-9]+[.][0-9]+[.][0-9]+', tag):
+        raise SystemExit('Ogiltig releasetagg')
+    line = 'version: "' + tag[1:] + '"'
+    rows = text.splitlines()
+    for i, value in enumerate(rows):
+        if value.startswith('version:'):
+            rows[i] = line
+            break
+    else:
+        rows.insert(0, line)
+    return chr(10).join(rows) + chr(10)
+
 def main()->int:
     ap=argparse.ArgumentParser(); ap.add_argument('--format',choices=['epub','pdf','all'],default='all'); ap.add_argument('--output-dir',default=str(ROOT/'exports')); args=ap.parse_args()
     if not shutil.which('pandoc'): raise SystemExit('Pandoc saknas')
     text=read_book_yaml(); meta=metadata(text); chapters=resolve_chapters(text); validate_markdown(chapters)
+    effective_yaml=export_metadata(text,os.environ.get('BOOK_RELEASE_TAG'))
     out=Path(args.output_dir).resolve(); out.mkdir(parents=True,exist_ok=True); slug=meta['project_slug']
     with tempfile.TemporaryDirectory() as td:
-        td=Path(td); body='\n\n'.join(p.read_text(encoding='utf-8').strip() for p in chapters)+'\n'; merged=td/'book.md'; merged.write_text(body,encoding='utf-8')
-        common=['pandoc',str(merged),'--from=markdown+pipe_tables+fenced_code_blocks+fenced_divs','--standalone','--metadata-file',str(ROOT/'book.yaml')]
+        td=Path(td); metadata_path=td/'book-metadata.yaml'; metadata_path.write_text(effective_yaml,encoding='utf-8'); from book_references import prepare
+        merged=td/'book.md'
+        common=['pandoc',str(merged),'--from=markdown+pipe_tables+fenced_code_blocks+fenced_divs','--standalone','--metadata-file',str(metadata_path)]
         if args.format in ('epub','all'):
+            merged.write_text(prepare(chapters,image_transform=image_transform_for('epub',td)),encoding='utf-8')
             epub=out/f'{slug}.epub'
-            cmd=['pandoc',str(merged),'--from=markdown+pipe_tables+fenced_code_blocks+fenced_divs','--to=epub3','--standalone','--toc','--toc-depth=1','--metadata-file',str(ROOT/'book.yaml'),'--css',str(ROOT/'publishing/epub.css')]
+            cmd=['pandoc',str(merged),'--from=markdown+pipe_tables+fenced_code_blocks+fenced_divs','--to=epub3','--standalone','--toc','--toc-depth=1','--metadata-file',str(metadata_path),'--css',str(ROOT/'publishing/epub.css')]
             cover=meta['cover_image'];
             if cover:
                 cp=ROOT/cover
@@ -921,8 +971,10 @@ def main()->int:
                 cmd += ['--epub-cover-image',str(cp)]
             run(cmd+['--output',str(epub)]); run([sys.executable,str(ROOT/'publishing/fix-epub-after-pandoc.py'),str(epub)])
         if args.format in ('pdf','all'):
+            merged.write_text(prepare(chapters,image_transform=image_transform_for('pdf',td)),encoding='utf-8')
             if not shutil.which('xelatex'): raise SystemExit('XeLaTeX saknas för PDF-export')
-            pdf=out/f'{slug}.pdf'; cmd=common+['--top-level-division=chapter','--pdf-engine=xelatex','--template',str(ROOT/'publishing/pdf-template.tex'),'--lua-filter',str(ROOT/'publishing/pdf-filter.lua')]
+            width,height=pdf_size(meta)
+            pdf=out/f'{slug}.pdf'; cmd=common+['--metadata',f'pdf-paper-width={width}','--metadata',f'pdf-paper-height={height}','--top-level-division=chapter','--pdf-engine=xelatex','--template',str(ROOT/'publishing/pdf-template.tex'),'--lua-filter',str(ROOT/'publishing/pdf-filter.lua')]
             fontdir=find_font_dir()
             if fontdir: cmd += ['--metadata',f'pdf-font-dir={fontdir.as_posix()}/']
             cover=meta['cover_image']
@@ -936,6 +988,7 @@ if __name__=='__main__':
     import sys
     raise SystemExit(main())
 ````
+
 
 ## `scripts/export-book.sh`
 
@@ -1210,5 +1263,53 @@ def main()->int:
         return 1
 
 if __name__=="__main__": raise SystemExit(main())
+````
+
+
+## `scripts/book_references.py`
+
+````python
+#!/usr/bin/env python3
+"""Prepare book-global source navigation without modifying original Markdown."""
+from __future__ import annotations
+import re
+from pathlib import Path
+
+ENTRY = re.compile(r'(?m)^(\s*[-*]\s*)\*\*\[(K\d{3})\]\*\*')
+REF = re.compile(r'(?<![\w\[])\[(K\d{3})\](?!\(|\])')
+URL = re.compile(r'(?<!\]\()https?://[^\s<>)]+')
+
+
+def prepare(chapters: list[Path], image_transform=None) -> str:
+    texts = [path.read_text(encoding='utf-8').strip() for path in chapters]
+    if image_transform is not None:
+        texts = [image_transform(text, path) for text, path in zip(texts, chapters)]
+    registers = [i for i, p in enumerate(chapters)
+                 if 'kall' in p.name.lower() or 'käll' in p.name.lower()]
+    ids = set()
+    for index in registers:
+        for match in ENTRY.finditer(texts[index]):
+            code = match.group(2)
+            if code in ids:
+                raise ValueError(f'Dubbelt käll-ID: {code}')
+            ids.add(code)
+    output = []
+    for index, chapter in enumerate(texts):
+        if index in registers:
+            # The source entry becomes an anchor target; all other occurrences
+            # of Kxxx become internal links rather than their own targets.
+            chapter = ENTRY.sub(
+                lambda m: m.group(1) + '[]{#' + m.group(2).lower() + '} **['
+                + m.group(2) + ']**', chapter)
+            chapter = URL.sub(lambda m: '[Öppna källan](' + m.group(0) + ')', chapter)
+        else:
+            def resolve(match):
+                code = match.group(1)
+                if code not in ids:
+                    raise ValueError(f'Saknat käll-ID: {code}')
+                return '[' + code + '](#' + code.lower() + ')'
+            chapter = REF.sub(resolve, chapter)
+        output.append(chapter)
+    return '\n\n'.join(output) + '\n'
 ````
 
