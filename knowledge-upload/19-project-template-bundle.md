@@ -1171,6 +1171,12 @@ def render_one(source:Path, jar:Path|None)->Path:
             raise RuntimeError("PlantUML saknas. Hämta officiell JAR från https://github.com/plantuml/plantuml/releases och bifoga filen.")
         with source.open("rb") as f, target.open("wb") as out:
             subprocess.run(cmd,stdin=f,stdout=out,check=True,timeout=90)
+    # Graphviz/PlantUML kan skriva en SVG 1.1-DOCTYPE. Ta bort den lokalt,
+    # så att slutartefakten blir fristående och passerar säkerhetsvalideringen.
+    if source.suffix in (".dot",".puml"):
+        data=target.read_text(encoding="utf-8")
+        data=re.sub(r'<!DOCTYPE\\s+svg\\s+PUBLIC\\s+"-//W3C//DTD SVG 1\\.1//EN"\\s+"http://www\\.w3\\.org/Graphics/SVG/1\\.1/DTD/svg11\\.dtd"\\s*>', "", data)
+        target.write_text(data,encoding="utf-8")
     check_svg(target)
     return target
 
