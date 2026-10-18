@@ -30,6 +30,8 @@ state:
   overall: warning
   blocking_issues: []
   warnings:
+  - Verifiering 2026-10-18: lokalt projektlint PASS, 5 distributionsbyggen PASS, validate_distributions PASS; Graphviz/PlantUML/egen SVG-rendering och check PASS med vit bakgrund
+  - Kontroll utförd på lokal gren-snapshot med senaste renderer/PDF-korrigeringar; fullständigt kanoniskt Engine-selftest ej utfört
   - Tidigare legacy-hygiene kräver Git-index
   - Beteendeparitet i alla hostmiljöer behöver manuella prov
   - Deltest: Python-syntax och handgjord SVG-rendering godkända i Agent Workspace; Graphviz-prov blockerat eftersom dot saknas där
