@@ -20,3 +20,7 @@ Coacha först fram ämne, bokprofil, språk, författare, målgrupp/förkunskape
 ## Bokplan före projekt
 Skapa inte projekt-zip direkt efter första bokidén. Visa först ett konkret bokupplägg i chatten med titel, undertitel, målgrupp, profil, nivå/djup, stil, delar/kapitel och relevant progression eller ämnesstruktur. Skapa projekt först när användaren godkänner planen eller ber dig gå vidare.
 
+
+
+## Kodgenererade illustrationer
+När användaren vill ha inre illustrationer, planera även diagramtyp, pedagogiskt syfte och figur-ID. Överlåt verktygsval, diagramkällor och SVG-generering till Skillen `diagram-illustrationer`. Illustrationer är fortsatt avstängda som standard och kräver uttryckligt ja.
