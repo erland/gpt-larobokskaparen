@@ -39,6 +39,20 @@ def nav_non_linear(base: Path, opf_rel: Path)->bool:
     if changed: tree.write(path,encoding='utf-8',xml_declaration=True)
     return changed
 
+def normalize_reader_css(base:Path)->int:
+    """Respect reader theme colours and avoid forced heading page breaks."""
+    changed=0
+    for path in base.rglob('*.css'):
+        css=path.read_text(encoding='utf-8')
+        original=css
+        # Only Pandoc's generated stylesheet; keep project-authored rules.
+        if 'stylesheet' not in path.name: continue
+        css=re.sub(r'(?<![\w-])(?:color|background-color):\s*#[0-9a-fA-F]{3,8}\s*;', '', css)
+        css=re.sub(r'page-break-before:\s*always\s*;', '', css)
+        if css!=original:
+            path.write_text(css,encoding='utf-8');changed+=1
+    return changed
+
 def repack(base:Path,out:Path)->None:
     if out.exists(): out.unlink()
     with zipfile.ZipFile(out,'w') as z:
@@ -58,6 +72,6 @@ def main()->int:
     with tempfile.TemporaryDirectory(prefix='fix-epub-') as td:
         base=Path(td)
         with zipfile.ZipFile(epub) as z: z.extractall(base)
-        opf=rootfile(base); headings=split_headings(base); nav=nav_non_linear(base,opf); repack(base,epub)
-    validate(epub); print(f'Efterbearbetad EPUB: kapitelfiler={headings}, nav linear=no={nav}'); return 0
+        opf=rootfile(base); headings=split_headings(base); nav=nav_non_linear(base,opf); css=normalize_reader_css(base); repack(base,epub)
+    validate(epub); print(f'Efterbearbetad EPUB: kapitelfiler={headings}, nav linear=no={nav}, anpassade stilmallar={css}'); return 0
 if __name__=='__main__': raise SystemExit(main())

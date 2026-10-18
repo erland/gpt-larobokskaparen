@@ -6,4 +6,8 @@ img { max-width: 100%; height: auto; }
 table { border-collapse: collapse; width: 100%; }
 th, td { border: 1px solid #999; padding: 0.35em 0.5em; vertical-align: top; }
 pre { white-space: pre-wrap; padding: 0.7em; }
-}
+
+/* EPUB-läsaren styr sidans text- och bakgrundsfärger, inklusive mörkt läge. */
+html, body { color: inherit; background: transparent; }
+h1 { break-before: auto; page-break-before: auto; }
+figure { margin: 1em 0; }
