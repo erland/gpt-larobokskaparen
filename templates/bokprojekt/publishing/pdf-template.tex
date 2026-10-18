@@ -16,6 +16,17 @@ $endif$
 \renewcommand{\contentsname}{Innehåll}\setcounter{tocdepth}{2}\setlength{\cftbeforechapskip}{0.35em}
 \newcommand{\bookfrontchapter}[1]{\clearpage\phantomsection\addcontentsline{toc}{chapter}{#1}\thispagestyle{plain}\vspace*{8mm}\begin{center}{\fontsize{18}{21}\selectfont\bfseries #1\par}\end{center}\vspace{7mm}}
 \newcommand{\bookchapter}[2]{\clearpage\phantomsection\addcontentsline{toc}{chapter}{#1.\ #2}\markboth{#1.\ #2}{#1.\ #2}\thispagestyle{plain}\vspace*{8mm}\begin{center}{\fontsize{13}{15}\selectfont #1\par}\vspace{1.5mm}{\fontsize{16}{19}\selectfont\bfseries #2\par}\end{center}\vspace{7mm}}
+% Keep image and its single caption in reading order without a LaTeX float.
+% The bounded graphic height prevents an unbreakable image from exceeding a page.
+\newcommand{\bookinlineillustration}[2]{%
+  \par\medskip
+  \noindent\begin{minipage}{\linewidth}
+    \centering
+    \includegraphics[width=\linewidth,height=0.67\textheight,keepaspectratio]{#1}%
+    \ifstrempty{#2}{}{\par\smallskip{\small #2\par}}%
+  \end{minipage}%
+  \par\medskip
+}
 \begin{document}
 $if(cover-image)$
 \thispagestyle{empty}\newgeometry{margin=0pt}\noindent\includegraphics[width=\paperwidth,height=\paperheight,keepaspectratio]{$cover-image$}\restoregeometry\clearpage
