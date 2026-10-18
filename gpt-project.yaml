@@ -545,3 +545,17 @@ structure:
     path: dist
     generated: true
     create_when_needed: true
+
+engine:
+  enabled: true
+  resources:
+  - templates/bokprojekt
+  - .engine-deps/plantuml.jar
+  - docs/ENGINE.md
+  selftest: scripts/engine_selftest.py
+  required_files:
+  - templates/bokprojekt/scripts/export-book.py
+  - templates/bokprojekt/scripts/render_diagrams.py
+  - templates/bokprojekt/scripts/project_integrity.py
+  - .engine-deps/plantuml.jar
+  python_dependencies: []
