@@ -1218,7 +1218,7 @@ def render_one(source:Path, jar:Path|None)->Path:
         dot=shutil.which("dot")
         if not dot: raise RuntimeError("Graphviz saknas: dot hittades inte")
         with target.open("wb") as f:
-            subprocess.run([dot,"-Tsvg",str(source)],stdout=f,check=True,timeout=60)
+            subprocess.run([dot,"-Tsvg","-Gbgcolor=white",str(source)],stdout=f,check=True,timeout=60)
     else:
         exe=shutil.which("plantuml")
         if jar:
@@ -1231,7 +1231,10 @@ def render_one(source:Path, jar:Path|None)->Path:
             raise RuntimeError("PlantUML saknas. Hämta officiell JAR från https://github.com/plantuml/plantuml/releases och bifoga filen.")
         with target.open("wb") as out:
             raw=source.read_text(encoding="utf-8")
-            subprocess.run(cmd,input=source.read_bytes(),stdout=out,check=True,timeout=90)
+            # Keep white background explicit even when a different renderer theme is active.
+            if "@startuml" in raw and not re.search(r"(?im)^\s*skinparam\s+backgroundColor\b",raw):
+                raw=raw.replace("@startuml","@startuml\nskinparam backgroundColor white",1)
+            subprocess.run(cmd,input=raw.encode("utf-8"),stdout=out,check=True,timeout=90)
     # Graphviz/PlantUML kan skriva en SVG 1.1-DOCTYPE. Ta bort den lokalt,
     # så att slutartefakten blir fristående och passerar säkerhetsvalideringen.
     if source.suffix in (".dot",".puml"):
@@ -1262,7 +1265,11 @@ def main()->int:
         for source in files:
             target=OUTPUT/(source.stem+".svg")
             if args.check: check_svg(target)
-            else: render_one(source,args.plantuml_jar)
+            else:
+                try: render_one(source,args.plantuml_jar)
+                except Exception:
+                    target.unlink(missing_ok=True)
+                    raise
             print(f"OK {source.relative_to(ROOT)} -> {target.relative_to(ROOT)}")
         print(f"Godkända diagram: {len(files)}")
         return 0
