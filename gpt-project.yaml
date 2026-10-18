@@ -468,7 +468,6 @@ skills:
     - knowledge-upload/18-local-export-pipeline.md
     assets:
     - knowledge-upload/19-project-template-bundle.md
-    - templates/bokprojekt
     scripts:
     - templates/bokprojekt/scripts/project_integrity.py
     - templates/bokprojekt/scripts/validate_project.py
