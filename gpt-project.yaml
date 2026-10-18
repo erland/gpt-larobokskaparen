@@ -157,6 +157,15 @@ tools:
     mutates_workspace: false
     working_directory: workspace
     runtime_fallback: block
+  - id: diagram-render
+    type: script
+    requirement: optional
+    purpose: Rendera Graphviz/PlantUML/egen SVG till kontrollerad SVG när användaren vill ha diagram.
+    script: templates/bokprojekt/scripts/render_diagrams.py
+    deterministic: true
+    mutates_workspace: true
+    working_directory: workspace
+    runtime_fallback: manual
   - id: book-export
     type: script
     requirement: recommended
@@ -448,7 +457,8 @@ skills:
     source: canonical/skills/diagram-illustrationer/behavior.md
     references:
     - knowledge-upload/20-code-generated-diagrams.md
-    scripts: []
+    scripts:
+    - templates/bokprojekt/scripts/render_diagrams.py
     assets: []
   - id: bokprojekt-publicering
     name: Bokprojekt, revision och publicering
