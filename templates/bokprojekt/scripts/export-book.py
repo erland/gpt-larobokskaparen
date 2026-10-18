@@ -139,7 +139,7 @@ def main()->int:
             merged.write_text(prepare(chapters,image_transform=image_transform_for('pdf',td)),encoding='utf-8')
             if not shutil.which('xelatex'): raise SystemExit('XeLaTeX saknas för PDF-export')
             width,height=pdf_size(meta)
-            pdf=out/f'{slug}.pdf'; cmd=common+['--metadata',f'pdf-paper-width={width}','--metadata',f'pdf-paper-height={height}','--top-level-division=chapter','--pdf-engine=xelatex','--template',str(ROOT/'publishing/pdf-template.tex'),'--lua-filter',str(ROOT/'publishing/pdf-filter.lua')]
+            pdf=out/f'{slug}.pdf'; cmd=common+['--variable',f'bookpaperwidth={width}','--variable',f'bookpaperheight={height}','--top-level-division=chapter','--pdf-engine=xelatex','--template',str(ROOT/'publishing/pdf-template.tex'),'--lua-filter',str(ROOT/'publishing/pdf-filter.lua')]
             fontdir=find_font_dir()
             if fontdir: cmd += ['--metadata',f'pdf-font-dir={fontdir.as_posix()}/']
             cover=meta['cover_image']
