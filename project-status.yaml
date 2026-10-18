@@ -33,8 +33,8 @@ state:
   - Tidigare legacy-hygiene kräver Git-index
   - Beteendeparitet i alla hostmiljöer behöver manuella prov
   - Deltest: Python-syntax och handgjord SVG-rendering godkända i Agent Workspace; Graphviz-prov blockerat eftersom dot saknas där
-  - Fullständigt lokalt bokprojektstest PASS: Graphviz, PlantUML, egen SVG, revisionsmanifest och PDF/EPUB; EPUB SVG utan vit sidbakgrund, PDF utan rasterbilder
-  - Mörkläge i faktiska EPUB-läsare är ej verifierat; CSS prefers-color-scheme och filter kan sakna stöd
+  - Fullständigt lokalt bokprojektstest tidigare PASS: Graphviz, PlantUML, egen SVG, revisionsmanifest och PDF/EPUB. Efter återgång till standardbakgrunder behöver berörda exporttester köras igen.
+  - Diagram återställda till standardbakgrunder (normalt vit) utan CSS-filter för mörkt läge; inga anspråk på mörklägesanpassning
   - Full release- och hostparitet samt kanonisk distributionsbyggning återstår
 resume:
   supported: true
