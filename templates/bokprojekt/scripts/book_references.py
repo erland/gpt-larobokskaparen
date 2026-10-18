@@ -94,4 +94,6 @@ def number_figures(texts: list[str], chapters: list[Path]) -> list[str]:
         label, anchor = labels[ident]
         return f'[{label}](#{anchor})'
 
-    return [FIGURE_REFERENCE.sub(resolve, body) for body in numbered]
+    # Figure reference token already includes the Swedish noun 'Figur'.
+    # Avoid 'Figur Figur 1.1' in prose written with an explicit prefix.
+    return [FIGURE_REFERENCE.sub(resolve, re.sub(r'(?i)\bFigur[ \t]+(?=\[@fig:IMG-\d{2}-\d{2}\])', '', body)) for body in numbered]
