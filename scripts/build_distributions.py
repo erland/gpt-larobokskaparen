@@ -1518,7 +1518,7 @@ def build_runtime_target(
 
 
 def project_files(root: Path) -> list[Path]:
-    excluded_top = {"build", "dist", ".git"}
+    excluded_top = {"build", "dist", ".git", ".engine-deps"}
     result = []
     for p in root.rglob("*"):
         if not p.is_file():
