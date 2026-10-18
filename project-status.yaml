@@ -30,6 +30,7 @@ state:
   overall: warning
   blocking_issues: []
   warnings:
+  - Engine 1.6.22 självtest PASS (61 filer, SHA-256, installer, sex paket); Lärobokskaparens kanoniska build PASS efter korrigerad katalogresurs men validate_distributions BLOCKERAD av OpenCode script path i gpt-byggaren/issues/89. Manuell korrigering av genererad OpenCode-output gav PASS men är inte releaseverifiering.
   - Verifiering 2026-10-18: lokalt projektlint PASS, 5 distributionsbyggen PASS, validate_distributions PASS; Graphviz/PlantUML/egen SVG-rendering och check PASS med vit bakgrund
   - Kontroll utförd på lokal gren-snapshot med senaste renderer/PDF-korrigeringar; fullständigt kanoniskt Engine-selftest ej utfört
   - Tidigare legacy-hygiene kräver Git-index
