@@ -6,7 +6,7 @@ Lärobokskaparen hjälper till att planera, skriva, underhålla och exportera l�
 
 ## Kanonisk arkitektur
 
-Projektet är migrerat till **GPT Byggaren v1.6.22**. Projektprofilen finns i `gpt-project.yaml`; gemensamma arbetsprinciper finns i `canonical/core.md` och beteendet är uppdelat i tre Skills under `canonical/skills/`: bokplanering, bokskrivande och bokprojekt/publicering.
+Projektet är migrerat till **GPT Byggaren v1.6.26**. Projektprofilen finns i `gpt-project.yaml`; gemensamma arbetsprinciper finns i `canonical/core.md` och beteendet är uppdelat i tre Skills under `canonical/skills/`: bokplanering, bokskrivande och bokprojekt/publicering.
 
 `gpt-configuration/instructions.md` finns kvar som ursprunglig beteendereferens. `templates/bokprojekt/` är fortsatt single source of truth för *genererade bokprojekt*. `knowledge-upload/19-project-template-bundle.md` är den genererade Knowledge-projektionen.
 
