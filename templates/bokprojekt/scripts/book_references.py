@@ -9,8 +9,10 @@ REF = re.compile(r'(?<![\w\[])\[(K\d{3})\](?!\(|\])')
 URL = re.compile(r'(?<!\]\()https?://[^\s<>)]+')
 
 
-def prepare(chapters: list[Path]) -> str:
+def prepare(chapters: list[Path], image_transform=None) -> str:
     texts = [path.read_text(encoding='utf-8').strip() for path in chapters]
+    if image_transform is not None:
+        texts = [image_transform(text, path) for text, path in zip(texts, chapters)]
     registers = [i for i, p in enumerate(chapters)
                  if 'kall' in p.name.lower() or 'käll' in p.name.lower()]
     ids = set()
