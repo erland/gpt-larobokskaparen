@@ -82,6 +82,8 @@ def main()->int:
     except SystemExit as exc: errors.append(str(exc)); chapters=[]; meta={}
     if meta and not meta.get('project_slug'): errors.append('book.yaml saknar project_slug')
     if meta and not re.fullmatch(r'[a-z0-9]+(?:-[a-z0-9]+)*',meta.get('project_slug','')): errors.append('project_slug måste vara en gemen kebab-case slug')
+    diagram_check=subprocess.run([sys.executable,'scripts/render_diagrams.py','--check'],cwd=ROOT,text=True,capture_output=True)
+    if diagram_check.returncode!=0: errors.append('Diagramvalidering misslyckades: '+(diagram_check.stderr or diagram_check.stdout).strip())
     errors.extend(source_register_errors(chapters))
     for path in chapters:
         text=path.read_text(encoding='utf-8')
