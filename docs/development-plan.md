@@ -49,3 +49,9 @@ Synkronisera dokumentation/status och verifiera att migreringen är komplett, be
 4. **Acceptanstest och distribution (återstår):** diagramtyper, regressionsfall, canonical builder för fem distributioner och värdplattformstester.
 
 Status: steg 1 är ett källkontraktsförslag på arbetsgren; full kanonisk distributionsbyggning och funktionell rendering är ännu inte verifierade.
+
+
+## Kapitelgranskning före release
+- Två val efter färdigskrivet kapitel: manuell granskning eller automatisk gransknings-/korrigerings-/godkännandeprocess.
+- Versionsbundet granskningsprotokoll, spärr mot ogiltigt automatiskt godkännande, kompatibilitet med äldre bokprojekt och regressionstester.
+- Slutför CI och värdplattformstester innan release.

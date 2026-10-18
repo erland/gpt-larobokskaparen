@@ -21,3 +21,14 @@ Arbetsnoteringar i `docs/` är inte boktext och ska inte exporteras om de inte u
 
 ## Kodgenererade diagram
 För Graphviz, PlantUML och handgjord SVG: spara källan under `assets/diagrams/IMG-NN-MM.dot|puml|svg` och kör `python scripts/render_diagrams.py` för att generera SVG i `assets/generated/`. Validera med `python scripts/render_diagrams.py --check`. För PlantUML kan `--plantuml-jar /sökväg/plantuml.jar` eller `PLANTUML_JAR` användas. Om PlantUML saknas: https://github.com/plantuml/plantuml/releases . Uppdatera projektets integritetsmanifest enligt revisionsflödet efter diagramändringar.
+
+## Två vägar för kapitelgranskning
+Efter kapitelutkast erbjuds användaren **Granska själv** eller **Granska, korrigera och godkänn automatiskt**. Assistenten genomför kvalitetsgranskningen; Python-skriptet registrerar status och validerar granskningsprotokollets fullständighet och versionsbindning.
+
+Exempel på kommandon (kör i bokprojektets rot):
+```sh
+python scripts/chapter_review.py start 03-exempel.md --mode auto
+python scripts/chapter_review.py approve 03-exempel.md --mode auto --report /tmp/03-review.json
+python scripts/chapter_review.py check 03-exempel.md
+```
+Manuellt alternativ: `start ... --mode manual` följt av `approve ... --mode manual --approved-by <namn>` efter uttryckligt godkännande. Kör normal revision och projektintegritetsverifiering innan slutleverans. Befintliga kapitel utan granskningsprotokoll berörs inte.

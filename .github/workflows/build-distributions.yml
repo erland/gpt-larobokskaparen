@@ -50,6 +50,10 @@ jobs:
         run: python3 tests/test_book_legacy_chapters.py
       - name: Test book export references and validation
         run: python3 tests/test_book_export_quality.py
+      - name: Test chapter quality review workflow
+        run: python3 tests/test_chapter_review.py
+      - name: Test chapter review end-to-end and revisions
+        run: python3 tests/test_chapter_review_integration.py
       - name: Test book editorial and source reference guards
         run: python3 tests/test_book_editorial_guard.py
       - name: Validate project contracts

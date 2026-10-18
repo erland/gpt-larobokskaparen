@@ -28,6 +28,17 @@ Arbetsnoteringar i `docs/` är inte boktext och ska inte exporteras om de inte u
 
 ## Kodgenererade diagram
 För Graphviz, PlantUML och handgjord SVG: spara källan under `assets/diagrams/IMG-NN-MM.dot|puml|svg` och kör `python scripts/render_diagrams.py` för att generera SVG i `assets/generated/`. Validera med `python scripts/render_diagrams.py --check`. För PlantUML kan `--plantuml-jar /sökväg/plantuml.jar` eller `PLANTUML_JAR` användas. Om PlantUML saknas: https://github.com/plantuml/plantuml/releases . Uppdatera projektets integritetsmanifest enligt revisionsflödet efter diagramändringar.
+
+## Två vägar för kapitelgranskning
+Efter kapitelutkast erbjuds användaren **Granska själv** eller **Granska, korrigera och godkänn automatiskt**. Assistenten genomför kvalitetsgranskningen; Python-skriptet registrerar status och validerar granskningsprotokollets fullständighet och versionsbindning.
+
+Exempel på kommandon (kör i bokprojektets rot):
+```sh
+python scripts/chapter_review.py start 03-exempel.md --mode auto
+python scripts/chapter_review.py approve 03-exempel.md --mode auto --report /tmp/03-review.json
+python scripts/chapter_review.py check 03-exempel.md
+```
+Manuellt alternativ: `start ... --mode manual` följt av `approve ... --mode manual --approved-by <namn>` efter uttryckligt godkännande. Kör normal revision och projektintegritetsverifiering innan slutleverans. Befintliga kapitel utan granskningsprotokoll berörs inte.
 ````
 
 
@@ -242,7 +253,11 @@ Planering
 
 ## Nästa rekommenderade steg
 - ...
+
+## Granskningsstatus för kapitel
+Använd `draft`, `review_pending`, `reviewing`, `changes_needed`, `approved_manual` eller `approved_auto`. `docs/reviews/NN-titel.json` är auktoritativt granskningsprotokoll när det finns. Förändrad kapiteltext kräver ny granskning. Historiska projekt utan protokoll förblir giltiga.
 ````
+
 
 ## `docs/innehalls-canon.md`
 
@@ -384,7 +399,12 @@ Använd detta som arbetsregister. Det är inte automatiskt en publicerad källf�
 - [ ] `book.yaml` är komplett och kapitelordningen stämmer.
 - [ ] Canonical markdown är validerad.
 - [ ] Arbetsnoteringar från `docs/` exporteras inte av misstag.
+
+## Gransknings- och godkännandegrind
+Efter kapitelskrivning väljs manuell eller automatisk granskning. Vid automatisk granskning krävs dokumenterat resultat för: `language`, `structure`, `consistency`, `audience`, `sources`, `facts`, `illustrations`, `editorial`. Varje kontroll märks `passed`, `failed` eller `not_applicable` med motivering för käll- och faktakontroll som ej tillämpliga. Blockerande brister tillåter inte automatiskt godkännande. Gör högst två korrigeringsomgångar och rapportera kvarstående hinder.
+Granskningsprotokoll finns i `docs/reviews/`, och `scripts/chapter_review.py` kontrollerar godkännandestatus mot kapitlets SHA-256. Kontrollera projektintegriteten efter revisionsuppdatering. Ett internt automatiskt godkännande är inte likvärdigt med oberoende faktagranskning.
 ````
+
 
 ## `docs/illustration-plan.md`
 
@@ -896,6 +916,19 @@ def main()->int:
     if meta and not re.fullmatch(r'[a-z0-9]+(?:-[a-z0-9]+)*',meta.get('project_slug','')): errors.append('project_slug måste vara en gemen kebab-case slug')
     diagram_check=subprocess.run([sys.executable,'scripts/render_diagrams.py','--check'],cwd=ROOT,text=True,capture_output=True)
     if diagram_check.returncode!=0: errors.append('Diagramvalidering misslyckades: '+(diagram_check.stderr or diagram_check.stdout).strip())
+    # Äldre bokprojekt utan protokoll behåller samma validering.
+    review_dir=ROOT/'docs/reviews'
+    if review_dir.is_dir():
+        import importlib.util as _review_import
+        _spec=_review_import.spec_from_file_location('chapter_review',ROOT/'scripts/chapter_review.py')
+        _review=_review_import.module_from_spec(_spec); _spec.loader.exec_module(_review)
+        for protocol in sorted(review_dir.glob('*.json')):
+            chapter_name=protocol.stem+'.md'
+            try:
+                review_errors=_review.validate(chapter_name,_review.load(chapter_name))
+                errors.extend(f'{protocol.relative_to(ROOT)}: {e}' for e in review_errors)
+            except (ValueError,OSError,ValueError) as exc:
+                errors.append(f'{protocol.relative_to(ROOT)}: {exc}')
     errors.extend(source_register_errors(chapters))
     for path in chapters:
         text=path.read_text(encoding='utf-8')
@@ -932,6 +965,7 @@ def main()->int:
     print(f"OK: projektvalidering godkänd. {len(chapters)} boktextfiler, profil={meta.get('book_kind')}."); return 0
 if __name__=='__main__': raise SystemExit(main())
 ````
+
 
 ## `scripts/export-book.py`
 
@@ -1530,3 +1564,140 @@ def main() -> int:
 if __name__ == '__main__':
     raise SystemExit(main())
 ````
+
+## `docs/reviews/README.md`
+
+````markdown
+# Kapitelgranskningar
+
+Varje kapitel kan ha ett versionsbundet JSON-protokoll, `NN-titel.json`.
+`scripts/chapter_review.py` skapar och validerar protokollet. Protokollet är arbetsmaterial och exporteras inte som boktext.
+
+Automatisk kvalitetsgranskning utförs av assistenten, inte av Python-skriptet. Assistenten ska faktiskt läsa, kontrollera, korrigera och återkontrollera kapitlet. Protokollet anger vad som verifierades; okontrollerade fakta får aldrig märkas som verifierade.
+
+Status: `review_pending`, `reviewing`, `changes_needed`, `approved_manual`, `approved_auto`. Ändrad kapiteltext ogiltigförklarar ett äldre godkännande genom SHA-256-kontroll. Integritetsmanifestet ska uppdateras via normalt revisionsflöde efter kapitel- och protokolländringar.
+````
+
+
+## `scripts/chapter_review.py`
+
+````python
+#!/usr/bin/env python3
+"""Spårbara kapitelgodkännanden; modellen utför själva sakgranskningen."""
+from __future__ import annotations
+import argparse
+import hashlib
+import json
+import re
+from datetime import datetime, timezone
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+REQUIRED = ("language", "structure", "consistency", "audience", "sources", "facts", "illustrations", "editorial")
+STATES = ("review_pending", "reviewing", "changes_needed", "approved_manual", "approved_auto")
+
+def chapter_path(name):
+    if not re.fullmatch(r"[0-9]{2}-[a-zA-Z0-9][a-zA-Z0-9-]*\.md", name):
+        raise ValueError("Ange en giltig kapitelfil (NN-titel.md)")
+    path = ROOT / "chapters" / name
+    if not path.is_file(): raise ValueError(f"Kapitlet saknas: {name}")
+    return path
+
+def report_path(name):
+    return ROOT / "docs" / "reviews" / (Path(name).stem + ".json")
+
+def digest(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+def timestamp():
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+
+def load(name):
+    p=report_path(name)
+    if not p.is_file(): return {}
+    return json.loads(p.read_text(encoding="utf-8"))
+
+def save(name,data):
+    p=report_path(name); p.parent.mkdir(parents=True,exist_ok=True)
+    p.write_text(json.dumps(data,ensure_ascii=False,indent=2,sort_keys=True)+"\n",encoding="utf-8")
+
+def revision():
+    p=ROOT/"project-manifest.json"
+    if not p.is_file(): return None
+    data=json.loads(p.read_text(encoding="utf-8"))
+    return data.get("revision")
+
+def validate(name,record):
+    if not record: return []
+    errors=[]
+    path=chapter_path(name)
+    if record.get("status") not in STATES: errors.append("Ogiltig granskningsstatus")
+    if record.get("chapter_sha256")!=digest(path): errors.append("Granskningsprotokollet avser en annan kapitelversion")
+    if record.get("status")=="approved_auto":
+        checks=record.get("checks",{})
+        missing=[k for k in REQUIRED if checks.get(k) not in ("passed","not_applicable")]
+        if missing: errors.append("Saknade/underkända automatiska kvalitetskontroller: "+", ".join(missing))
+        if checks.get("sources")=="not_applicable" and not record.get("source_justification"):
+            errors.append("Källkontroll som ej tillämplig kräver motivering")
+        if checks.get("facts")=="not_applicable" and not record.get("fact_justification"):
+            errors.append("Faktakontroll som ej tillämplig kräver motivering")
+        if record.get("blockers"): errors.append("Öppna blockerare hindrar automatiskt godkännande")
+        if not record.get("summary"): errors.append("Sammanfattning krävs")
+    if record.get("status")=="approved_manual" and not record.get("approved_by"):
+        errors.append("Manuell granskning måste ha angiven godkännare")
+    return errors
+
+def main():
+    parser=argparse.ArgumentParser()
+    sub=parser.add_subparsers(dest="command",required=True)
+    for command in ("start","approve","block","check"):
+        p=sub.add_parser(command)
+        p.add_argument("chapter")
+        if command=="start": p.add_argument("--mode",choices=("manual","auto"),required=True)
+        if command=="block": p.add_argument("--report",type=Path,required=True)
+        if command=="approve":
+            p.add_argument("--mode",choices=("manual","auto"),required=True)
+            p.add_argument("--report",type=Path,help="JSON-protokoll med utförda kontroller")
+            p.add_argument("--approved-by",help="Godkännare vid manuell granskning")
+    args=parser.parse_args()
+    try:
+        path=chapter_path(args.chapter)
+        if args.command=="check":
+            errors=validate(args.chapter,load(args.chapter))
+            if errors: raise ValueError("; ".join(errors))
+            print("OK: granskningsstatus giltig"); return 0
+        if args.command=="start":
+            record={"chapter":args.chapter,"chapter_sha256":digest(path),
+                    "status":"review_pending" if args.mode=="manual" else "reviewing",
+                    "review_mode":args.mode,"updated_at":timestamp()}
+        else:
+            old=load(args.chapter)
+            if not old: raise ValueError("Starta granskningsflödet med start först")
+            if args.command=="block":
+                evidence=json.loads(args.report.read_text(encoding="utf-8"))
+                record={**old,**evidence,"chapter":args.chapter,"chapter_sha256":digest(path),
+                        "status":"changes_needed","updated_at":timestamp()}
+                save(args.chapter,record)
+                print(f"OK: {args.chapter}: changes_needed"); return 0
+            if old.get("review_mode")!=args.mode: raise ValueError("Granskningsläge matchar inte det påbörjade flödet")
+            if args.mode=="auto":
+                if not args.report: raise ValueError("Automatiskt godkännande kräver granskningsprotokoll --report")
+                evidence=json.loads(args.report.read_text(encoding="utf-8"))
+                record={**old,**evidence,"chapter":args.chapter,"chapter_sha256":digest(path),
+                        "review_mode":"auto","status":"approved_auto","updated_at":timestamp(),
+                        "project_revision_at_review":revision()}
+            else:
+                if not args.approved_by: raise ValueError("Ange --approved-by")
+                record={**old,"chapter_sha256":digest(path),"status":"approved_manual",
+                        "approved_by":args.approved_by,"updated_at":timestamp(),
+                        "project_revision_at_review":revision()}
+            errors=validate(args.chapter,record)
+            if errors: raise ValueError("; ".join(errors))
+        save(args.chapter,record)
+        print(f"OK: {args.chapter}: {record['status']}"); return 0
+    except (ValueError,OSError,json.JSONDecodeError) as exc:
+        parser.exit(1,f"Granskningsfel: {exc}\n")
+
+if __name__=="__main__": raise SystemExit(main())
+````
+

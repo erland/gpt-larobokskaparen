@@ -84,6 +84,19 @@ def main()->int:
     if meta and not re.fullmatch(r'[a-z0-9]+(?:-[a-z0-9]+)*',meta.get('project_slug','')): errors.append('project_slug måste vara en gemen kebab-case slug')
     diagram_check=subprocess.run([sys.executable,'scripts/render_diagrams.py','--check'],cwd=ROOT,text=True,capture_output=True)
     if diagram_check.returncode!=0: errors.append('Diagramvalidering misslyckades: '+(diagram_check.stderr or diagram_check.stdout).strip())
+    # Äldre bokprojekt utan protokoll behåller samma validering.
+    review_dir=ROOT/'docs/reviews'
+    if review_dir.is_dir():
+        import importlib.util as _review_import
+        _spec=_review_import.spec_from_file_location('chapter_review',ROOT/'scripts/chapter_review.py')
+        _review=_review_import.module_from_spec(_spec); _spec.loader.exec_module(_review)
+        for protocol in sorted(review_dir.glob('*.json')):
+            chapter_name=protocol.stem+'.md'
+            try:
+                review_errors=_review.validate(chapter_name,_review.load(chapter_name))
+                errors.extend(f'{protocol.relative_to(ROOT)}: {e}' for e in review_errors)
+            except (ValueError,OSError,ValueError) as exc:
+                errors.append(f'{protocol.relative_to(ROOT)}: {exc}')
     errors.extend(source_register_errors(chapters))
     for path in chapters:
         text=path.read_text(encoding='utf-8')
