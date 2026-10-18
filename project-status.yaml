@@ -7,8 +7,8 @@ migration:
   target_builder_version: 1.6.22
   status: release_candidate
 next_step:
-  recommended: runtime_parity_and_dark_mode_acceptance
-  title: Verifiera mörkt läsläge och distributioner
+  recommended: host_acceptance
+  title: Genomför värdplattformstester och PR-granskning
   reason: Diagramkällor och renderingsskript finns på arbetsgrenen, men faktisk körning, integritetsflöde och exporter återstår att verifiera.
 plan:
   path: docs/development-plan.md
@@ -33,8 +33,10 @@ state:
   - Tidigare legacy-hygiene kräver Git-index
   - Beteendeparitet i alla hostmiljöer behöver manuella prov
   - Deltest: Python-syntax och handgjord SVG-rendering godkända i Agent Workspace; Graphviz-prov blockerat eftersom dot saknas där
-  - Fullständigt lokalt bokprojektstest tidigare PASS: Graphviz, PlantUML, egen SVG, revisionsmanifest och PDF/EPUB. Efter återgång till standardbakgrunder behöver berörda exporttester köras igen.
-  - Diagram återställda till standardbakgrunder (normalt vit) utan CSS-filter för mörkt läge; inga anspråk på mörklägesanpassning
+  - Regression med standardbakgrunder PASS: Graphviz, PlantUML, egen SVG, validering, PDF, EPUB och revision 1 till 2. PDF: 4 sidor, 0 rasterbilder; EPUB: 3 SVG.
+  - Diagram har standardbakgrunder utan mörklägesfilter; samma visuella resultat i alla EPUB-läsare är inte värdverifierat
+  - Lokalt bygge av projekt-ZIP och fem distributioner PASS; distributionsvalidering PASS; projektlint PASS (0 fel, 0 varningar) efter rensning av build/dist/cache
+  - Full kanonisk motor-selftest och värdplattformstester återstår före release
   - Full release- och hostparitet samt kanonisk distributionsbyggning återstår
 resume:
   supported: true
