@@ -48,6 +48,7 @@ date: ""
 rights: "All rights reserved"
 publisher: ""
 cover_image: ""
+pdf_size: "170x240" # 170x240 | a5
 identifier: ""
 subject: ""
 description: ""
@@ -316,6 +317,13 @@ Beskriv vilken källnivå boken behöver. Policyn används särskilt för faktab
 
 ## Anteckning
 Källarbetsmaterial hör normalt hemma i `docs/faktakontroll.md` och ska inte exporteras som boktext av misstag.
+
+## Gemensamt referensregister
+- Använd bokövergripande käll-ID som `K001`, `K002` osv. Ett ID ska betyda samma källa i hela boken.
+- Placera ett gemensamt register sist i boken och lista det i `book.yaml`; exempelvis `chapters/99-kallregister.md`.
+- Formatera poster som `- **[K001]** Organisation, titel, datum. https://...` och hänvisa med `[K001]` i kapiteltext.
+- Projektvalideringen flaggar saknade och dubblerade käll-ID. Kort, klickbar länktext föredras framför utskrivna långa adresser.
+- Källreservationen ska vända sig till läsaren: ange tidsavgränsning och att analysen är författarens tolkning. Låt redaktionella instruktioner ligga kvar i `docs/`.
 ````
 
 ## `docs/faktakontroll.md`
@@ -411,9 +419,17 @@ Pandoc 3.1.11.1 rekommenderas. PDF kräver XeLaTeX och TeX Gyre Pagella.
 ## GitHub
 - Validate körs på pull request och push till `main`.
 - Build Preview startas manuellt och ger ett gemensamt artifact med EPUB, PDF och SHA256SUMS.
-- Release triggas av `v<SemVer>` och publicerar EPUB/PDF som separata release-assets.
+- Release triggas av `v<SemVer>` och publicerar EPUB/PDF som separata release-assets. Release-taggen bestämmer den publicerade bokversionen (exempelvis `v0.5.2` → `0.5.2`) genom temporära exportmetadata. `book.yaml` ändras inte och får ha ett annat versionsnummer. Förhandsbyggen utan release-tagg använder `book.yaml`-versionen.
 
 Arbetsfiler i `docs/` exporteras aldrig som boktext.
+
+## Bokövergripande källhänvisningar
+Om boken har ett källregister under `chapters/` (t.ex. `17-kallor.md` eller `99-kallregister.md`) används poster på formen `- **[K001]** Organisation, titel. https://example.org`. Hänvisa till samma ID från valfritt kapitel med `[K001]`. Exporten skapar automatiskt interna PDF-/EPUB-länkar från hänvisningen till källposten, där originaladressen visas med den korta länktexten "Öppna källan". Källregistrering är valfri för böcker som inte använder Kxxx-hänvisningar; om ID används måste det finnas i registret.
+
+## Layout och publiceringskontroller
+`pdf_size: "170x240"` i `book.yaml` väljer standardformat 170 × 240 mm; `pdf_size: "a5"` väljer A5 (148 × 210 mm). Endast dessa två profiler stöds. EPUB är fortsatt omflödesbar enligt läsarens egna typsnittsinställningar.
+
+`python3 scripts/build_book.py --output-dir exports` genererar båda formaten, testar ZIP-struktur, EPUB-navigation, manifest, spine och interna EPUB-länk- och ankarmål, samt att PDF har sidor och extraherbar text. Bygget avbryts vid fel och kontrollsummor skrivs först när filerna godkänts. PDF-kontrollen kräver även `pdfinfo` och `pdftotext` från Poppler; installera `poppler-utils` vid lokal export. Den automatiska kontrollen ersätter inte en visuell granskning av PDF/EPUB i en faktisk läsare.
 ````
 
 ## `chapters/00-inledning.md`
@@ -651,12 +667,13 @@ $body$
 
 ## `publishing/pdf-filter.lua`
 
-````text
+````lua
 -- PDF: numrerade H1 får kompakt tvådelad kapitelstart; övriga H1 (t.ex. Inledning) blir onumrerade kapitel.
 function Header(el)
   if el.level ~= 1 then return nil end
   local text = pandoc.utils.stringify(el.content)
   local number, title = text:match("^%s*(%d+)%.%s+(.+)%s*$")
+  if not number then number, title = text:match("^%s*[Kk]apitel%s+(%d+):%s*(.+)%s*$") end
   if number then
     local blocks = pandoc.read(title, "markdown").blocks
     local inlines = (#blocks > 0 and blocks[1].content) or {pandoc.Str(title)}
@@ -800,9 +817,73 @@ sys.dont_write_bytecode=True
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 MARKERS=('TODO','TBD','[SKRIV','[FYLL I','Lorem ipsum')
+EDITORIAL_PATTERNS=(
+    r'fortsatta bokarbetet', r'inför (?:färdigställandet|publicering|utgivning)',
+    r'innan publicering', r'redaktionell (?:anmärkning|notering|kommentar)',
+    r'återstår att (?:faktagranska|verifiera|kontrollera)',
+    r'(?:behöver|måste|ska) (?:kontrolleras|verifieras|uppdateras) (?:före|inför) (?:publicering|utgivning)',
+)
+EDITORIAL_HEADING_PATTERNS=(
+    r'redaktionell(?:a|t)?\s+(?:granskning|noteringar?|anmärkningar?|kommentarer?)',
+    r'redaktionell(?:a|t)?\s+källanmärkning',
+    r'kapitel(?:noteringar?|anmärkningar?)',
+    r'granskningsanteckningar?',
+    r'arbetsanteckningar?',
+    r'kvarstående\s+faktakontroll',
+    r'att\s+kontrollera\s+inför\s+publicering',
+)
+EDITORIAL_PROSE_WARNINGS=(
+    r'redaktionell(?:a|t)?\s+granskning',
+    r'kapitelnoteringar?',
+    r'granskningsanteckningar?',
+    r'arbetsanteckningar?',
+)
+
+def editorial_quality_findings(text):
+    """Return (blocking errors, nonblocking warnings) as (line, phrase) pairs."""
+    errors=[]; warnings=[]
+    heading_re=re.compile(r'^[ \t]{0,3}#{1,6}[ \t]+([^\r\n]+)',re.MULTILINE)
+    heading_lines=set()
+    for heading in heading_re.finditer(text):
+        line=text.count('\n',0,heading.start())+1
+        heading_lines.add(line)
+        title=re.sub(r'[*_`]', '', heading.group(1))
+        for pattern in EDITORIAL_HEADING_PATTERNS:
+            if re.search(pattern,title,re.IGNORECASE):
+                errors.append((line,title.strip()));break
+    for pattern in EDITORIAL_PATTERNS:
+        for match in re.finditer(pattern,text,re.IGNORECASE):
+            errors.append((text.count('\n',0,match.start())+1,match.group(0)))
+    for pattern in EDITORIAL_PROSE_WARNINGS:
+        for match in re.finditer(pattern,text,re.IGNORECASE):
+            line=text.count('\n',0,match.start())+1
+            if line not in heading_lines and not any(x[0]==line for x in errors):
+                warnings.append((line,match.group(0)))
+    return list(dict.fromkeys(errors)),list(dict.fromkeys(warnings))
+
+SOURCE_REF=re.compile(r'(?<!\w)\[(K\d{3})\](?!\()')
+SOURCE_ENTRY=re.compile(r'(?m)^\s*[-*]\s*\*\*\[(K\d{3})\]\*\*')
+
+def source_register_errors(chapters):
+    """Check global reference IDs if the optional source register exists."""
+    errors=[]; entries={}; used=set()
+    for path in chapters:
+        body=path.read_text(encoding='utf-8')
+        if 'kall' in path.name.lower() or 'käll' in path.name.lower():
+            for match in SOURCE_ENTRY.finditer(body):
+                code=match.group(1)
+                if code in entries: errors.append(f'Dubbelt käll-ID {code} i {path.name}')
+                entries[code]=path.name
+        else:
+            used.update(SOURCE_REF.findall(body))
+    if used and not entries: errors.append('Källhänvisningar finns men globalt källregister saknas')
+    for code in sorted(used-set(entries)):
+        errors.append(f'Källhänvisning {code} saknas i källregistret')
+    return errors
+
 
 def main()->int:
-    errors=[]
+    errors=[]; warnings=[]
     integrity=subprocess.run([sys.executable,'scripts/project_integrity.py','verify','.'],cwd=ROOT,text=True,capture_output=True)
     if integrity.returncode!=0: errors.append('Projektets integritetsverifiering misslyckades: '+(integrity.stderr or integrity.stdout).strip())
     sys.path.insert(0,str(ROOT/'scripts'))
@@ -813,15 +894,28 @@ def main()->int:
     except SystemExit as exc: errors.append(str(exc)); chapters=[]; meta={}
     if meta and not meta.get('project_slug'): errors.append('book.yaml saknar project_slug')
     if meta and not re.fullmatch(r'[a-z0-9]+(?:-[a-z0-9]+)*',meta.get('project_slug','')): errors.append('project_slug måste vara en gemen kebab-case slug')
+    diagram_check=subprocess.run([sys.executable,'scripts/render_diagrams.py','--check'],cwd=ROOT,text=True,capture_output=True)
+    if diagram_check.returncode!=0: errors.append('Diagramvalidering misslyckades: '+(diagram_check.stderr or diagram_check.stdout).strip())
+    errors.extend(source_register_errors(chapters))
     for path in chapters:
         text=path.read_text(encoding='utf-8')
         if not text.strip(): errors.append(f'{path.relative_to(ROOT)} är tom')
         if sum(1 for line in text.splitlines() if re.match(r'^#\s+',line))!=1: errors.append(f'{path.relative_to(ROOT)} ska ha exakt en H1')
-        mfile=re.match(r'^(\d{2})-', path.name)
+        # Accept NN-title.md and title-NN.md, with "1. Titel" or "Kapitel 1: Titel".
+        # Intro, appendices and source registers intentionally have unnumbered H1.
         first=next((line.strip() for line in text.splitlines() if line.strip()), '')
-        if mfile and mfile.group(1)!='00':
-            mh1=re.fullmatch(r'#\s+(\d+)\.\s+.+', first)
-            if not mh1 or int(mh1.group(1))!=int(mfile.group(1)): errors.append(f'{path.relative_to(ROOT)} ska börja med H1 som matchar kapitelnumret')
+        name=path.stem.lower()
+        special=bool(re.search(r'inledning|introduktion|appendix|bilaga|kall|käll|register',name,re.I))
+        filename_num=re.match(r'^(\d{2})-',path.name) or re.search(r'-(\d{2})\.md$',path.name)
+        title_num=re.fullmatch(r'#\s*(?:Kapitel\s+)?(\d+)\s*[.:]\s+.+',first,re.I)
+        if not special and filename_num and title_num:
+            if int(filename_num.group(1))!=int(title_num.group(1)):
+                errors.append(f'{path.relative_to(ROOT)} har olika kapitelnummer i filnamn och H1')
+        editorial_errors, editorial_warnings=editorial_quality_findings(text)
+        for line,phrase in editorial_errors:
+            errors.append(f'{path.relative_to(ROOT)}:{line} innehåller redaktionell arbetsmarkör: {phrase}')
+        for line,phrase in editorial_warnings:
+            warnings.append(f'{path.relative_to(ROOT)}:{line} möjlig redaktionell notering: {phrase}')
         for marker in MARKERS:
             if marker.lower() in text.lower(): errors.append(f'{path.relative_to(ROOT)} innehåller arbetsmarkören {marker}')
         for m in re.finditer(r'!\[[^\]]*\]\(([^)]+)\)',text):
@@ -831,6 +925,8 @@ def main()->int:
             try: target.relative_to(ROOT.resolve())
             except ValueError: errors.append(f'{path.relative_to(ROOT)} har bildreferens utanför projektet: {ref}'); continue
             if not target.exists(): errors.append(f'{path.relative_to(ROOT)} saknar bildfil: {ref}')
+    if warnings:
+        print('Editorial warnings:\n- '+'\n- '.join(warnings),file=sys.stderr)
     if errors:
         print('Validation failed:\n- '+'\n- '.join(errors),file=sys.stderr); return 1
     print(f"OK: projektvalidering godkänd. {len(chapters)} boktextfiler, profil={meta.get('book_kind')}."); return 0
@@ -1025,6 +1121,7 @@ def main()->int:
     subprocess.run([sys.executable,'scripts/export-book.py','--format','all','--output-dir',str(out)],cwd=ROOT,check=True)
     files=sorted(list(out.glob('*.epub'))+list(out.glob('*.pdf')))
     if len([p for p in files if p.suffix=='.epub'])!=1 or len([p for p in files if p.suffix=='.pdf'])!=1: raise SystemExit('Bygget ska ge exakt en EPUB och en PDF')
+    subprocess.run([sys.executable,'scripts/validate_exports.py',str(next(p for p in files if p.suffix=='.epub')),str(next(p for p in files if p.suffix=='.pdf'))],cwd=ROOT,check=True)
     (out/'SHA256SUMS.txt').write_text('\n'.join(f'{sha(p)}  {p.name}' for p in files)+'\n',encoding='utf-8')
     print('Bygge klart:',', '.join(p.name for p in files)); return 0
 if __name__=='__main__': raise SystemExit(main())
@@ -1077,7 +1174,7 @@ jobs:
       - name: Install XeLaTeX and PDF tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends texlive-xetex texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended lmodern fonts-texgyre
+          sudo apt-get install -y --no-install-recommends texlive-xetex texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended lmodern fonts-texgyre poppler-utils
           fc-cache -f
           find /usr/share/fonts -iname 'texgyrepagella-regular.otf' -print -quit | grep .
       - name: Build EPUB and PDF
@@ -1119,7 +1216,7 @@ jobs:
       - name: Install XeLaTeX and PDF tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends texlive-xetex texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended lmodern fonts-texgyre
+          sudo apt-get install -y --no-install-recommends texlive-xetex texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended lmodern fonts-texgyre poppler-utils
           fc-cache -f
           find /usr/share/fonts -iname 'texgyrepagella-regular.otf' -print -quit | grep .
       - name: Validate release tag
@@ -1127,6 +1224,8 @@ jobs:
         run: |
           [[ "${GITHUB_REF_NAME}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([+-][0-9A-Za-z.-]+)?$ ]] || { echo "Taggen måste vara v<SemVer>" >&2; exit 1; }
       - name: Build EPUB and PDF
+        env:
+          BOOK_RELEASE_TAG: ${{ github.ref_name }}
         run: python3 scripts/build_book.py --output-dir "${RUNNER_TEMP}/book-dist"
       - name: Create or update GitHub Release
         env:
