@@ -25,3 +25,6 @@ Planering
 
 ## Nästa rekommenderade steg
 - ...
+
+## Granskningsstatus för kapitel
+Använd `draft`, `review_pending`, `reviewing`, `changes_needed`, `approved_manual` eller `approved_auto`. `docs/reviews/NN-titel.json` är auktoritativt granskningsprotokoll när det finns. Förändrad kapiteltext kräver ny granskning. Historiska projekt utan protokoll förblir giltiga.
