@@ -580,7 +580,11 @@ img { max-width: 100%; height: auto; }
 table { border-collapse: collapse; width: 100%; }
 th, td { border: 1px solid #999; padding: 0.35em 0.5em; vertical-align: top; }
 pre { white-space: pre-wrap; padding: 0.7em; }
-}
+
+/* EPUB-läsaren styr sidans text- och bakgrundsfärger, inklusive mörkt läge. */
+html, body { color: inherit; background: transparent; }
+h1 { break-before: auto; page-break-before: auto; }
+figure { margin: 1em 0; }
 ````
 
 
@@ -628,6 +632,20 @@ def nav_non_linear(base: Path, opf_rel: Path)->bool:
     if changed: tree.write(path,encoding='utf-8',xml_declaration=True)
     return changed
 
+def normalize_reader_css(base:Path)->int:
+    """Respect reader theme colours and avoid forced heading page breaks."""
+    changed=0
+    for path in base.rglob('*.css'):
+        css=path.read_text(encoding='utf-8')
+        original=css
+        # Only Pandoc's generated stylesheet; keep project-authored rules.
+        if 'stylesheet' not in path.name: continue
+        css=re.sub(r'(?<![\\w-])(?:color|background-color):\\s*#[0-9a-fA-F]{3,8}\\s*;', '', css)
+        css=re.sub(r'page-break-before:\\s*always\\s*;', '', css)
+        if css!=original:
+            path.write_text(css,encoding='utf-8');changed+=1
+    return changed
+
 def repack(base:Path,out:Path)->None:
     if out.exists(): out.unlink()
     with zipfile.ZipFile(out,'w') as z:
@@ -647,8 +665,8 @@ def main()->int:
     with tempfile.TemporaryDirectory(prefix='fix-epub-') as td:
         base=Path(td)
         with zipfile.ZipFile(epub) as z: z.extractall(base)
-        opf=rootfile(base); headings=split_headings(base); nav=nav_non_linear(base,opf); repack(base,epub)
-    validate(epub); print(f'Efterbearbetad EPUB: kapitelfiler={headings}, nav linear=no={nav}'); return 0
+        opf=rootfile(base); headings=split_headings(base); nav=nav_non_linear(base,opf); css=normalize_reader_css(base); repack(base,epub)
+    validate(epub); print(f'Efterbearbetad EPUB: kapitelfiler={headings}, nav linear=no={nav}, anpassade stilmallar={css}'); return 0
 if __name__=='__main__': raise SystemExit(main())
 ````
 
@@ -1096,11 +1114,11 @@ def main()->int:
     with tempfile.TemporaryDirectory() as td:
         td=Path(td); metadata_path=td/'book-metadata.yaml'; metadata_path.write_text(effective_yaml,encoding='utf-8'); from book_references import prepare
         merged=td/'book.md'
-        common=['pandoc',str(merged),'--from=markdown+pipe_tables+fenced_code_blocks+fenced_divs','--standalone','--metadata-file',str(metadata_path)]
+        common=['pandoc',str(merged),'--from=markdown+pipe_tables+fenced_code_blocks+fenced_divs-implicit_figures','--standalone','--metadata-file',str(metadata_path)]
         if args.format in ('epub','all'):
             merged.write_text(prepare(chapters,image_transform=image_transform_for('epub',td)),encoding='utf-8')
             epub=out/f'{slug}.epub'
-            cmd=['pandoc',str(merged),'--from=markdown+pipe_tables+fenced_code_blocks+fenced_divs','--to=epub3','--standalone','--toc','--toc-depth=1','--metadata-file',str(metadata_path),'--css',str(ROOT/'publishing/epub.css')]
+            cmd=['pandoc',str(merged),'--from=markdown+pipe_tables+fenced_code_blocks+fenced_divs-implicit_figures','--to=epub3','--standalone','--toc','--toc-depth=1','--metadata-file',str(metadata_path),'--css',str(ROOT/'publishing/epub.css')]
             cover=meta['cover_image'];
             if cover:
                 cp=ROOT/cover
