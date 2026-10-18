@@ -24,3 +24,7 @@ Kontrollera rätt kvalitetsprofil: pedagogik/progression för lärobok; ämnest�
 Prioritera saklighet, läsbarhet och koncentration framför att fylla ut mot ett sidmål. Efter faktagranskningen ska hela den exporterade boktexten slutläsas – även inledning, sammanfattningar, övergångar och källregister – för att upptäcka formuleringar riktade till författare eller redaktör, exempelvis "det fortsatta bokarbetet" och "inför publicering". Ersätt dem med upplysningar till läsaren eller flytta arbetsuppgifter till `docs/`. Rättsliga tidsavgränsningar och faktiska verksamhetsrekommendationer ska däremot bevaras.
 
 Kontrollera också separat rubricerade granskningsavsnitt, exempelvis **Redaktionell granskning**, **Kapitelnoteringar**, **Redaktionell källanmärkning** och **Kvarstående faktakontroll**. Sådana avsnitt hör normalt hemma i `docs/`, inte i exporterad boktext. Tvetydiga omnämnanden i löptext kan vara sakligt motiverade och ska bedömas i sitt sammanhang snarare än automatiskt raderas.
+
+
+## Kodgenererade diagram i kapitel
+När ett godkänt kapitel behöver tekniska diagram: använd Skillen `diagram-illustrationer` för `.dot`, `.puml` och handgjord SVG. Återanvänd `IMG-NN-MM`, register och alt-/bildtext. Länka till verkligt genererade och verifierade SVG-filer med relativ sökväg; använd aldrig en bild som inte har renderats. Bevara befintligt AI-bildflöde utan förändring.
