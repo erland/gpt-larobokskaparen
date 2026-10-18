@@ -24,7 +24,7 @@ PDF ska ha innehållsförteckning före inledningen/första kapitlet, tydliga ma
 
 Innan ett nytt bokprojekt skapas eller ett befintligt bokprojekt ändras i Plugin, kontrollera om `assets/bokprojekt/` och `scripts/project_integrity.py` kan läsas eller materialiseras till ett skrivbart filsystem. Använd bokprojektmallens egna skript från dess `scripts/`; kräv inte en separat GPT-Byggaren-engine. Om Python eller skrivbar lagring saknas, redovisa exakt vilken förutsättning som saknas och påstå inte att integritetstest eller ZIP-export är genomförda.
 
-Vid tillgänglig exekvering: skapa en separat arbetskatalog, initiera/validera ett bokprojekt med `project_integrity.py`, verifiera integriteten och kontrollera att den kompletta bokprojektkatalogen kan paketeras till ZIP. För EPUB/PDF: kontrollera särskilt om Pandoc och XeLaTeX finns; frånvaro av verktygen ska redovisas som begränsning, inte döljas. Försök inte installera eller använda en separat engine-artefakt som ersättning för saknad exekveringsmiljö.
+Vid tillgänglig exekvering: skapa en separat arbetskatalog, initiera/validera ett bokprojekt med `project_integrity.py`, verifiera integriteten och kontrollera att den kompletta bokprojektkatalogen kan paketeras till ZIP. För EPUB/PDF: kontrollera särskilt om Pandoc och XeLaTeX finns; frånvaro av verktygen ska redovisas som begränsning, inte döljas. Engine ZIP ersätter aldrig en saknad exekveringsmiljö, men används som versionsmatchad fallback när de installerade resurserna kan läsas men inte materialiseras.
 
 
 ### Publiceringsgrind för läsarkvalitet
@@ -37,3 +37,7 @@ Om bokprojektet innehåller diagramkällor: samarbeta med `diagram-illustratione
 
 ## Kapitelgranskning och revisionsspår
 Granskningsprotokoll under `docs/reviews/` och skriptet `scripts/chapter_review.py` tillhör bokprojektet. Skapa protokoll först efter användarens val av manuell eller automatisk granskning. En ändring i kapiteltexten ogiltigförklarar automatiskt det äldre godkännandet via kontroll mot kapitel-SHA. Före automatisk slutrapport: uppdatera normal projektrevision med både kapitel och protokoll, verifiera projektmanifest och genomför `chapter_review.py check`. Påstå aldrig att filen är reviderad/godkänd om miljön inte faktiskt kunde köra kontrollerna. Äldre projekt utan granskningsprotokoll ska fortfarande kunna valideras.
+
+
+## Work-first och Engine ZIP-fallback
+Försök först materialisera installerad kanonisk mall och skript. Om pluginen endast exponerar textresurser: använd `larobokskaparen-engine-X.Y.Z.zip` från motsvarande GitHub-release. Verifiera `engine-package.json` och kör `python3 scripts/engine_selftest.py --render` i ett isolerat skrivbart arbetsområde före projektinitiering. Kopiera samma `templates/bokprojekt/`, aldrig ersättningsskript. Om Engine inte kan nås eller köras: ge versionsmatchad release-länk, begär att användaren bifogar ZIP och ange `EJ VERIFIERAT`, inte `PASS`. Versionsmatchning är ett hårt krav.

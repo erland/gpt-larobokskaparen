@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Verify exactly six project/runtime artifacts and checksums for a release."""
+"""Verify exactly seven project/runtime artifacts and checksums for a release."""
 from pathlib import Path
 import argparse,hashlib,sys
 R=Path(__file__).resolve().parents[1]
 p=argparse.ArgumentParser();p.add_argument('--version',required=True);p.add_argument('--print-paths',action='store_true');p.add_argument('--dist',type=Path,default=R/'dist');a=p.parse_args()
-labels=('project','chat','plugin','claude-project','claude-skills','opencode')
+labels=('project','chat','plugin','claude-project','claude-skills','opencode','engine')
 expected={f'larobokskaparen-{label}-{a.version}.zip' for label in labels}
 actual={p.name for p in a.dist.glob('*.zip')}
 issues=[]
@@ -21,4 +21,4 @@ if issues:
     sys.exit(1)
 if a.print_paths:
     for name in sorted(expected):print(a.dist/name)
-else:print('PASS: six release artifacts and checksums')
+else:print('PASS: seven release artifacts and checksums')
