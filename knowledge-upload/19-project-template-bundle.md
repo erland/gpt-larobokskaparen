@@ -691,7 +691,7 @@ $endif$
 \fancypagestyle{plain}{\fancyhf{}\fancyfoot[C]{\small\thepage}\renewcommand{\headrulewidth}{0pt}}
 \renewcommand{\contentsname}{Innehåll}\setcounter{tocdepth}{2}\setlength{\cftbeforechapskip}{0.35em}
 \newcommand{\bookfrontchapter}[1]{\clearpage\phantomsection\addcontentsline{toc}{chapter}{#1}\thispagestyle{plain}\vspace*{8mm}\begin{center}{\fontsize{18}{21}\selectfont\bfseries #1\par}\end{center}\vspace{7mm}}
-\newcommand{\bookchapter}[2]{\clearpage\phantomsection\addcontentsline{toc}{chapter}{#1.\ #2}\markboth{#1.\ #2}{#1.\ #2}\thispagestyle{plain}\vspace*{8mm}\begin{center}{\fontsize{13}{15}\selectfont #1\par}\vspace{1.5mm}{\fontsize{16}{19}\selectfont\bfseries #2\par}\end{center}\vspace{7mm}}
+\newcommand{\bookchapter}[2]{\clearpage\setcounter{chapter}{#1}\setcounter{section}{0}\phantomsection\addcontentsline{toc}{chapter}{#1.\ #2}\markboth{#1.\ #2}{#1.\ #2}\thispagestyle{plain}\vspace*{8mm}\begin{center}{\fontsize{13}{15}\selectfont #1\par}\vspace{1.5mm}{\fontsize{16}{19}\selectfont\bfseries #2\par}\end{center}\vspace{7mm}}
 % Keep image and its single caption in reading order without a LaTeX float.
 % The bounded graphic height prevents an unbreakable image from exceeding a page.
 \newcommand{\bookinlineillustration}[2]{%
@@ -1580,7 +1580,9 @@ def number_figures(texts: list[str], chapters: list[Path]) -> list[str]:
         label, anchor = labels[ident]
         return f'[{label}](#{anchor})'
 
-    return [FIGURE_REFERENCE.sub(resolve, body) for body in numbered]
+    # Figure reference token already includes the Swedish noun 'Figur'.
+    # Avoid 'Figur Figur 1.1' in prose written with an explicit prefix.
+    return [FIGURE_REFERENCE.sub(resolve, re.sub(r'(?i)\bFigur[ \t]+(?=\[@fig:IMG-\d{2}-\d{2}\])', '', body)) for body in numbered]
 ````
 
 ## `scripts/validate_exports.py`

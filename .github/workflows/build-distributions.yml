@@ -54,6 +54,8 @@ jobs:
         run: python3 tests/test_book_export_quality.py
       - name: Test PDF paper dimensions
         run: python3 tests/test_pdf_paper_dimensions.py
+      - name: Test PDF heading numbering
+        run: python3 tests/test_pdf_heading_numbering.py
       - name: Test automatic figure numbering
         run: python3 tests/test_figure_numbering.py
       - name: Test chapter quality review workflow
