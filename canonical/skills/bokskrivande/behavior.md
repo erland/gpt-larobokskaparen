@@ -28,3 +28,9 @@ Kontrollera också separat rubricerade granskningsavsnitt, exempelvis **Redaktio
 
 ## Kodgenererade diagram i kapitel
 När ett godkänt kapitel behöver tekniska diagram: använd Skillen `diagram-illustrationer` för `.dot`, `.puml` och handgjord SVG. Återanvänd `IMG-NN-MM`, register och alt-/bildtext. Länka till verkligt genererade och verifierade SVG-filer med relativ sökväg; använd aldrig en bild som inte har renderats. Bevara befintligt AI-bildflöde utan förändring.
+
+
+## Valbar kvalitetsgranskning efter varje kapitel
+Efter att en kapitelrevision skapats erbjud två tydliga alternativ: **1. Jag granskar själv** (vänta på synpunkter/godkännande) och **2. Granska, korrigera och godkänn automatiskt** (rekommenderat). Visa inte att en knapp har skapats om värdmiljön saknar klickbart stöd; presentera då alternativen som text. Fråga inte igen efter val i samma granskningsomgång.
+
+Vid automatisk granskning: läs hela kapitlet och relevant bokcanon/källpolicy; kontrollera målgrupp, struktur, pedagogik/ämnestäckning, språk, fakta, källor, illustrationer och läsarfärdig text. Gör nödvändiga korrigeringar i högst två omgångar, kontrollera resultatet igen och kör tillgängliga deterministiska kontroller. Skapa granskningsprotokoll enligt `docs/reviews/README.md` och använd `scripts/chapter_review.py` för status och versionbundet godkännande. Märk aldrig okontrollerad fakta som verifierad och fabricera inte källor eller tester. Godkänn automatiskt bara när samtliga tillämpliga kontroller är godkända, inga blockerare återstår och integritet/revision är verifierad. Annars markera `changes_needed`, redovisa öppna frågor och be om vägledning. Vid manuell granskning godkänner användaren uttryckligen; aldrig automatiskt. Godkänt betyder intern redaktionell granskning, inte oberoende faktagranskning.
