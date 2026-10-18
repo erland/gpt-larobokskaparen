@@ -33,14 +33,14 @@ for target in ("plugin", "claude-skills", "opencode"):
         if bundle_path in names:
             bundle = z.read(bundle_path).decode("utf-8")
             sections = re.findall(
-                r"^## `([^`]+)`\\s*\\n````[^\\n]*\\n(.*?)\\n````",
+                r"^## `([^`]+)`\s*\n````[^\n]*\n(.*?)\n````",
                 bundle, flags=re.MULTILINE | re.DOTALL,
             )
             bundled_files = {}
             for rel, content in sections:
                 if rel in bundled_files:
                     errors.append(f"{target}: duplicate project template section {rel}")
-                bundled_files[rel] = (content + "\\n").encode("utf-8")
+                bundled_files[rel] = (content + "\n").encode("utf-8")
             for source in template_root.rglob("*"):
                 if not source.is_file() or "__pycache__" in source.parts or source.suffix in {".pyc", ".pyo"}:
                     continue
