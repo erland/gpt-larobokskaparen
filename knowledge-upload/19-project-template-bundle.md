@@ -640,8 +640,8 @@ def normalize_reader_css(base:Path)->int:
         original=css
         # Only Pandoc's generated stylesheet; keep project-authored rules.
         if 'stylesheet' not in path.name: continue
-        css=re.sub(r'(?<![\\w-])(?:color|background-color):\\s*#[0-9a-fA-F]{3,8}\\s*;', '', css)
-        css=re.sub(r'page-break-before:\\s*always\\s*;', '', css)
+        css=re.sub(r'(?<![\w-])(?:color|background-color):\s*#[0-9a-fA-F]{3,8}\s*;', '', css)
+        css=re.sub(r'page-break-before:\s*always\s*;', '', css)
         if css!=original:
             path.write_text(css,encoding='utf-8');changed+=1
     return changed
