@@ -66,10 +66,11 @@ def validate(name,record):
 def main():
     parser=argparse.ArgumentParser()
     sub=parser.add_subparsers(dest="command",required=True)
-    for command in ("start","approve","check"):
+    for command in ("start","approve","block","check"):
         p=sub.add_parser(command)
         p.add_argument("chapter")
         if command=="start": p.add_argument("--mode",choices=("manual","auto"),required=True)
+        if command=="block": p.add_argument("--report",type=Path,required=True)
         if command=="approve":
             p.add_argument("--mode",choices=("manual","auto"),required=True)
             p.add_argument("--report",type=Path,help="JSON-protokoll med utförda kontroller")
@@ -87,7 +88,14 @@ def main():
                     "review_mode":args.mode,"updated_at":timestamp()}
         else:
             old=load(args.chapter)
-            if not old or old.get("review_mode")!=args.mode: raise ValueError("Starta granskningsflödet med start först")
+            if not old: raise ValueError("Starta granskningsflödet med start först")
+            if args.command=="block":
+                evidence=json.loads(args.report.read_text(encoding="utf-8"))
+                record={**old,**evidence,"chapter":args.chapter,"chapter_sha256":digest(path),
+                        "status":"changes_needed","updated_at":timestamp()}
+                save(args.chapter,record)
+                print(f"OK: {args.chapter}: changes_needed"); return 0
+            if old.get("review_mode")!=args.mode: raise ValueError("Granskningsläge matchar inte det påbörjade flödet")
             if args.mode=="auto":
                 if not args.report: raise ValueError("Automatiskt godkännande kräver granskningsprotokoll --report")
                 evidence=json.loads(args.report.read_text(encoding="utf-8"))
