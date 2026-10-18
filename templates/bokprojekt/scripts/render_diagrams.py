@@ -68,7 +68,7 @@ def render_one(source:Path, jar:Path|None)->Path:
     # så att slutartefakten blir fristående och passerar säkerhetsvalideringen.
     if source.suffix in (".dot",".puml"):
         data=target.read_text(encoding="utf-8")
-        data=re.sub(r'<!DOCTYPE\\s+svg\\s+PUBLIC\\s+"-//W3C//DTD SVG 1\\.1//EN"\\s+"http://www\\.w3\\.org/Graphics/SVG/1\\.1/DTD/svg11\\.dtd"\\s*>', "", data)
+        data=re.sub(r'<!DOCTYPE[\s\S]*?>', '', data, count=1)
         target.write_text(data,encoding="utf-8")
     # PlantUML may include a hard-coded white SVG canvas as inline CSS.
     if source.suffix==".puml":
