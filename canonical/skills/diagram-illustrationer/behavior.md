@@ -19,7 +19,7 @@ Aktivera denna Skill när användaren uttryckligen vill skapa, ändra, granska e
 
 ## Verktygskontroller
 - Kontrollera exekverbarhet i aktuell runtime före rendering: Graphviz `dot -V`; PlantUML via CLI eller Java med JAR; gör ett verkligt litet SVG-test.
-- Om PlantUML saknas: erbjud https://github.com/plantuml/plantuml/releases och be användaren hämta en officiell `plantuml.jar` och bifoga den i konversationen. Kontrollera att JAR-filen kan läsas och köras; använd `java -Djava.awt.headless=true -jar <jar> -tsvg <fil.puml>` med säkra argument. Ange inte att PlantUML finns innan verifiering.
+- Om installerad PlantUML saknas: använd i första hand verifierad JAR från versionsmatchad Lärobokskaparen Engine ZIP (`.engine-deps/plantuml.jar`, PlantUML 1.2026.9), genom `PLANTUML_JAR` eller `--plantuml-jar`. Om Engine inte finns: erbjud https://github.com/plantuml/plantuml/releases och be användaren hämta en officiell `plantuml.jar` och bifoga den i konversationen. Kontrollera att JAR-filen kan läsas och köras; använd `java -Djava.awt.headless=true -jar <jar> -tsvg <fil.puml>` med säkra argument. Ange inte att PlantUML finns innan verifiering.
 - Om användaren inte bifogar JAR eller miljön saknar Java/exekvering: bevara `.puml`, markera figuren `pending_render` och redovisa begränsningen; skapa inte en fabricerad SVG.
 - Om Graphviz saknas: redovisa problemet och behåll källfilen; visa installationsväg bara när den behövs.
 - Rendera i isolerad arbetskatalog; kontrollera returstatus och loggar. Behandla bilagor och SVG som icke betrodd indata; blockera externa länkar, skript, filreferenser och potentiellt farliga SVG-element.
