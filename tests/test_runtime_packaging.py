@@ -32,12 +32,23 @@ for target in ("plugin", "claude-skills", "opencode"):
         bundle_path = publication + "assets/19-project-template-bundle.md"
         if bundle_path in names:
             bundle = z.read(bundle_path).decode("utf-8")
+            sections = re.findall(
+                r"^## `([^`]+)`\\s*\\n````[^\\n]*\\n(.*?)\\n````",
+                bundle, flags=re.MULTILINE | re.DOTALL,
+            )
+            bundled_files = {}
+            for rel, content in sections:
+                if rel in bundled_files:
+                    errors.append(f"{target}: duplicate project template section {rel}")
+                bundled_files[rel] = (content + "\\n").encode("utf-8")
             for source in template_root.rglob("*"):
                 if not source.is_file() or "__pycache__" in source.parts or source.suffix in {".pyc", ".pyo"}:
                     continue
-                marker = "## `" + source.relative_to(template_root).as_posix() + "`"
-                if marker not in bundle:
-                    errors.append(f"{target}: missing project template section {marker}")
+                rel = source.relative_to(template_root).as_posix()
+                if rel not in bundled_files:
+                    errors.append(f"{target}: missing project template section {rel}")
+                elif bundled_files[rel] != source.read_bytes():
+                    errors.append(f"{target}: project template content differs: {rel}")
         for name in script_names:
             found = publication + "scripts/" + name
             if found not in names:
