@@ -15,8 +15,14 @@ sys.path.insert(0, str(ROOT / "scripts"))
 from lib.canonical_skill_sources import modules, projected_instruction
 from lib.verify_modular_migration import inspect
 
-EXPECTED = {"bokplanering", "bokskrivande", "bokprojekt-publicering"}
+EXPECTED = {"bokplanering", "bokskrivande", "bokprojekt-publicering", "diagram-illustrationer"}
 CASES = {
+    "diagram-illustrationer": [
+        ("Källor och format", "Graphviz"),
+        ("Källor och format", "PlantUML"),
+        ("Verktygskontroller", "plantuml.jar"),
+        ("Samarbete och leverans", "bokprojekt-publicering"),
+    ],
     "bokplanering": [
         ("book_kind", "textbook"),
         ("book_kind", "factbook"),
