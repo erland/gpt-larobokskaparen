@@ -166,6 +166,15 @@ tools:
     mutates_workspace: true
     working_directory: workspace
     runtime_fallback: manual
+  - id: chapter-review
+    type: script
+    requirement: optional
+    purpose: Versionsbind och verifiera kapitelgranskning och godkännande.
+    script: templates/bokprojekt/scripts/chapter_review.py
+    deterministic: true
+    mutates_workspace: true
+    working_directory: workspace
+    runtime_fallback: manual
   - id: book-export
     type: script
     requirement: recommended
@@ -472,6 +481,7 @@ skills:
     - templates/bokprojekt/scripts/project_integrity.py
     - templates/bokprojekt/scripts/validate_project.py
     - templates/bokprojekt/scripts/export-book.py
+    - templates/bokprojekt/scripts/chapter_review.py
     - templates/bokprojekt/scripts/build_book.py
 build:
   deterministic: true
