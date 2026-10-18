@@ -124,11 +124,11 @@ def main()->int:
     with tempfile.TemporaryDirectory() as td:
         td=Path(td); metadata_path=td/'book-metadata.yaml'; metadata_path.write_text(effective_yaml,encoding='utf-8'); from book_references import prepare
         merged=td/'book.md'
-        common=['pandoc',str(merged),'--from=markdown+pipe_tables+fenced_code_blocks+fenced_divs','--standalone','--metadata-file',str(metadata_path)]
+        common=['pandoc',str(merged),'--from=markdown+pipe_tables+fenced_code_blocks+fenced_divs-implicit_figures','--standalone','--metadata-file',str(metadata_path)]
         if args.format in ('epub','all'):
             merged.write_text(prepare(chapters,image_transform=image_transform_for('epub',td)),encoding='utf-8')
             epub=out/f'{slug}.epub'
-            cmd=['pandoc',str(merged),'--from=markdown+pipe_tables+fenced_code_blocks+fenced_divs','--to=epub3','--standalone','--toc','--toc-depth=1','--metadata-file',str(metadata_path),'--css',str(ROOT/'publishing/epub.css')]
+            cmd=['pandoc',str(merged),'--from=markdown+pipe_tables+fenced_code_blocks+fenced_divs-implicit_figures','--to=epub3','--standalone','--toc','--toc-depth=1','--metadata-file',str(metadata_path),'--css',str(ROOT/'publishing/epub.css')]
             cover=meta['cover_image'];
             if cover:
                 cp=ROOT/cover
