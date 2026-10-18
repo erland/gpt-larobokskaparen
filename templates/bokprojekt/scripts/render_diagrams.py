@@ -61,8 +61,8 @@ def render_one(source:Path, jar:Path|None)->Path:
         with target.open("wb") as out:
             raw=source.read_text(encoding="utf-8")
             # Transparent page; keep source immutable.
-            if not re.search(r"(?im)^\\s*skinparam\\s+backgroundColor\\b",raw):
-                raw=raw.replace("@startuml","@startuml\\nskinparam backgroundColor transparent",1)
+            if not re.search(r"(?im)^\s*skinparam\s+backgroundColor\b",raw):
+                raw=raw.replace("@startuml","@startuml\nskinparam backgroundColor transparent",1)
             subprocess.run(cmd,input=raw.encode("utf-8"),stdout=out,check=True,timeout=90)
     # Graphviz/PlantUML kan skriva en SVG 1.1-DOCTYPE. Ta bort den lokalt,
     # så att slutartefakten blir fristående och passerar säkerhetsvalideringen.
@@ -73,7 +73,7 @@ def render_one(source:Path, jar:Path|None)->Path:
     # PlantUML may include a hard-coded white SVG canvas as inline CSS.
     if source.suffix==".puml":
         rendered=target.read_text(encoding="utf-8")
-        rendered=re.sub(r"background:\\s*#(?:FFFFFF|ffffff|FFF|fff)\\s*;","background:transparent;",rendered)
+        rendered=re.sub(r"background:\s*#(?:FFFFFF|ffffff|FFF|fff)\s*;","background:transparent;",rendered)
         target.write_text(rendered,encoding="utf-8")
     check_svg(target)
     return target
